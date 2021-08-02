@@ -10,7 +10,7 @@ const IBCIdentifier = artifacts.require("IBCIdentifier");
 const SimpleToken = artifacts.require("SimpleToken");
 const ICS20TransferBank = artifacts.require("ICS20TransferBank");
 const ICS20Bank = artifacts.require("ICS20Bank");
-const CrossModule = artifacts.require("CrossModule");
+const CrossSimpleModule = artifacts.require("CrossSimpleModule");
 
 const deployCore = async (deployer) => {
   await deployer.deploy(IBCIdentifier);
@@ -47,7 +47,7 @@ const deployApp = async (deployer) => {
   await deployer.deploy(SimpleToken, "simple", "simple", 1000000);
   await deployer.deploy(ICS20Bank);
   await deployer.deploy(ICS20TransferBank, IBCHost.address, IBCHandler.address, ICS20Bank.address);
-  await deployer.deploy(CrossModule, IBCHost.address, IBCHandler.address);
+  await deployer.deploy(CrossSimpleModule, IBCHost.address, IBCHandler.address);
 };
 
 module.exports = async function (deployer) {
