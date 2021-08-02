@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+message PacketData {
+  option (gogoproto.goproto_getters) = false;
+  Header header  = 1 [(gogoproto.nullable) = false];
+  bytes  payload = 2 [(gogoproto.casttype) = "Payload"];
+}
+
+message Header {
+  option (gogoproto.goproto_getters) = false;
+  repeated HeaderField fields = 1 [(gogoproto.nullable) = false];
+}
+
+message HeaderField {
+  option (gogoproto.goproto_getters) = false;
+  string key   = 1;
+  bytes  value = 2;
+}
+
+message PacketDataCall {
+  option (gogoproto.equal)           = false;
+
+  bytes tx_id  = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/tx/types.TxID"];
+  repeated bytes signers = 2 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/account/types.AccountID"];
+  bytes call_info = 3 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/tx/types.ContractCallInfo"];
+  ReturnValue return_value = 4;
+  repeated google.protobuf.Any objects = 5 [(gogoproto.nullable) = false];
+}
+
+message PacketAcknowledgementCall {
+  option (gogoproto.equal)           = false;
+
+  enum CommitStatus {
+    option (gogoproto.goproto_enum_prefix) = false;
+  
+    COMMIT_STATUS_UNKNOWN = 0;
+    COMMIT_STATUS_OK      = 1;
+    COMMIT_STATUS_FAILED  = 2;
+  }
+
+  CommitStatus status = 1;
+}
+
+message ReturnValue {
+  bytes value = 1;
+}
+
