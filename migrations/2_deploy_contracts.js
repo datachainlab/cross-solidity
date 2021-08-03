@@ -7,6 +7,7 @@ const IBCHandler = artifacts.require("IBCHandler");
 const IBCMsgs = artifacts.require("IBCMsgs");
 const IBCIdentifier = artifacts.require("IBCIdentifier");
 const CrossSimpleModule = artifacts.require("CrossSimpleModule");
+const MockCrossContract = artifacts.require("MockCrossContract");
 
 const deployCore = async (deployer) => {
   await deployer.deploy(IBCIdentifier);
@@ -38,7 +39,8 @@ const deployCore = async (deployer) => {
 const deployApp = async (deployer) => {
   console.log("deploying app contracts");
 
-  await deployer.deploy(CrossSimpleModule, IBCHost.address, IBCHandler.address);
+  await deployer.deploy(MockCrossContract);
+  await deployer.deploy(CrossSimpleModule, IBCHost.address, IBCHandler.address, MockCrossContract.address);
 };
 
 module.exports = async function (deployer) {
