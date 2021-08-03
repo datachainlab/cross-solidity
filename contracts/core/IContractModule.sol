@@ -2,6 +2,8 @@
 pragma solidity ^0.6.8;
 pragma experimental ABIEncoderV2;
 
+import "./PacketHandler.sol";
+
 interface IContractModule {
-    function onContractCall(bytes calldata callInfo) external returns (bytes memory);
+    function onContractCall(CommitMode commitMode, bytes calldata callInfo) external returns (bytes memory);
 }
