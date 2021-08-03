@@ -23,11 +23,18 @@ message HeaderField {
 message PacketDataCall {
   option (gogoproto.equal)           = false;
 
+  message ResolvedContractTransaction {
+    option (gogoproto.equal) = false;
+
+    google.protobuf.Any cross_chain_channel = 1 [(gogoproto.nullable) = true];
+    repeated bytes signers = 2 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/account/types.AccountID"];
+    bytes call_info = 3 [(gogoproto.casttype) = "ContractCallInfo"];
+    ReturnValue return_value = 4;
+    repeated google.protobuf.Any objects = 5 [(gogoproto.nullable) = false];
+  }
+
   bytes tx_id  = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/tx/types.TxID"];
-  repeated bytes signers = 2 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/account/types.AccountID"];
-  bytes call_info = 3 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/tx/types.ContractCallInfo"];
-  ReturnValue return_value = 4;
-  repeated google.protobuf.Any objects = 5 [(gogoproto.nullable) = false];
+  ResolvedContractTransaction tx = 2 [(gogoproto.nullable) = false];
 }
 
 message PacketAcknowledgementCall {
@@ -47,4 +54,3 @@ message PacketAcknowledgementCall {
 message ReturnValue {
   bytes value = 1;
 }
-
