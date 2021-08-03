@@ -1,11 +1,6 @@
 const IBCHost = artifacts.require("IBCHost");
-const IBFT2Client = artifacts.require("IBFT2Client");
-const MockClient = artifacts.require("MockClient");
 const IBCHandler = artifacts.require("IBCHandler");
-const IBCIdentifier = artifacts.require("IBCIdentifier");
-const SimpleToken = artifacts.require("SimpleToken");
-const ICS20TransferBank = artifacts.require("ICS20TransferBank");
-const ICS20Bank = artifacts.require("ICS20Bank");
+const CrossSimpleModule = artifacts.require("CrossSimpleModule");
 
 var fs = require("fs");
 var ejs = require("ejs");
@@ -35,12 +30,7 @@ module.exports = function(callback) {
     ejs.renderFile(item[1], {
       IBCHostAddress: IBCHost.address,
       IBCHandlerAddress: IBCHandler.address,
-      IBFT2ClientAddress: IBFT2Client.address,
-      MockClientAddress: MockClient.address,
-      IBCIdentifierAddress: IBCIdentifier.address,
-      SimpleTokenAddress: SimpleToken.address,
-      ICS20TransferBankAddress: ICS20TransferBank.address,
-      ICS20BankAddress: ICS20Bank.address
+      CrossSimpleModuleAddress: CrossSimpleModule.address
     }, null, function(err, str){
         if (err) {
           throw err;
