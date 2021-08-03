@@ -30,6 +30,14 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
         }
 
+        return packPacketAcknowledgementCall(ack);
+    }
+
+    function handleAcknowledgement(Packet.Data memory packet, bytes memory acknowledgement) virtual internal override {
+        // TODO implements
+    }
+
+    function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack) internal pure returns (bytes memory) {
         HeaderField.Data[] memory fields;
         return PacketData.encode(
             PacketData.Data({
@@ -44,9 +52,5 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
                 )
             })
         );
-    }
-
-    function handleAcknowledgement(Packet.Data memory packet, bytes memory acknowledgement) virtual internal override {
-        // TODO implements
     }
 }

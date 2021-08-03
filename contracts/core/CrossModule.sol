@@ -6,20 +6,29 @@ import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCModule.sol";
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCHost.sol";
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCHandler.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
-abstract contract CrossModule is Context, IModuleCallbacks, IBCKeeper, PacketHandler {
+abstract contract CrossModule is Context, AccessControl, IModuleCallbacks, IBCKeeper, PacketHandler {
+
+    bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
+
+    constructor(IBCHost ibcHost_, IBCHandler ibcHandler_) IBCKeeper(ibcHost_, ibcHandler_) public {
+        _setupRole(IBC_ROLE, address(ibcHandler_));
+    }
 
     // function initiateTx() external {}
 
     /// Module callbacks ///
 
     function onRecvPacket(Packet.Data memory packet) public virtual override returns (bytes memory acknowledgement) {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         return handlePacket(packet);
     }
 
     function onAcknowledgementPacket(Packet.Data memory packet, bytes memory acknowledgement) public virtual override {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         return handleAcknowledgement(packet, acknowledgement);
     }
 

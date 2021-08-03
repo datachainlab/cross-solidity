@@ -51,6 +51,14 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 			},
 		),
 	))
+	ack, err := suite.chain.CrossSimpleModule.PacketAcknowledgementCallOK(
+		suite.chain.CallOpts(ctx, 0),
+	)
+	suite.Require().NoError(err)
+	expectedAck := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_OK))
+	bz, err := proto.Marshal(&expectedAck)
+	suite.Require().NoError(err)
+	suite.Require().Equal(ack, bz)
 }
 
 func TestChainTestSuite(t *testing.T) {

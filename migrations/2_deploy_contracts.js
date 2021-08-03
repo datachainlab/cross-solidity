@@ -40,7 +40,7 @@ const deployApp = async (deployer) => {
   console.log("deploying app contracts");
 
   await deployer.deploy(MockCrossContract);
-  await deployer.deploy(CrossSimpleModule, IBCHost.address, IBCHandler.address, MockCrossContract.address);
+  await deployer.deploy(CrossSimpleModule, IBCHost.address, IBCHandler.address, MockCrossContract.address, true);
 };
 
 module.exports = async function (deployer) {
