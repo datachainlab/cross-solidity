@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "../core/IContractModule.sol";
 
 contract MockCrossContract is IContractModule {
-    function onContractCall(CommitMode commitMode, bytes calldata callInfo) external override returns (bytes memory) {
+    function onContractCall(CrossContext calldata context, bytes calldata callInfo) external override returns (bytes memory) {
         return new bytes(1);
     }
 }

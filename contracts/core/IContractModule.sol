@@ -4,6 +4,13 @@ pragma experimental ABIEncoderV2;
 
 import "./PacketHandler.sol";
 
+struct CrossContext {
+    CommitMode commitMode;
+    bytes tx_id;
+    uint8 tx_index;
+    bytes[] signers;
+}
+
 interface IContractModule {
-    function onContractCall(CommitMode commitMode, bytes calldata callInfo) external returns (bytes memory);
+    function onContractCall(CrossContext calldata context, bytes calldata callInfo) external returns (bytes memory);
 }

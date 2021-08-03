@@ -10,5 +10,7 @@ abstract contract PacketHandler {
 }
 
 enum CommitMode {
-    UNSPECIFIED_MODE
+    UNSPECIFIED_MODE,
+    IMMEDIATELY_MODE,
+    PREPARE_MODE
 }

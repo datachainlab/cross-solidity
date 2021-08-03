@@ -14,6 +14,8 @@ import "./types/AtomicSimple.sol";
 
 abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
 
+    uint8 constant private txIndexParticipant = 1;
+
     function handlePacket(Packet.Data memory packet) virtual internal override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);
 
@@ -24,7 +26,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
         PacketAcknowledgementCall.Data memory ack;
-        try getModule(packet).onContractCall(CommitMode.UNSPECIFIED_MODE, pdc.tx.call_info) returns (bytes memory ret) {
+        try getModule(packet).onContractCall(CrossContext(CommitMode.IMMEDIATELY_MODE, pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
