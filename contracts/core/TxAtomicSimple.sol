@@ -19,16 +19,30 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
 
         PacketData.Data memory pd = PacketData.decode(packet.data);
         Any.Data memory anyPayload = Any.decode(pd.payload);
-        // TODO asserts the typeUrl
-        // assert(anyPayload.type_url == "");
+        require(sha256(bytes(anyPayload.type_url)) == sha256(bytes("cross.core.atomic.simple.PacketDataCall")), "got unexpected type_url");
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
-        // TODO returns a correct acknowledgement
+        PacketAcknowledgementCall.Data memory ack;
         try getModule(packet).onContractCall(CommitMode.UNSPECIFIED_MODE, pdc.tx.call_info) returns (bytes memory ret) {
-            return new bytes(0);
+            ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
         } catch (bytes memory) {
-            return new bytes(0);
+            ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
         }
+
+        HeaderField.Data[] memory fields;
+        return PacketData.encode(
+            PacketData.Data({
+                header: Header.Data({
+                    fields: fields
+                }),
+                payload: Any.encode(
+                    Any.Data({
+                        type_url: "cross.core.atomic.simple.PacketAcknowledgementCall",
+                        value: PacketAcknowledgementCall.encode(ack)
+                    })
+                )
+            })
+        );
     }
 
     function handleAcknowledgement(Packet.Data memory packet, bytes memory acknowledgement) virtual internal override {

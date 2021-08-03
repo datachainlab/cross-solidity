@@ -1555,15 +1555,15 @@ library PacketDataCallResolvedContractTransaction {
    * @return The decoded inner-struct
    * @return The number of bytes used to decode
    */
-  function _decode_GoogleProtobufAny(uint256 p, bytes memory bs)
+  function _decode_ReturnValue(uint256 p, bytes memory bs)
     internal
     pure
-    returns (GoogleProtobufAny.Data memory, uint)
+    returns (ReturnValue.Data memory, uint)
   {
     uint256 pointer = p;
     (uint256 sz, uint256 bytesRead) = ProtoBufRuntime._decode_varint(pointer, bs);
     pointer += bytesRead;
-    (GoogleProtobufAny.Data memory r, ) = GoogleProtobufAny._decode(pointer, bs, sz);
+    (ReturnValue.Data memory r, ) = ReturnValue._decode(pointer, bs, sz);
     return (r, sz + bytesRead);
   }
 
@@ -1574,15 +1574,15 @@ library PacketDataCallResolvedContractTransaction {
    * @return The decoded inner-struct
    * @return The number of bytes used to decode
    */
-  function _decode_ReturnValue(uint256 p, bytes memory bs)
+  function _decode_GoogleProtobufAny(uint256 p, bytes memory bs)
     internal
     pure
-    returns (ReturnValue.Data memory, uint)
+    returns (GoogleProtobufAny.Data memory, uint)
   {
     uint256 pointer = p;
     (uint256 sz, uint256 bytesRead) = ProtoBufRuntime._decode_varint(pointer, bs);
     pointer += bytesRead;
-    (ReturnValue.Data memory r, ) = ReturnValue._decode(pointer, bs, sz);
+    (GoogleProtobufAny.Data memory r, ) = GoogleProtobufAny._decode(pointer, bs, sz);
     return (r, sz + bytesRead);
   }
 
