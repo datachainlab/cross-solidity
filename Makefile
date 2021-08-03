@@ -2,6 +2,10 @@
 ABIGEN ?= abigen
 SOLPB_EXTERNAL_RUNTIME_REPO ?= @hyperledger-labs/yui-ibc-solidity/contracts/core/types/
 
+.PHONY: test
+test:
+	go test -v ./pkg/...
+
 .PHONY: proto-gen
 proto-gen:
 	@echo "Generating Protobuf files"
