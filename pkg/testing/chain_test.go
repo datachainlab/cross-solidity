@@ -1,15 +1,18 @@
 package testing
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/avast/retry-go"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -23,12 +26,29 @@ import (
 	"github.com/datachainlab/cross-solidity/pkg/wallet"
 )
 
+var (
+	abiEventOnContractCall abi.Event
+)
+
+func init() {
+	var ok bool
+	parsedCrossModuleABI, err := abi.JSON(strings.NewReader(crosssimplemodule.CrosssimplemoduleABI))
+	if err != nil {
+		panic(err)
+	}
+	abiEventOnContractCall, ok = parsedCrossModuleABI.Events["OnContractCall"]
+	if !ok {
+		panic("OnContractCall not found")
+	}
+}
+
 type Chain struct {
 	chainID        int64
 	mnemonicPhrase string
 	keys           map[uint32]*ecdsa.PrivateKey
 
-	ETHClient *ethclient.Client
+	ETHClient      *ethclient.Client
+	ContractConfig ContractConfig
 
 	// Core modules
 	IBCHandler ibchandler.Ibchandler
@@ -70,6 +90,26 @@ func (chain *Chain) TxSyncIfNoError(ctx context.Context) func(tx *gethtypes.Tran
 		}
 		return chain.TxSync(ctx, tx)
 	}
+}
+
+func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*crosssimplemodule.CrosssimplemoduleOnContractCall, error) {
+	filter, err := crosssimplemodule.NewCrosssimplemoduleFilterer(
+		chain.ContractConfig.GetCrossSimpleModuleAddress(), chain.ETHClient,
+	)
+	if err != nil {
+		return nil, err
+	}
+	iter, err := filter.FilterOnContractCall(&bind.FilterOpts{Context: ctx})
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+	for iter.Next() {
+		if bytes.Equal(txID, iter.Event.TxId) {
+			return iter.Event, nil
+		}
+	}
+	return nil, fmt.Errorf("event not found: txID=%v", string(txID))
 }
 
 func (chain *Chain) TxOpts(ctx context.Context, index uint32) *bind.TransactOpts {
@@ -138,6 +178,7 @@ func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg Contract
 	return &Chain{
 		ETHClient:         ethc,
 		CrossSimpleModule: *crossMod,
+		ContractConfig:    ccfg,
 
 		chainID:        1337,
 		mnemonicPhrase: mnemonicPhrase,

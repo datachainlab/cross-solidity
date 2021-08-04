@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	simpletypes "github.com/datachainlab/cross/x/core/atomic/protocol/simple/types"
 	"github.com/datachainlab/cross/x/core/tx/types"
@@ -32,10 +33,9 @@ func (suite *CrossTestSuite) SetupTest() {
 func (suite *CrossTestSuite) TestRecvPacket() {
 	ctx := context.Background()
 
-	txID := []byte(fmt.Sprintf("txid-%v", 0))
+	txID := []byte(fmt.Sprintf("txid-%v", time.Now().UnixNano()))
 
-	channel := xcctypes.ChannelInfo{}
-	xcc, err := xcctypes.PackCrossChainChannel(&channel)
+	xcc, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{})
 	suite.Require().NoError(err)
 
 	pdc := simpletypes.NewPacketDataCall(txID, types.NewResolvedContractTransaction(xcc, nil, types.ContractCallInfo{}, nil, nil))
@@ -51,6 +51,12 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 			},
 		),
 	))
+
+	event, err := suite.chain.findEventOnContractCall(ctx, txID)
+	suite.Require().NoError(err)
+	suite.Require().True(event.Success)
+	suite.Require().Equal(event.Ret, []byte("mock call succeed"))
+
 	ack, err := suite.chain.CrossSimpleModule.PacketAcknowledgementCallOK(
 		suite.chain.CallOpts(ctx, 0),
 	)

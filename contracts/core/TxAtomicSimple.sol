@@ -12,9 +12,13 @@ import "./IContractModule.sol";
 import "./IBCKeeper.sol";
 import "./types/AtomicSimple.sol";
 
+// TxAtomicSimple implements PacketHandler that supports simple-commit protocol
 abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
 
+    // it's defined at simple-commit protocol
     uint8 constant private txIndexParticipant = 1;
+
+    event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret);
 
     function handlePacket(Packet.Data memory packet) virtual internal override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);
@@ -22,15 +26,17 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         PacketData.Data memory pd = PacketData.decode(packet.data);
         require(pd.payload.length != 0, "decoding error");
         Any.Data memory anyPayload = Any.decode(pd.payload);
+        // TODO should be more gas efficient
         require(sha256(bytes(anyPayload.type_url)) == sha256(bytes("/cross.core.atomic.simple.PacketDataCall")), "got unexpected type_url");
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
         PacketAcknowledgementCall.Data memory ack;
         try getModule(packet).onContractCall(CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
-            // TODO emit an event that includes the return value
+            emit OnContractCall(pdc.tx_id, txIndexParticipant, true, ret);
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
+            emit OnContractCall(pdc.tx_id, txIndexParticipant, false, new bytes(0));
         }
 
         return packPacketAcknowledgementCall(ack);

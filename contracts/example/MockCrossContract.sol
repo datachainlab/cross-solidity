@@ -6,6 +6,6 @@ import "../core/IContractModule.sol";
 
 contract MockCrossContract is IContractModule {
     function onContractCall(CrossContext calldata context, bytes calldata callInfo) external override returns (bytes memory) {
-        return new bytes(1);
+        return bytes("mock call succeed");
     }
 }
