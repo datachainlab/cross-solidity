@@ -26,8 +26,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
         PacketAcknowledgementCall.Data memory ack;
-        try getModule(packet).onContractCall(CrossContext(CommitMode.IMMEDIATELY_MODE, pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info) returns (bytes memory ret) {
+        try getModule(packet).onContractCall(CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
+            // TODO emit an event that includes the return value
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
         }
@@ -36,7 +37,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     }
 
     function handleAcknowledgement(Packet.Data memory packet, bytes memory acknowledgement) virtual internal override {
-        // TODO implements
+        revert("not implemented error");
     }
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack) internal pure returns (bytes memory) {
