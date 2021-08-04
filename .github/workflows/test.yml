@@ -1,0 +1,32 @@
+name: Test
+on: [push]
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.16
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.16
+      id: go
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '12'
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Resolve dependencies
+      run: npm install
+
+    - name: apply the patch
+      run: sed -i -e 's/20000,/200000,/' ./node_modules/@trufflesuite/web3-provider-engine/subproviders/rpc.js
+
+    - name: Setup ganache-cli
+      run: NO_GEN_CODE=1 ./scripts/setup.sh development
+
+    - name: Test
+      run: make test
