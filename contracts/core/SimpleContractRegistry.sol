@@ -6,6 +6,7 @@ import "./ContractRegistry.sol";
 import "./IContractModule.sol";
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/Channel.sol";
 
+// SimpleContractRegistry is a simple registry that implements ContractRegistry
 abstract contract SimpleContractRegistry is ContractRegistry {
 
     // it keeps only one module.
