@@ -33,13 +33,12 @@ func (suite *CrossTestSuite) SetupTest() {
 func (suite *CrossTestSuite) TestRecvPacket() {
 	ctx := context.Background()
 
+	// check if the calling of OnRecvPacket succeeds
+	// 1. create a packet that is send by the coordinator
+	// 2. call OnRecvPacket with the packet
+
 	txID := []byte(fmt.Sprintf("txid-%v", time.Now().UnixNano()))
-
-	xcc, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{})
-	suite.Require().NoError(err)
-
-	pdc := simpletypes.NewPacketDataCall(txID, types.NewResolvedContractTransaction(xcc, nil, types.ContractCallInfo{}, nil, nil))
-	pd := packets.NewPacketData(nil, pdc)
+	pd := suite.createPacket(txID, []byte{})
 	packetData, err := proto.Marshal(&pd)
 	suite.Require().NoError(err)
 
@@ -52,19 +51,37 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		),
 	))
 
+	// check if a fired event is expected
+
 	event, err := suite.chain.findEventOnContractCall(ctx, txID)
 	suite.Require().NoError(err)
 	suite.Require().True(event.Success)
 	suite.Require().Equal(event.Ret, []byte("mock call succeed"))
+	suite.Require().Equal(event.TxId, txID)
+	suite.Require().Equal(event.TxIndex, uint8(1))
+}
+
+func (suite *CrossTestSuite) TestSerialization() {
+	ctx := context.Background()
+
+	// check if the serialization of ack is expected
 
 	ack, err := suite.chain.CrossSimpleModule.PacketAcknowledgementCallOK(
 		suite.chain.CallOpts(ctx, 0),
 	)
 	suite.Require().NoError(err)
+
 	expectedAck := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_OK))
 	bz, err := proto.Marshal(&expectedAck)
 	suite.Require().NoError(err)
 	suite.Require().Equal(ack, bz)
+}
+
+func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.PacketData {
+	xcc, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{})
+	suite.Require().NoError(err)
+	pdc := simpletypes.NewPacketDataCall(txID, types.NewResolvedContractTransaction(xcc, nil, callInfo, nil, nil))
+	return packets.NewPacketData(nil, pdc)
 }
 
 func TestChainTestSuite(t *testing.T) {
