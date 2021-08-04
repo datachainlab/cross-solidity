@@ -31,34 +31,67 @@ func (suite *CrossTestSuite) SetupTest() {
 }
 
 func (suite *CrossTestSuite) TestRecvPacket() {
+	var (
+		mockSuccessCall = []byte{0x01}
+		mockFailureCall = []byte{0xFF}
+		successMsg      = []byte("mock call succeed")
+	)
+
 	ctx := context.Background()
 
-	// check if the calling of OnRecvPacket succeeds
-	// 1. create a packet that is send by the coordinator
-	// 2. call OnRecvPacket with the packet
+	// check if the contract module call succeeds via OnRecvPacket
+	{
+		// 1. create a packet that is send by the coordinator
+		txID := []byte(fmt.Sprintf("txid-%v", time.Now().UnixNano()))
+		pd := suite.createPacket(txID, mockSuccessCall)
+		packetData, err := proto.Marshal(&pd)
+		suite.Require().NoError(err)
 
-	txID := []byte(fmt.Sprintf("txid-%v", time.Now().UnixNano()))
-	pd := suite.createPacket(txID, []byte{})
-	packetData, err := proto.Marshal(&pd)
-	suite.Require().NoError(err)
+		// 2. call OnRecvPacket with the packet
+		suite.Require().NoError(suite.chain.TxSyncIfNoError(ctx)(
+			suite.chain.CrossSimpleModule.OnRecvPacket(
+				suite.chain.TxOpts(ctx, 0),
+				crosssimplemodule.PacketData{
+					Data: packetData,
+				},
+			),
+		))
 
-	suite.Require().NoError(suite.chain.TxSyncIfNoError(ctx)(
-		suite.chain.CrossSimpleModule.OnRecvPacket(
-			suite.chain.TxOpts(ctx, 0),
-			crosssimplemodule.PacketData{
-				Data: packetData,
-			},
-		),
-	))
+		// 3. check if a fired event is expected
+		event, err := suite.chain.findEventOnContractCall(ctx, txID)
+		suite.Require().NoError(err)
+		suite.Require().True(event.Success)
+		suite.Require().Equal(event.Ret, successMsg)
+		suite.Require().Equal(event.TxId, txID)
+		suite.Require().Equal(event.TxIndex, uint8(1))
+	}
 
-	// check if a fired event is expected
+	// check if OnRecvPacket succeeds even if the contract module call fails
+	{
+		// 1. create a packet that is send by the coordinator
+		txID := []byte(fmt.Sprintf("txid-%v", time.Now().UnixNano()))
+		pd := suite.createPacket(txID, mockFailureCall)
+		packetData, err := proto.Marshal(&pd)
+		suite.Require().NoError(err)
 
-	event, err := suite.chain.findEventOnContractCall(ctx, txID)
-	suite.Require().NoError(err)
-	suite.Require().True(event.Success)
-	suite.Require().Equal(event.Ret, []byte("mock call succeed"))
-	suite.Require().Equal(event.TxId, txID)
-	suite.Require().Equal(event.TxIndex, uint8(1))
+		// 2. call OnRecvPacket with the packet
+		suite.Require().NoError(suite.chain.TxSyncIfNoError(ctx)(
+			suite.chain.CrossSimpleModule.OnRecvPacket(
+				suite.chain.TxOpts(ctx, 0),
+				crosssimplemodule.PacketData{
+					Data: packetData,
+				},
+			),
+		))
+
+		// 3. check if a fired event is expected
+		event, err := suite.chain.findEventOnContractCall(ctx, txID)
+		suite.Require().NoError(err)
+		suite.Require().False(event.Success)
+		suite.Require().Empty(event.Ret)
+		suite.Require().Equal(event.TxId, txID)
+		suite.Require().Equal(event.TxIndex, uint8(1))
+	}
 }
 
 func (suite *CrossTestSuite) TestSerialization() {
