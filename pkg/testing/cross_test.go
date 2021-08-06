@@ -8,6 +8,7 @@ import (
 
 	simpletypes "github.com/datachainlab/cross/x/core/atomic/protocol/simple/types"
 	"github.com/datachainlab/cross/x/core/tx/types"
+	crosstypes "github.com/datachainlab/cross/x/core/types"
 	xcctypes "github.com/datachainlab/cross/x/core/xcc/types"
 	"github.com/datachainlab/cross/x/packets"
 	"github.com/gogo/protobuf/proto"
@@ -57,7 +58,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 			),
 		))
 
-		// 3. check if a fired event is expected
+		// 3. check if a fired event matches expected one
 		event, err := suite.chain.findEventOnContractCall(ctx, txID)
 		suite.Require().NoError(err)
 		suite.Require().True(event.Success)
@@ -84,7 +85,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 			),
 		))
 
-		// 3. check if a fired event is expected
+		// 3. check if a fired event matches expected one
 		event, err := suite.chain.findEventOnContractCall(ctx, txID)
 		suite.Require().NoError(err)
 		suite.Require().False(event.Success)
@@ -94,20 +95,36 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 	}
 }
 
-func (suite *CrossTestSuite) TestSerialization() {
+func (suite *CrossTestSuite) TestPBSerialization() {
 	ctx := context.Background()
 
-	// check if the serialization of ack is expected
+	// check if the serialization of a successful ack is correct
+	{
+		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
+			suite.chain.CallOpts(ctx, 0),
+			uint8(simpletypes.COMMIT_STATUS_OK),
+		)
+		suite.Require().NoError(err)
+		expectedAckData := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_OK))
+		expectedAckDataBz, err := proto.Marshal(&expectedAckData)
+		suite.Require().NoError(err)
+		expectedAck := crosstypes.NewAcknowledgement(true, expectedAckDataBz)
+		suite.Require().Equal(ack, expectedAck.Acknowledgement())
+	}
 
-	ack, err := suite.chain.CrossSimpleModule.PacketAcknowledgementCallOK(
-		suite.chain.CallOpts(ctx, 0),
-	)
-	suite.Require().NoError(err)
-
-	expectedAck := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_OK))
-	bz, err := proto.Marshal(&expectedAck)
-	suite.Require().NoError(err)
-	suite.Require().Equal(ack, bz)
+	// check if the serialization of a failure ack is correct
+	{
+		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
+			suite.chain.CallOpts(ctx, 0),
+			uint8(simpletypes.COMMIT_STATUS_FAILED),
+		)
+		suite.Require().NoError(err)
+		expectedAckData := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_FAILED))
+		expectedAckDataBz, err := proto.Marshal(&expectedAckData)
+		suite.Require().NoError(err)
+		expectedAck := crosstypes.NewAcknowledgement(false, expectedAckDataBz)
+		suite.Require().Equal(ack, expectedAck.Acknowledgement())
+	}
 }
 
 func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.PacketData {
