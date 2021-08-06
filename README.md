@@ -33,3 +33,10 @@ interface IContractModule {
 ## How to deploy a contract module
 
 [Here](./migrations/2_deploy_contracts.js) is an example of deploying with the module `CrossSimpleModule` that implements the simple commit.
+
+## For Developers
+
+To develop this project, you need the code generator [solidity-protobuf](https://github.com/datachainlab/solidity-protobuf) to generate encoders and decoders in solidity from proto files.
+
+Currently, you need to use [this version](https://github.com/datachainlab/solidity-protobuf/commit/a365f06c140c6ea366d7e72eeea68c9a5b94d390).
+
