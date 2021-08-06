@@ -9,6 +9,11 @@ message PacketData {
   bytes  payload = 2 [(gogoproto.casttype) = "Payload"];
 }
 
+message Acknowledgement {
+  bool is_success = 1;
+  bytes result = 2;
+}
+
 message Header {
   option (gogoproto.goproto_getters) = false;
   repeated HeaderField fields = 1 [(gogoproto.nullable) = false];

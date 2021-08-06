@@ -18,9 +18,9 @@ contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimpl
 
     // debug for serialization
 
-    function packetAcknowledgementCallOK() public pure returns (bytes memory acknowledgement) {
+    function getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus status) public pure returns (bytes memory acknowledgement) {
         PacketAcknowledgementCall.Data memory ack;
-        ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
+        ack.status = status;
         return packPacketAcknowledgementCall(ack);
     }
 }

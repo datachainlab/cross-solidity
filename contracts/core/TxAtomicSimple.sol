@@ -48,15 +48,20 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack) internal pure returns (bytes memory) {
         HeaderField.Data[] memory fields;
-        return PacketData.encode(
-            PacketData.Data({
-                header: Header.Data({
-                    fields: fields
-                }),
-                payload: Any.encode(
-                    Any.Data({
-                        type_url: "/cross.core.atomic.simple.PacketAcknowledgementCall",
-                        value: PacketAcknowledgementCall.encode(ack)
+        return Acknowledgement.encode(
+            Acknowledgement.Data({
+                is_success: ack.status == PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK,
+                result: PacketData.encode(
+                    PacketData.Data({
+                        header: Header.Data({
+                            fields: fields
+                        }),
+                        payload: Any.encode(
+                            Any.Data({
+                                type_url: "/cross.core.atomic.simple.PacketAcknowledgementCall",
+                                value: PacketAcknowledgementCall.encode(ack)
+                            })
+                        )
                     })
                 )
             })
