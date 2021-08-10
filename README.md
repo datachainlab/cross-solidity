@@ -14,7 +14,7 @@ A coordinator feature of the simple commit and two-phase commit will be provided
 
 ## Contract module development
 
-A developer who develops contract using Cross Framework need to implement IContractModule, which is defined in [IContractModule.sol](./contract/core/IContractModule.sol).
+A developer who develops contract using Cross Framework need to implement IContractModule, which is defined in [IContractModule.sol](./contracts/core/IContractModule.sol).
 
 ```
 // IContractModule defines the expected interface of a contract module on Cross Framework
