@@ -3,6 +3,7 @@ pragma solidity ^0.6.8;
 pragma experimental ABIEncoderV2;
 
 import "./PacketHandler.sol";
+import "./types/Auth.sol";
 
 // IContractModule defines the expected interface of a contract module on Cross Framework
 interface IContractModule {
@@ -25,5 +26,5 @@ interface IContractModule {
 struct CrossContext {
     bytes tx_id;
     uint8 tx_index;
-    bytes[] signers;
+    Account.Data[] signers;
 }

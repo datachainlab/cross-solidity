@@ -164,6 +164,8 @@ github.com/danieljoos/wincred v1.0.2 h1:zf4bhty2iLuwgjgpraD2E9UbvO+fe54XXGJbOwe2
 github.com/danieljoos/wincred v1.0.2/go.mod h1:SnuYRW9lp1oJrZX/dXJqr0cPK5gYXqx3EJbmjhLdK9U=
 github.com/datachainlab/cross v0.1.1-0.20210803025654-71ed96d5ea91 h1:vjY2s+hej2yoPrSU0I3FKyBfFDqL/mktTvH9gb9aXig=
 github.com/datachainlab/cross v0.1.1-0.20210803025654-71ed96d5ea91/go.mod h1:AP/BendjJ7MQTohYslPLs0PJ0gftifkLXQXYkBsn9e8=
+github.com/datachainlab/cross v0.1.1-0.20210826013317-b5cd45b9977f h1:5qQrvhXMpbJYBf/VIXvjsC1fGz/8V2n8K4nxOmR6JY8=
+github.com/datachainlab/cross v0.1.1-0.20210826013317-b5cd45b9977f/go.mod h1:AP/BendjJ7MQTohYslPLs0PJ0gftifkLXQXYkBsn9e8=
 github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

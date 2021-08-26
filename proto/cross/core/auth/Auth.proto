@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/datachainlab/cross/x/core/auth/types";
+option (gogoproto.goproto_getters_all) = false;
+
+message Account {
+  option (gogoproto.equal) = true;
+  bytes id = 1 [(gogoproto.casttype) = "AccountID"];
+  AuthType auth_type = 2 [(gogoproto.nullable) = false];
+}
+
+message AuthType {
+  enum AuthMode {
+    AUTH_MODE_UNSPECIFIED = 0;
+    AUTH_MODE_LOCAL       = 1;
+    AUTH_MODE_CHANNEL     = 2;
+    AUTH_MODE_EXTENSION   = 3;
+  }  
+
+  option (gogoproto.equal) = true;
+  AuthMode mode = 1;
+  google.protobuf.Any option = 2 [(gogoproto.nullable) = true]; // xcc or extension_type_url
+}

@@ -27,6 +27,11 @@ find ./contracts/core/types -type f \
 -name '*.sol' \
 -a ! -name 'ProtoBufRuntime.sol' \
 -a ! -name 'GoogleProtobufAny.sol' \
--print0 | xargs -0 sed -i -E "s#(^import +\")(\.\/)(.+\";)#\1$SOLPB_EXTERNAL_RUNTIME_REPO\3#"
+-print0 | xargs -0 sed -i -E "s#(^import +\")(\.\/)(ProtoBufRuntime|GoogleProtobufAny|gogoproto.+\";)#\1$SOLPB_EXTERNAL_RUNTIME_REPO\3#"
 
 rm -f contracts/core/types/GoogleProtobufAny.sol contracts/core/types/ProtoBufRuntime.sol
+
+# XXX replace the proto import path with contract path
+find ./contracts/core/types -type f \
+-name '*.sol' \
+-print0 | xargs -0 sed -i -E "s#(^import +\"\./)(.+/)(.+\";)#\1\3#"
