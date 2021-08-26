@@ -7,6 +7,7 @@ import (
 	"time"
 
 	simpletypes "github.com/datachainlab/cross/x/core/atomic/protocol/simple/types"
+	authtypes "github.com/datachainlab/cross/x/core/auth/types"
 	"github.com/datachainlab/cross/x/core/tx/types"
 	crosstypes "github.com/datachainlab/cross/x/core/types"
 	xcctypes "github.com/datachainlab/cross/x/core/xcc/types"
@@ -130,7 +131,10 @@ func (suite *CrossTestSuite) TestPBSerialization() {
 func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.PacketData {
 	xcc, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{})
 	suite.Require().NoError(err)
-	pdc := simpletypes.NewPacketDataCall(txID, types.NewResolvedContractTransaction(xcc, nil, callInfo, nil, nil))
+	signers := []authtypes.Account{
+		authtypes.NewAccount(authtypes.AccountID("tester"), authtypes.NewAuthTypeChannel(&xcctypes.ChannelInfo{})),
+	}
+	pdc := simpletypes.NewPacketDataCall(txID, types.NewResolvedContractTransaction(xcc, signers, callInfo, nil, nil))
 	return packets.NewPacketData(nil, pdc)
 }
 
