@@ -3,6 +3,7 @@ pragma solidity ^0.6.8;
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/ProtoBufRuntime.sol";
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/GoogleProtobufAny.sol";
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/gogoproto/gogo.sol";
+import "./Auth.sol";
 
 library PacketData {
 
@@ -1569,7 +1570,7 @@ library PacketDataCallResolvedContractTransaction {
   //struct definition
   struct Data {
     GoogleProtobufAny.Data cross_chain_channel;
-    bytes[] signers;
+    Account.Data[] signers;
     bytes call_info;
     ReturnValue.Data return_value;
     GoogleProtobufAny.Data[] objects;
@@ -1662,7 +1663,7 @@ library PacketDataCallResolvedContractTransaction {
 
     }
     pointer = offset;
-    r.signers = new bytes[](counters[2]);
+    r.signers = new Account.Data[](counters[2]);
     r.objects = new GoogleProtobufAny.Data[](counters[5]);
 
     while (pointer < offset + sz) {
@@ -1755,7 +1756,7 @@ library PacketDataCallResolvedContractTransaction {
     /**
      * if `r` is NULL, then only counting the number of fields.
      */
-    (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
+    (Account.Data memory x, uint256 sz) = _decode_Account(p, bs);
     if (isNil(r)) {
       counters[2] += 1;
     } else {
@@ -1873,6 +1874,25 @@ library PacketDataCallResolvedContractTransaction {
    * @return The decoded inner-struct
    * @return The number of bytes used to decode
    */
+  function _decode_Account(uint256 p, bytes memory bs)
+    internal
+    pure
+    returns (Account.Data memory, uint)
+  {
+    uint256 pointer = p;
+    (uint256 sz, uint256 bytesRead) = ProtoBufRuntime._decode_varint(pointer, bs);
+    pointer += bytesRead;
+    (Account.Data memory r, ) = Account._decode(pointer, bs, sz);
+    return (r, sz + bytesRead);
+  }
+
+  /**
+   * @dev The decoder for reading a inner struct field
+   * @param p The offset of bytes array to start decode
+   * @param bs The bytes array to be decoded
+   * @return The decoded inner-struct
+   * @return The number of bytes used to decode
+   */
   function _decode_ReturnValue(uint256 p, bytes memory bs)
     internal
     pure
@@ -1935,7 +1955,7 @@ library PacketDataCallResolvedContractTransaction {
         pointer,
         bs)
       ;
-      pointer += ProtoBufRuntime._encode_bytes(r.signers[i], pointer, bs);
+      pointer += Account._encode_nested(r.signers[i], pointer, bs);
     }
     }
     if (r.call_info.length != 0) {
@@ -2012,7 +2032,7 @@ library PacketDataCallResolvedContractTransaction {
     uint256 e;uint256 i;
     e += 1 + ProtoBufRuntime._sz_lendelim(GoogleProtobufAny._estimate(r.cross_chain_channel));
     for(i = 0; i < r.signers.length; i++) {
-      e += 1 + ProtoBufRuntime._sz_lendelim(r.signers[i].length);
+      e += 1 + ProtoBufRuntime._sz_lendelim(Account._estimate(r.signers[i]));
     }
     e += 1 + ProtoBufRuntime._sz_lendelim(r.call_info.length);
     e += 1 + ProtoBufRuntime._sz_lendelim(ReturnValue._estimate(r.return_value));
@@ -2051,7 +2071,11 @@ library PacketDataCallResolvedContractTransaction {
    */
   function store(Data memory input, Data storage output) internal {
     GoogleProtobufAny.store(input.cross_chain_channel, output.cross_chain_channel);
-    output.signers = input.signers;
+
+    for(uint256 i2 = 0; i2 < input.signers.length; i2++) {
+      output.signers.push(input.signers[i2]);
+    }
+    
     output.call_info = input.call_info;
     ReturnValue.store(input.return_value, output.return_value);
 
@@ -2069,11 +2093,11 @@ library PacketDataCallResolvedContractTransaction {
    * @param self The in-memory struct
    * @param value The value to add
    */
-  function addSigners(Data memory self, bytes memory value) internal pure {
+  function addSigners(Data memory self, Account.Data memory value) internal pure {
     /**
      * First resize the array. Then add the new element to the end.
      */
-    bytes[] memory tmp = new bytes[](self.signers.length + 1);
+    Account.Data[] memory tmp = new Account.Data[](self.signers.length + 1);
     for (uint256 i = 0; i < self.signers.length; i++) {
       tmp[i] = self.signers[i];
     }
