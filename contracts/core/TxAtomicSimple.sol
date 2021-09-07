@@ -50,7 +50,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         HeaderField.Data[] memory fields;
         return Acknowledgement.encode(
             Acknowledgement.Data({
-                is_success: ack.status == PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK,
+                is_success: true,
                 result: PacketData.encode(
                     PacketData.Data({
                         header: Header.Data({
