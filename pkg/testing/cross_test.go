@@ -123,7 +123,7 @@ func (suite *CrossTestSuite) TestPBSerialization() {
 		expectedAckData := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_FAILED))
 		expectedAckDataBz, err := proto.Marshal(&expectedAckData)
 		suite.Require().NoError(err)
-		expectedAck := crosstypes.NewAcknowledgement(false, expectedAckDataBz)
+		expectedAck := crosstypes.NewAcknowledgement(true, expectedAckDataBz)
 		suite.Require().Equal(ack, expectedAck.Acknowledgement())
 	}
 }
