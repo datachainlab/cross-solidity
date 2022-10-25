@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.6.8;
+pragma solidity ^0.8.9;
 pragma experimental ABIEncoderV2;
 
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCHandler.sol";

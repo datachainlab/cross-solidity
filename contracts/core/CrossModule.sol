@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.6.8;
+pragma solidity ^0.8.9;
 pragma experimental ABIEncoderV2;
 
 import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCModule.sol";
@@ -14,7 +14,7 @@ abstract contract CrossModule is Context, AccessControl, IModuleCallbacks, IBCKe
 
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IBCHost ibcHost_, IBCHandler ibcHandler_) IBCKeeper(ibcHost_, ibcHandler_) public {
+    constructor(IBCHost ibcHost_, IBCHandler ibcHandler_) IBCKeeper(ibcHost_, ibcHandler_) {
         _setupRole(IBC_ROLE, address(ibcHandler_));
     }
 
@@ -22,12 +22,12 @@ abstract contract CrossModule is Context, AccessControl, IModuleCallbacks, IBCKe
 
     /// Module callbacks ///
 
-    function onRecvPacket(Packet.Data memory packet) public virtual override returns (bytes memory acknowledgement) {
+    function onRecvPacket(Packet.Data memory packet, address relayer) public virtual override returns (bytes memory acknowledgement) {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         return handlePacket(packet);
     }
 
-    function onAcknowledgementPacket(Packet.Data memory packet, bytes memory acknowledgement) public virtual override {
+    function onAcknowledgementPacket(Packet.Data memory packet, bytes memory acknowledgement, address relayer) public virtual override {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         return handleAcknowledgement(packet, acknowledgement);
     }
@@ -39,4 +39,8 @@ abstract contract CrossModule is Context, AccessControl, IModuleCallbacks, IBCKe
     function onChanOpenAck(string calldata portId, string calldata channelId, string calldata counterpartyVersion) external virtual override {}
 
     function onChanOpenConfirm(string calldata portId, string calldata channelId) external virtual override {}
+
+    function onChanCloseInit(string calldata portId, string calldata channelId) external virtual override {}
+
+    function onChanCloseConfirm(string calldata portId, string calldata channelId) external virtual override {}
 }

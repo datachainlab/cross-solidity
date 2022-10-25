@@ -6,9 +6,23 @@ SOLPB_EXTERNAL_RUNTIME_REPO ?= @hyperledger-labs/yui-ibc-solidity/contracts/core
 test:
 	go test -v ./pkg/...
 
+# Requirements
+# - setup for solidity-protobuf (https://github.com/datachainlab/solidity-protobuf)
+# - python3
+# - gsed if MacOS user
 .PHONY: solpb
 solpb:
 	SOLPB_EXTERNAL_RUNTIME_REPO=$(SOLPB_EXTERNAL_RUNTIME_REPO) ./scripts/solpb.sh
+
+# run after sol files changed
+.PHONY: setup
+setup:
+	./scripts/setup.sh development
+
+.PHONY: lint-go
+lint-go:
+	go fmt ./pkg/...
+	go vet ./pkg/...
 
 .PHONY: abi
 abi:

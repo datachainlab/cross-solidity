@@ -12,6 +12,7 @@ import (
 	crosstypes "github.com/datachainlab/cross/x/core/types"
 	xcctypes "github.com/datachainlab/cross/x/core/xcc/types"
 	"github.com/datachainlab/cross/x/packets"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
@@ -37,6 +38,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		mockSuccessCall = []byte{0x01}
 		mockFailureCall = []byte{0xFF}
 		successMsg      = []byte("mock call succeed")
+		relayerAddr     = common.HexToAddress("wip")
 	)
 
 	ctx := context.Background()
@@ -56,6 +58,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 				crosssimplemodule.PacketData{
 					Data: packetData,
 				},
+				relayerAddr,
 			),
 		))
 
@@ -83,6 +86,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 				crosssimplemodule.PacketData{
 					Data: packetData,
 				},
+				relayerAddr,
 			),
 		))
 

@@ -4,14 +4,14 @@
   "scripts": {
     "migrate": "truffle migrate --reset",
     "compile": "truffle compile",
-    "postinstall": "cd node_modules/@hyperledger-labs/yui-ibc-solidity && truffle compile",
+    "postinstall": "truffle compile",
     "clean": "rm -rf build"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^3.4.1",
-    "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#05047b73f12020ed671b8ca9d9e3d188d5befbd5",
-    "@truffle/hdwallet-provider": "1.4.1",
-    "truffle": "^5.3.14",
+    "@openzeppelin/contracts": "^4.7.3",
+    "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#14bafbb5eaad4177151673adc8871674e76117ca",
+    "@truffle/hdwallet-provider": "^2.0.17",
+    "truffle": "^5.6.0",
     "truffle-contract-size": "^2.0.1"
   }
 }
