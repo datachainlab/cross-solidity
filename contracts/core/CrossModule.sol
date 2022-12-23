@@ -2,19 +2,18 @@
 pragma solidity ^0.8.9;
 pragma experimental ABIEncoderV2;
 
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCModule.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCHost.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/IBCHandler.sol";
+import "@hyperledger-labs/yui-ibc-solidity/contracts/core/05-port/IIBCModule.sol";
+import "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IBCHandler.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
-abstract contract CrossModule is Context, AccessControl, IModuleCallbacks, IBCKeeper, PacketHandler {
+abstract contract CrossModule is Context, AccessControl, IIBCModule, IBCKeeper, PacketHandler {
 
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IBCHost ibcHost_, IBCHandler ibcHandler_) IBCKeeper(ibcHost_, ibcHandler_) {
+    constructor(IBCHandler ibcHandler_) IBCKeeper(ibcHandler_) {
         _setupRole(IBC_ROLE, address(ibcHandler_));
     }
 

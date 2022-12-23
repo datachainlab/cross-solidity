@@ -1,5 +1,4 @@
-const IBCHost = artifacts.require("IBCHost");
-const IBCHandler = artifacts.require("IBCHandler");
+const IBCHandler = artifacts.require("OwnableIBCHandler");
 const CrossSimpleModule = artifacts.require("CrossSimpleModule");
 
 var fs = require("fs");
@@ -28,7 +27,6 @@ const targets = makePairs(process.env.CONF_TPL.split(":"));
 module.exports = function(callback) {
   targets.forEach(function(item) {
     ejs.renderFile(item[1], {
-      IBCHostAddress: IBCHost.address,
       IBCHandlerAddress: IBCHandler.address,
       CrossSimpleModuleAddress: CrossSimpleModule.address
     }, null, function(err, str){

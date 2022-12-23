@@ -9,7 +9,7 @@ import "./IBCKeeper.sol";
 
 contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimple {
 
-    constructor(IBCHost ibcHost_, IBCHandler ibcHandler_, IContractModule module, bool debugMode) CrossModule(ibcHost_, ibcHandler_) public {
+    constructor(IBCHandler ibcHandler_, IContractModule module, bool debugMode) CrossModule(ibcHandler_) public {
         if (debugMode) {
             _setupRole(IBC_ROLE, _msgSender());
         }

@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./ContractRegistry.sol";
 import "./IContractModule.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/Channel.sol";
+import "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannel.sol";
 
 // SimpleContractRegistry is a simple registry that implements ContractRegistry
 abstract contract SimpleContractRegistry is ContractRegistry {

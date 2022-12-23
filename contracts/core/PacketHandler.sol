@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 pragma experimental ABIEncoderV2;
 
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/Channel.sol";
+import "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannel.sol";
 
 // PacketHandler is a handler that handles a packet and acknowledgement
 abstract contract PacketHandler {

@@ -1,6 +1,6 @@
 
 ABIGEN ?= abigen
-SOLPB_EXTERNAL_RUNTIME_REPO ?= @hyperledger-labs/yui-ibc-solidity/contracts/core/types/
+SOLPB_EXTERNAL_RUNTIME_REPO ?= @hyperledger-labs/yui-ibc-solidity/contracts/proto/
 
 .PHONY: test
 test:
