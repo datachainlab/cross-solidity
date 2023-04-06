@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.9;
-pragma experimental ABIEncoderV2;
 
 import "./PacketHandler.sol";
 import "./types/Auth.sol";
