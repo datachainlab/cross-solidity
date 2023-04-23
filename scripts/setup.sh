@@ -2,7 +2,6 @@
 set -ex
 
 TRUFFLE="npx truffle"
-SOLPB_EXTERNAL_RUNTIME_REPO="@hyperledger-labs/yui-ibc-solidity/contracts/core/types/"
 # the contracts to generate ABI
 CONTRACTS=(
     "OwnableIBCHandler"
@@ -13,8 +12,7 @@ function before_common() {
     if [ -n "$NO_GEN_CODE" ]; then
         return
     fi
-    export SOLPB_EXTERNAL_RUNTIME_REPO
-    ./scripts/solpb.sh
+    ./scripts/protogen.sh
 }
 
 function after_common() {
@@ -36,7 +34,7 @@ function chain() {
         exit 1
     fi
 
-    pushd ./chains && docker-compose up -d ${network} && popd
+    pushd ./chains && docker compose up -d ${network} && popd
     # XXX Wait for the first block to be created
     sleep 3
     ${TRUFFLE} migrate --reset --network=${network}
@@ -54,7 +52,7 @@ function development {
 }
 
 function down {
-    pushd ./chains && docker-compose down && popd
+    pushd ./chains && docker compose down && popd
 }
 
 subcommand="$1"

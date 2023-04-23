@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 import "@hyperledger-labs/yui-ibc-solidity/contracts/proto/ProtoBufRuntime.sol";
 import "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
-import "./Auth.sol";
+import "../../auth/Auth.sol";
 
 library PacketData {
 
@@ -50,7 +50,6 @@ library PacketData {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[3] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -60,33 +59,13 @@ library PacketData {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_header(pointer, bs, r, counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_payload(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_header(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_payload(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -100,25 +79,15 @@ library PacketData {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_header(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (Header.Data memory x, uint256 sz) = _decode_Header(p, bs);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.header = x;
-      if (counters[1] > 0) counters[1] -= 1;
-    }
+    r.header = x;
     return sz;
   }
 
@@ -127,25 +96,15 @@ library PacketData {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_payload(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    if (isNil(r)) {
-      counters[2] += 1;
-    } else {
-      r.payload = x;
-      if (counters[2] > 0) counters[2] -= 1;
-    }
+    r.payload = x;
     return sz;
   }
 
@@ -365,7 +324,6 @@ library Acknowledgement {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[3] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -375,33 +333,13 @@ library Acknowledgement {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_is_success(pointer, bs, r, counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_result(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_is_success(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_result(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -415,25 +353,15 @@ library Acknowledgement {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_is_success(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bool x, uint256 sz) = ProtoBufRuntime._decode_bool(p, bs);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.is_success = x;
-      if (counters[1] > 0) counters[1] -= 1;
-    }
+    r.is_success = x;
     return sz;
   }
 
@@ -442,25 +370,15 @@ library Acknowledgement {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_result(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    if (isNil(r)) {
-      counters[2] += 1;
-    } else {
-      r.result = x;
-      if (counters[2] > 0) counters[2] -= 1;
-    }
+    r.result = x;
     return sz;
   }
 
@@ -673,63 +591,27 @@ library Header {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_fields(pointer, bs, nil(), counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_unpacked_repeated_fields(pointer, bs, nil(), counters);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
     pointer = offset;
-    r.fields = new HeaderField.Data[](counters[1]);
+    if (counters[1] > 0) {
+      require(r.fields.length == 0);
+      r.fields = new HeaderField.Data[](counters[1]);
+    }
 
     while (pointer < offset + sz) {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_fields(pointer, bs, r, counters);
-      }
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_unpacked_repeated_fields(pointer, bs, r, counters);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
     }
     return (r, sz);
@@ -745,7 +627,7 @@ library Header {
    * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
-  function _read_fields(
+  function _read_unpacked_repeated_fields(
     uint256 p,
     bytes memory bs,
     Data memory r,
@@ -759,7 +641,7 @@ library Header {
       counters[1] += 1;
     } else {
       r.fields[r.fields.length - counters[1]] = x;
-      if (counters[1] > 0) counters[1] -= 1;
+      counters[1] -= 1;
     }
     return sz;
   }
@@ -995,7 +877,6 @@ library HeaderField {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[3] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -1005,33 +886,13 @@ library HeaderField {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_key(pointer, bs, r, counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_value(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_key(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_value(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -1045,25 +906,15 @@ library HeaderField {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_key(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (string memory x, uint256 sz) = ProtoBufRuntime._decode_string(p, bs);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.key = x;
-      if (counters[1] > 0) counters[1] -= 1;
-    }
+    r.key = x;
     return sz;
   }
 
@@ -1072,25 +923,15 @@ library HeaderField {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_value(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    if (isNil(r)) {
-      counters[2] += 1;
-    } else {
-      r.value = x;
-      if (counters[2] > 0) counters[2] -= 1;
-    }
+    r.value = x;
     return sz;
   }
 
@@ -1294,7 +1135,6 @@ library PacketDataCall {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[3] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -1304,33 +1144,13 @@ library PacketDataCall {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_tx_id(pointer, bs, r, counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_tx(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_tx_id(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_tx(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -1344,25 +1164,15 @@ library PacketDataCall {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_tx_id(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.tx_id = x;
-      if (counters[1] > 0) counters[1] -= 1;
-    }
+    r.tx_id = x;
     return sz;
   }
 
@@ -1371,25 +1181,15 @@ library PacketDataCall {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_tx(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (PacketDataCallResolvedContractTransaction.Data memory x, uint256 sz) = _decode_PacketDataCallResolvedContractTransaction(p, bs);
-    if (isNil(r)) {
-      counters[2] += 1;
-    } else {
-      r.tx = x;
-      if (counters[2] > 0) counters[2] -= 1;
-    }
+    r.tx = x;
     return sz;
   }
 
@@ -1622,88 +1422,46 @@ library PacketDataCallResolvedContractTransaction {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_cross_chain_channel(pointer, bs, r, counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_signers(pointer, bs, nil(), counters);
-      }
-      else if (fieldId == 3) {
-        pointer += _read_call_info(pointer, bs, r, counters);
-      }
-      else if (fieldId == 4) {
-        pointer += _read_return_value(pointer, bs, r, counters);
-      }
-      else if (fieldId == 5) {
-        pointer += _read_objects(pointer, bs, nil(), counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_cross_chain_channel(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_unpacked_repeated_signers(pointer, bs, nil(), counters);
+      } else
+      if (fieldId == 3) {
+        pointer += _read_call_info(pointer, bs, r);
+      } else
+      if (fieldId == 4) {
+        pointer += _read_return_value(pointer, bs, r);
+      } else
+      if (fieldId == 5) {
+        pointer += _read_unpacked_repeated_objects(pointer, bs, nil(), counters);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
     pointer = offset;
-    r.signers = new Account.Data[](counters[2]);
-    r.objects = new GoogleProtobufAny.Data[](counters[5]);
+    if (counters[2] > 0) {
+      require(r.signers.length == 0);
+      r.signers = new Account.Data[](counters[2]);
+    }
+    if (counters[5] > 0) {
+      require(r.objects.length == 0);
+      r.objects = new GoogleProtobufAny.Data[](counters[5]);
+    }
 
     while (pointer < offset + sz) {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
-      if (fieldId == 1) {
-        pointer += _read_cross_chain_channel(pointer, bs, nil(), counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_signers(pointer, bs, r, counters);
-      }
-      else if (fieldId == 3) {
-        pointer += _read_call_info(pointer, bs, nil(), counters);
-      }
-      else if (fieldId == 4) {
-        pointer += _read_return_value(pointer, bs, nil(), counters);
-      }
-      else if (fieldId == 5) {
-        pointer += _read_objects(pointer, bs, r, counters);
-      }
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+      if (fieldId == 2) {
+        pointer += _read_unpacked_repeated_signers(pointer, bs, r, counters);
+      } else
+      if (fieldId == 5) {
+        pointer += _read_unpacked_repeated_objects(pointer, bs, r, counters);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
     }
     return (r, sz);
@@ -1716,25 +1474,15 @@ library PacketDataCallResolvedContractTransaction {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_cross_chain_channel(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[6] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (GoogleProtobufAny.Data memory x, uint256 sz) = _decode_GoogleProtobufAny(p, bs);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.cross_chain_channel = x;
-      if (counters[1] > 0) counters[1] -= 1;
-    }
+    r.cross_chain_channel = x;
     return sz;
   }
 
@@ -1746,7 +1494,7 @@ library PacketDataCallResolvedContractTransaction {
    * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
-  function _read_signers(
+  function _read_unpacked_repeated_signers(
     uint256 p,
     bytes memory bs,
     Data memory r,
@@ -1760,7 +1508,7 @@ library PacketDataCallResolvedContractTransaction {
       counters[2] += 1;
     } else {
       r.signers[r.signers.length - counters[2]] = x;
-      if (counters[2] > 0) counters[2] -= 1;
+      counters[2] -= 1;
     }
     return sz;
   }
@@ -1770,25 +1518,15 @@ library PacketDataCallResolvedContractTransaction {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_call_info(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[6] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    if (isNil(r)) {
-      counters[3] += 1;
-    } else {
-      r.call_info = x;
-      if (counters[3] > 0) counters[3] -= 1;
-    }
+    r.call_info = x;
     return sz;
   }
 
@@ -1797,25 +1535,15 @@ library PacketDataCallResolvedContractTransaction {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_return_value(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[6] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (ReturnValue.Data memory x, uint256 sz) = _decode_ReturnValue(p, bs);
-    if (isNil(r)) {
-      counters[4] += 1;
-    } else {
-      r.return_value = x;
-      if (counters[4] > 0) counters[4] -= 1;
-    }
+    r.return_value = x;
     return sz;
   }
 
@@ -1827,7 +1555,7 @@ library PacketDataCallResolvedContractTransaction {
    * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
-  function _read_objects(
+  function _read_unpacked_repeated_objects(
     uint256 p,
     bytes memory bs,
     Data memory r,
@@ -1841,7 +1569,7 @@ library PacketDataCallResolvedContractTransaction {
       counters[5] += 1;
     } else {
       r.objects[r.objects.length - counters[5]] = x;
-      if (counters[5] > 0) counters[5] -= 1;
+      counters[5] -= 1;
     }
     return sz;
   }
@@ -2194,6 +1922,20 @@ library PacketAcknowledgementCall {
   }
 
 
+  /**
+   * @dev The estimator for an packed enum array
+   * @return The number of bytes encoded
+   */
+  function estimate_packed_repeated_CommitStatus(
+    CommitStatus[] memory a
+  ) internal pure returns (uint256) {
+    uint256 e = 0;
+    for (uint i = 0; i < a.length; i++) {
+      e += ProtoBufRuntime._sz_enum(encode_CommitStatus(a[i]));
+    }
+    return e;
+  }
+
   //struct definition
   struct Data {
     PacketAcknowledgementCall.CommitStatus status;
@@ -2236,7 +1978,6 @@ library PacketAcknowledgementCall {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[2] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -2246,30 +1987,10 @@ library PacketAcknowledgementCall {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_status(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_status(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -2283,26 +2004,16 @@ library PacketAcknowledgementCall {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_status(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[2] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (int64 tmp, uint256 sz) = ProtoBufRuntime._decode_enum(p, bs);
     PacketAcknowledgementCall.CommitStatus x = decode_CommitStatus(tmp);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.status = x;
-      if(counters[1] > 0) counters[1] -= 1;
-    }
+    r.status = x;
     return sz;
   }
 
@@ -2491,7 +2202,6 @@ library ReturnValue {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[2] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -2501,30 +2211,10 @@ library ReturnValue {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_value(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_value(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -2538,25 +2228,15 @@ library ReturnValue {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_value(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[2] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.value = x;
-      if (counters[1] > 0) counters[1] -= 1;
-    }
+    r.value = x;
     return sz;
   }
 
