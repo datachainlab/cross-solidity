@@ -36,7 +36,6 @@ interface IContractModule {
 
 ## For Developers
 
-To develop this project, you need the code generator [solidity-protobuf](https://github.com/datachainlab/solidity-protobuf) to generate encoders and decoders in solidity from proto files.
+To generate encoders and decoders in solidity from proto files, you need to use the code generator [solidity-protobuf](https://github.com/datachainlab/solidity-protobuf).
 
-Currently, you need to use [this version](https://github.com/datachainlab/solidity-protobuf/commit/a365f06c140c6ea366d7e72eeea68c9a5b94d390).
-
+Currently, [this version](https://github.com/datachainlab/solidity-protobuf/commit/3def6706178e5407497f3d01b8f0ceb17b32108d) is required.
