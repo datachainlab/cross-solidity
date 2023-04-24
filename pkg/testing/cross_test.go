@@ -3,6 +3,7 @@ package testing
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"testing"
 	"time"
 
@@ -38,7 +39,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		mockSuccessCall = []byte{0x01}
 		mockFailureCall = []byte{0xFF}
 		successMsg      = []byte("mock call succeed")
-		relayerAddr     = common.HexToAddress("wip")
+		relayerAddr     = common.BigToAddress(big.NewInt(1))
 	)
 
 	ctx := context.Background()
