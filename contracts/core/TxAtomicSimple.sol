@@ -8,7 +8,7 @@ import "./PacketHandler.sol";
 import "./ContractRegistry.sol";
 import "./IContractModule.sol";
 import "./IBCKeeper.sol";
-import "./types/AtomicSimple.sol";
+import "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 // TxAtomicSimple implements PacketHandler that supports simple-commit protocol
 abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {

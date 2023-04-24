@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "./PacketHandler.sol";
-import "./types/Auth.sol";
+import "../proto/cross/core/auth/Auth.sol";
 
 // IContractModule defines the expected interface of a contract module on Cross Framework
 interface IContractModule {

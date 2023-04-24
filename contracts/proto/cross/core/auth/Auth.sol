@@ -49,7 +49,6 @@ library Account {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[3] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -59,33 +58,13 @@ library Account {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_id(pointer, bs, r, counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_auth_type(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_id(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_auth_type(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -99,25 +78,15 @@ library Account {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_id(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.id = x;
-      if (counters[1] > 0) counters[1] -= 1;
-    }
+    r.id = x;
     return sz;
   }
 
@@ -126,25 +95,15 @@ library Account {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_auth_type(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (AuthType.Data memory x, uint256 sz) = _decode_AuthType(p, bs);
-    if (isNil(r)) {
-      counters[2] += 1;
-    } else {
-      r.auth_type = x;
-      if (counters[2] > 0) counters[2] -= 1;
-    }
+    r.auth_type = x;
     return sz;
   }
 
@@ -374,6 +333,20 @@ library AuthType {
   }
 
 
+  /**
+   * @dev The estimator for an packed enum array
+   * @return The number of bytes encoded
+   */
+  function estimate_packed_repeated_AuthMode(
+    AuthMode[] memory a
+  ) internal pure returns (uint256) {
+    uint256 e = 0;
+    for (uint i = 0; i < a.length; i++) {
+      e += ProtoBufRuntime._sz_enum(encode_AuthMode(a[i]));
+    }
+    return e;
+  }
+
   //struct definition
   struct Data {
     AuthType.AuthMode mode;
@@ -417,7 +390,6 @@ library AuthType {
     returns (Data memory, uint)
   {
     Data memory r;
-    uint[3] memory counters;
     uint256 fieldId;
     ProtoBufRuntime.WireType wireType;
     uint256 bytesRead;
@@ -427,33 +399,13 @@ library AuthType {
       (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
       pointer += bytesRead;
       if (fieldId == 1) {
-        pointer += _read_mode(pointer, bs, r, counters);
-      }
-      else if (fieldId == 2) {
-        pointer += _read_option(pointer, bs, r, counters);
-      }
-      
-      else {
-        if (wireType == ProtoBufRuntime.WireType.Fixed64) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed64(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Fixed32) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_fixed32(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.Varint) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_varint(pointer, bs);
-          pointer += size;
-        }
-        if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
-          uint256 size;
-          (, size) = ProtoBufRuntime._decode_lendelim(pointer, bs);
-          pointer += size;
-        }
+        pointer += _read_mode(pointer, bs, r);
+      } else
+      if (fieldId == 2) {
+        pointer += _read_option(pointer, bs, r);
+      } else
+      {
+        pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
       }
 
     }
@@ -467,26 +419,16 @@ library AuthType {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_mode(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (int64 tmp, uint256 sz) = ProtoBufRuntime._decode_enum(p, bs);
     AuthType.AuthMode x = decode_AuthMode(tmp);
-    if (isNil(r)) {
-      counters[1] += 1;
-    } else {
-      r.mode = x;
-      if(counters[1] > 0) counters[1] -= 1;
-    }
+    r.mode = x;
     return sz;
   }
 
@@ -495,25 +437,15 @@ library AuthType {
    * @param p The offset of bytes array to start decode
    * @param bs The bytes array to be decoded
    * @param r The in-memory struct
-   * @param counters The counters for repeated fields
    * @return The number of bytes decoded
    */
   function _read_option(
     uint256 p,
     bytes memory bs,
-    Data memory r,
-    uint[3] memory counters
+    Data memory r
   ) internal pure returns (uint) {
-    /**
-     * if `r` is NULL, then only counting the number of fields.
-     */
     (GoogleProtobufAny.Data memory x, uint256 sz) = _decode_GoogleProtobufAny(p, bs);
-    if (isNil(r)) {
-      counters[2] += 1;
-    } else {
-      r.option = x;
-      if (counters[2] > 0) counters[2] -= 1;
-    }
+    r.option = x;
     return sz;
   }
 

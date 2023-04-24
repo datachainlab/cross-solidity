@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "../core/IContractModule.sol";
-import "../core/types/Auth.sol";
+import "../proto/cross/core/auth/Auth.sol";
 
 contract MockCrossContract is IContractModule {
     function onContractCall(CrossContext calldata context, bytes calldata callInfo) external override returns (bytes memory) {
