@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.6.8;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.9;
 
 import "./ContractRegistry.sol";
 import "./IContractModule.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/Channel.sol";
+import "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannel.sol";
 
 // SimpleContractRegistry is a simple registry that implements ContractRegistry
 abstract contract SimpleContractRegistry is ContractRegistry {

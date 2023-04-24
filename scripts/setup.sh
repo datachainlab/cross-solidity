@@ -5,8 +5,7 @@ TRUFFLE="npx truffle"
 SOLPB_EXTERNAL_RUNTIME_REPO="@hyperledger-labs/yui-ibc-solidity/contracts/core/types/"
 # the contracts to generate ABI
 CONTRACTS=(
-    "IBCHost"
-    "IBCHandler"
+    "OwnableIBCHandler"
     "CrossSimpleModule"
 )
 

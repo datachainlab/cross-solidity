@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.6.8;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.9;
 
 import "./CrossModule.sol";
 import "./TxAtomicSimple.sol";
@@ -9,7 +8,7 @@ import "./IBCKeeper.sol";
 
 contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimple {
 
-    constructor(IBCHost ibcHost_, IBCHandler ibcHandler_, IContractModule module, bool debugMode) CrossModule(ibcHost_, ibcHandler_) public {
+    constructor(IBCHandler ibcHandler_, IContractModule module, bool debugMode) CrossModule(ibcHandler_) public {
         if (debugMode) {
             _setupRole(IBC_ROLE, _msgSender());
         }

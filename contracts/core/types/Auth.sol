@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.6.8;
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/ProtoBufRuntime.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/GoogleProtobufAny.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/gogoproto/gogo.sol";
+pragma solidity ^0.8.9;
+import "@hyperledger-labs/yui-ibc-solidity/contracts/proto/ProtoBufRuntime.sol";
+import "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
 library Account {
 

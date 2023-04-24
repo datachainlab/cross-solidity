@@ -1,17 +1,14 @@
-const IBCHost = artifacts.require("IBCHost");
-const IBCHandler = artifacts.require("IBCHandler");
-const MockClient = artifacts.require("MockClient");
+const IBCHandler = artifacts.require("@hyperledger-labs/yui-ibc-solidity/OwnableIBCHandler.sol");
+const MockClient = artifacts.require("@hyperledger-labs/yui-ibc-solidity/MockClient");
 const CrossSimpleModule = artifacts.require("CrossSimpleModule");
 
 const PortCross = "cross"
 const MockClientType = "mock-client"
 
 module.exports = async function (deployer) {
-  const ibcHost = await IBCHost.deployed();
   const ibcHandler = await IBCHandler.deployed();
 
   for(const promise of [
-    () => ibcHost.setIBCModule(IBCHandler.address),
     () => ibcHandler.bindPort(PortCross, CrossSimpleModule.address),
     () => ibcHandler.registerClient(MockClientType, MockClient.address)
   ]) {

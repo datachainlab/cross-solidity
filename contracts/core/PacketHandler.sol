@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.6.8;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.9;
 
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/types/Channel.sol";
+import "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannel.sol";
 
 // PacketHandler is a handler that handles a packet and acknowledgement
 abstract contract PacketHandler {

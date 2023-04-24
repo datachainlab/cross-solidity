@@ -21,8 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/datachainlab/cross-solidity/pkg/contract/crosssimplemodule"
-	"github.com/datachainlab/cross-solidity/pkg/contract/ibchandler"
-	"github.com/datachainlab/cross-solidity/pkg/contract/ibchost"
+	"github.com/datachainlab/cross-solidity/pkg/contract/ownableibchandler"
 	"github.com/datachainlab/cross-solidity/pkg/wallet"
 )
 
@@ -51,8 +50,7 @@ type Chain struct {
 	ContractConfig ContractConfig
 
 	// Core modules
-	IBCHandler ibchandler.Ibchandler
-	IBCHost    ibchost.Ibchost
+	IBCHandler ownableibchandler.Ownableibchandler
 
 	// App modules
 	CrossSimpleModule crosssimplemodule.Crosssimplemodule
@@ -161,7 +159,6 @@ func makeGenTxOpts(chainID *big.Int, prv *ecdsa.PrivateKey) GenTxOpts {
 }
 
 type ContractConfig interface {
-	GetIBCHostAddress() common.Address
 	GetIBCHandlerAddress() common.Address
 	GetCrossSimpleModuleAddress() common.Address
 }
