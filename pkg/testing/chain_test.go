@@ -177,7 +177,7 @@ func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg Contract
 		CrossSimpleModule: *crossMod,
 		ContractConfig:    ccfg,
 
-		chainID:        1337,
+		chainID:        5777,
 		mnemonicPhrase: mnemonicPhrase,
 		keys:           make(map[uint32]*ecdsa.PrivateKey),
 	}
