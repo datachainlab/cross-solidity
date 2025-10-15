@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	IBCHandlerAddress = "0x727a5648832d2b317925ce043ea9b7fe04b4cd55"
-	CrossSimpleModuleAddress = "0xaa43d337145e8930d01cb4e60abf6595c692921e"
+	IBCHandlerAddress = "<%= IBCHandlerAddress; %>"
+	CrossSimpleModuleAddress = "<%= CrossSimpleModuleAddress; %>"
 )
 
 type contractConfig struct{}
