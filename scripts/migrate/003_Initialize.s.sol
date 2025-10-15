@@ -21,8 +21,6 @@ contract InitializeContracts is Script {
 
         IBCHandler ibc = IBCHandler(ibcHandlerAddr);
 
-        // bindPort("cross", CrossSimpleModule.address)
-        // registerClient("mock-client", MockClient.address)
         (bool ok1, ) = address(ibc).call(
             abi.encodeWithSignature("bindPort(string,address)", portCross, crossSimpleModule)
         );
