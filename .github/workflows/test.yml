@@ -5,7 +5,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    timeout-minutes: 120
     steps:
 
     - name: Set up Go 1.16
@@ -32,7 +31,3 @@ jobs:
 
     - name: Test
       run: make test
-
-    - name: Debug with tmate (open shell)
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
