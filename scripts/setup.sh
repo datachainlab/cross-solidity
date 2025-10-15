@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
 
-TRUFFLE="npx truffle"
 # the contracts to generate ABI
 CONTRACTS=(
     "OwnableIBCHandler"
@@ -29,23 +28,17 @@ function chain() {
         echo "variable network must be set"
         exit 1
     fi
-    if [ -z "$CONF_TPL" ]; then
-        echo "variable CONF_TPL must be set"
-        exit 1
-    fi
 
     pushd ./chains && docker compose up -d ${network} && popd
     # XXX Wait for the first block to be created
     sleep 3
-    ${TRUFFLE} migrate --reset --network=${network}
-    ${TRUFFLE} exec ./scripts/confgen.js --network=${network}
+    npm run migrate
 }
 
 function development {
     before_common
 
     network=development
-    export CONF_TPL="./pkg/consts/contract.go:./scripts/template/contract.go.tpl"
     chain
 
     after_common

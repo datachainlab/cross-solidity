@@ -2,16 +2,15 @@
   "name": "cross-solidity",
   "version": "0.0.1",
   "scripts": {
-    "migrate": "truffle migrate --reset",
-    "compile": "truffle compile",
-    "postinstall": "truffle compile",
+    "migrate": "bash scripts/migrate.sh",
+    "compile": "forge build",
+    "postinstall": "forge build",
     "clean": "rm -rf build"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#3315e5fa0f5b31d1815b0c0f62239384aa27814a",
-    "@truffle/hdwallet-provider": "^2.0.17",
-    "truffle": "^5.6.0",
-    "truffle-contract-size": "^2.0.1"
+    "@foundry-rs/forge": "^1.4.0",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.5"
   }
 }
