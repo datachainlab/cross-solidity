@@ -32,7 +32,7 @@ interface IContractModule {
 
 ## How to deploy a contract module
 
-[Here](./migrations/2_deploy_contracts.js) is an example of deploying with the module `CrossSimpleModule` that implements the simple commit.
+[Here](./scripts/migrate/002_DeployApp.s.sol) is an example of deploying with the module `CrossSimpleModule` that implements the simple commit.
 
 ## For Developers
 
