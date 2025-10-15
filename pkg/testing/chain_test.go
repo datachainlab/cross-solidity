@@ -172,12 +172,16 @@ func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg Contract
 	if err != nil {
 		panic(err)
 	}
+	id, err := ethc.ChainID(context.Background())
+	if err != nil {
+		panic(err)
+	}
 	return &Chain{
 		ETHClient:         ethc,
 		CrossSimpleModule: *crossMod,
 		ContractConfig:    ccfg,
 
-		chainID:        5777,
+		chainID:        id.Int64(),
 		mnemonicPhrase: mnemonicPhrase,
 		keys:           make(map[uint32]*ecdsa.PrivateKey),
 	}
