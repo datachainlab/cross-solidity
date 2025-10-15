@@ -33,11 +33,5 @@ contract DeployCore is Script {
         console2.log("IBCHandler (Ownable):", address(handler));
 
         vm.stopBroadcast();
-
-        vm.serializeAddress("core", "IBCClient", address(client));
-        vm.serializeAddress("core", "IBCConnection", address(connection));
-        vm.serializeAddress("core", "IBCChannel", address(channel));
-        vm.serializeAddress("core", "IBCHandler", address(handler));
-        string memory out = vm.serializeString("root", "core", vm.serializeString("tmp","tmp",""));
     }
 }
