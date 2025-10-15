@@ -3,14 +3,13 @@
   "version": "0.0.1",
   "scripts": {
     "migrate": "bash scripts/migrate.sh",
-    "compile": "forge build",
-    "postinstall": "forge build",
+    "compile": "npx -y -p @foundry-rs/forge forge build",
+    "postinstall": "npx -y -p @foundry-rs/forge forge build",
     "clean": "rm -rf build"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#3315e5fa0f5b31d1815b0c0f62239384aa27814a",
-    "@foundry-rs/forge": "^1.4.0",
     "forge-std": "github:foundry-rs/forge-std#v1.9.5"
   }
 }
