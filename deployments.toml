@@ -1,18 +1,18 @@
-[5777]
+[31337]
 endpoint_url = "http://127.0.0.1:8545"
 
-[5777.string]
+[31337.string]
 mnemonic = "math razor capable expose worth grape metal sunset metal sudden usage scheme"
 port_cross = "cross"
 mock_client_type = "mock-client"
 
-[5777.uint]
+[31337.uint]
 mnemonic_index = 0
 
-[5777.bool]
+[31337.bool]
 debug_mode = true
 
-[5777.address]
+[31337.address]
 ibc_client = "0xB9c99Dc02185993bdB9C48Fc29544f6cC6604F87"
 ibc_connection = "0xdD5109D05Ac357E446992a60E64764041A0E8529"
 ibc_channel = "0x361552A65C96621003C62C5971b910a1fdC9ba78"

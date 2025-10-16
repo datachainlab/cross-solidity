@@ -8,7 +8,7 @@ const renderFile = util.promisify(ejs.renderFile);
 
 const {
   CONF_TPL,
-  CHAIN_ID = "5777",
+  CHAIN_ID = "31337",
   DEPLOYMENTS_TOML = "deployments.toml",
 } = process.env;
 

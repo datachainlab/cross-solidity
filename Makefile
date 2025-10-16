@@ -6,7 +6,7 @@ test:
 
 .PHONY: protogen
 protogen:
-	./scripts/protogen.sh
+	./script/protogen.sh
 
 .PHONY: abi
 abi:
