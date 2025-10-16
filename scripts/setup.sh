@@ -36,7 +36,7 @@ function chain() {
     pushd ./chains && docker compose up -d ${network} && popd
     # XXX Wait for the first block to be created
     sleep 3
-    npm run migrate
+    npm run deploy
     node ./scripts/confgen.js
 }
 
