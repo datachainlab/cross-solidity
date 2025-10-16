@@ -49,27 +49,27 @@ LIB_MSGS="$(
 echo "  IBCCommitment: $LIB_COMMITMENT"
 echo "  IBCMsgs      : $LIB_MSGS"
 
-# --- 001_DeployCore ---
-echo "==> 001_DeployCore"
-$FORGE script "$SCRIPTS_DIR/001_DeployCore.s.sol:DeployCore" \
+# --- 01_DeployCore ---
+echo "==> 01_DeployCore"
+$FORGE script "$SCRIPTS_DIR/01_DeployCore.s.sol:DeployCore" \
   --rpc-url "$RPC_URL" --broadcast --private-key "$PRIVATE_KEY" \
   --libraries "$LIB_COMMITMENT_SPEC:$LIB_COMMITMENT" \
   --libraries "$LIB_MSGS_SPEC:$LIB_MSGS"
 
-CORE_JSON="$BROADCAST_DIR/001_DeployCore.s.sol/$CHAIN_ID/run-latest.json"
+CORE_JSON="$BROADCAST_DIR/01_DeployCore.s.sol/$CHAIN_ID/run-latest.json"
 [[ -f "$CORE_JSON" ]] || die "broadcast not found: $CORE_JSON"
 
 IBC_HANDLER="$(jq -r '.transactions[] | select(.contractName=="OwnableIBCHandler") | .contractAddress' "$CORE_JSON" | tail -n1)"
 [[ -n "$IBC_HANDLER" && "$IBC_HANDLER" != "null" ]] || die "failed to extract IBC_HANDLER"
 echo "  IBC_HANDLER: $IBC_HANDLER"
 
-# --- 002_DeployApp ---
-echo "==> 002_DeployApp"
-$FORGE script "$SCRIPTS_DIR/002_DeployApp.s.sol:DeployApp" \
+# --- 02_DeployApp ---
+echo "==> 02_DeployApp"
+$FORGE script "$SCRIPTS_DIR/02_DeployApp.s.sol:DeployApp" \
   --rpc-url "$RPC_URL" --broadcast --private-key "$PRIVATE_KEY" \
   --sig "run(address,bool)" "$IBC_HANDLER" true
 
-APP_JSON="$BROADCAST_DIR/002_DeployApp.s.sol/$CHAIN_ID/run-latest.json"
+APP_JSON="$BROADCAST_DIR/02_DeployApp.s.sol/$CHAIN_ID/run-latest.json"
 [[ -f "$APP_JSON" ]] || die "broadcast not found: $APP_JSON"
 
 CROSS_SIMPLE_MODULE="$(jq -r '.transactions[] | select(.contractName=="CrossSimpleModule") | .contractAddress' "$APP_JSON" | tail -n1)"
@@ -82,9 +82,9 @@ echo "  MOCK_CLIENT        : $MOCK_CLIENT"
 PORT_CROSS="${PORT_CROSS:-cross}"
 MOCK_CLIENT_TYPE="${MOCK_CLIENT_TYPE:-mock-client}"
 
-# --- 003_Initialize ---
-echo "==> 003_Initialize"
-$FORGE script "$SCRIPTS_DIR/003_Initialize.s.sol:InitializeContracts" \
+# --- 03_Initialize ---
+echo "==> 03_Initialize"
+$FORGE script "$SCRIPTS_DIR/03_Initialize.s.sol:InitializeContracts" \
   --rpc-url "$RPC_URL" --broadcast --private-key "$PRIVATE_KEY" \
   --sig "run(address,address,address,string,string)" \
   "$IBC_HANDLER" "$CROSS_SIMPLE_MODULE" "$MOCK_CLIENT" "$PORT_CROSS" "$MOCK_CLIENT_TYPE"
