@@ -11,14 +11,9 @@ import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/M
 import {MockCrossContract} from "contracts/example/MockCrossContract.sol";
 
 contract DeployApp is Script {
-    function run() external {
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-        address ibcHandlerAddr = vm.envAddress("IBC_HANDLER"); // import from 001 script
-        bool debugMode = vm.envOr("DEBUG", true);
+    function run(address ibcHandlerAddr, bool debugMode) external {
+        vm.startBroadcast();
 
-        vm.startBroadcast(pk);
-
-        // MockCrossContract → CrossSimpleModule(IBCHandler, MockCrossContract, true)
         MockCrossContract mockApp = new MockCrossContract();
         console2.log("MockCrossContract:", address(mockApp));
 
