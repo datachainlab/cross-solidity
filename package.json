@@ -2,14 +2,15 @@
   "name": "cross-solidity",
   "version": "0.0.1",
   "scripts": {
-    "deploy": "npx -y -p @foundry-rs/forge@1.4.1 forge script script/DeployAll.s.sol --rpc-url anvil --broadcast",
-    "compile": "npx -y -p @foundry-rs/forge@1.4.1 forge build",
-    "postinstall": "npx -y -p @foundry-rs/forge@1.4.1 forge build",
+    "deploy": "forge script script/DeployAll.s.sol --rpc-url anvil --broadcast",
+    "compile": "forge build",
+    "postinstall": "forge build",
     "clean": "rm -rf build"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#3315e5fa0f5b31d1815b0c0f62239384aa27814a",
+    "@foundry-rs/forge": "1.4.1",
     "forge-std": "github:foundry-rs/forge-std#v1.11.0"
   }
 }
