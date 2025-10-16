@@ -84,7 +84,7 @@ MOCK_CLIENT_TYPE="${MOCK_CLIENT_TYPE:-mock-client}"
 
 # --- 03_Initialize ---
 echo "==> 03_Initialize"
-$FORGE script "$SCRIPTS_DIR/03_Initialize.s.sol:InitializeContracts" \
+$FORGE script "$SCRIPTS_DIR/03_Initialize.s.sol:Initialize" \
   --rpc-url "$RPC_URL" --broadcast --private-key "$PRIVATE_KEY" \
   --sig "run(address,address,address,string,string)" \
   "$IBC_HANDLER" "$CROSS_SIMPLE_MODULE" "$MOCK_CLIENT" "$PORT_CROSS" "$MOCK_CLIENT_TYPE"
