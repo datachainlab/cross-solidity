@@ -125,7 +125,6 @@ contract DeployAll is Script, Config {
         config.set("mock_client", address(mockClient));
 
         // Meta
-        config.set("deployed_at", block.timestamp);
         config.set("deployer", deployer);
 
         console2.log("\nDeployment complete! Addresses saved to deployments.toml");

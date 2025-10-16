@@ -8,7 +8,6 @@ mock_client_type = "mock-client"
 
 [5777.uint]
 mnemonic_index = 0
-deployed_at = 1760588200
 
 [5777.bool]
 debug_mode = true
