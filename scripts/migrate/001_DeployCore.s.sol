@@ -13,6 +13,7 @@ contract DeployCore is Script {
     function run() external {
         vm.startBroadcast();
 
+        // --- Deploy dependent contracts ---
         IBCClient client = new IBCClient();
         console2.log("IBCClient:", address(client));
 
