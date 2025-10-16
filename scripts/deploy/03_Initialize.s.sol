@@ -5,7 +5,7 @@ import "forge-std/src/Script.sol";
 import "forge-std/src/console2.sol";
 import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/OwnableIBCHandler.sol";
 
-contract InitializeContracts is Script {
+contract Initialize is Script {
     function run(
         address ibcHandlerAddr,
         address crossSimpleModule,
