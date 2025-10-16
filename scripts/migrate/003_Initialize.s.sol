@@ -3,21 +3,17 @@ pragma solidity ^0.8.9;
 
 import "forge-std/Script.sol";
 import "forge-std/console2.sol";
-
 import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/OwnableIBCHandler.sol";
 
 contract InitializeContracts is Script {
-    function run() external {
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-
-        address ibcHandlerAddr = vm.envAddress("IBC_HANDLER");
-        address crossSimpleModule = vm.envAddress("CROSS_SIMPLE_MODULE");
-        address mockClientAddr = vm.envAddress("MOCK_CLIENT");
-
-        string memory portCross = vm.envOr("PORT_CROSS", string("cross"));
-        string memory mockClientType = vm.envOr("MOCK_CLIENT_TYPE", string("mock-client"));
-
-        vm.startBroadcast(pk);
+    function run(
+        address ibcHandlerAddr,
+        address crossSimpleModule,
+        address mockClientAddr,
+        string memory portCross,
+        string memory mockClientType
+    ) external {
+        vm.startBroadcast();
 
         IBCHandler ibc = IBCHandler(ibcHandlerAddr);
 

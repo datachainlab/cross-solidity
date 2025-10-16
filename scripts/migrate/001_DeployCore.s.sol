@@ -11,10 +11,8 @@ import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidit
 
 contract DeployCore is Script {
     function run() external {
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(pk);
+        vm.startBroadcast();
 
-        // --- Deploy dependent contracts ---
         IBCClient client = new IBCClient();
         console2.log("IBCClient:", address(client));
 
