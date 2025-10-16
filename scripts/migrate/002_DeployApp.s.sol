@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.9;
 
-import "forge-std/Script.sol";
-import "forge-std/console2.sol";
+import "forge-std/src/Script.sol";
+import "forge-std/src/console2.sol";
 
 import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/OwnableIBCHandler.sol";
 import {IContractModule} from "contracts/core/IContractModule.sol";

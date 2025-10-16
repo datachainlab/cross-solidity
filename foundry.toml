@@ -2,15 +2,7 @@
 solc_version = "0.8.9"
 src = "contracts"
 test = "test"
-out = "build"
 libs = ["lib", "node_modules"]
 optimizer = true
 optimizer_runs = 1000
-auto_detect_solc = true
 evm_version = "london"
-
-remappings = [
-  "@openzeppelin/=node_modules/@openzeppelin/",
-  "@hyperledger-labs/yui-ibc-solidity/=node_modules/@hyperledger-labs/yui-ibc-solidity/",
-  "forge-std/=node_modules/forge-std/src/"
-]
