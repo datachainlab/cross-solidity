@@ -27,7 +27,7 @@ jobs:
       run: npm install
 
     - name: Setup ganache-cli
-      run: NO_GEN_CODE=1 ./scripts/setup.sh development
+      run: NO_GEN_CODE=1 ./script/setup.sh development
 
     - name: Test
       run: make test

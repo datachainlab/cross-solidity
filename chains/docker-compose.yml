@@ -7,13 +7,10 @@ services:
       [
         "--host","0.0.0.0",
         "--port","8545",
-        "--chain-id","5777",
+        "--chain-id","31337",
         "--accounts","10",
         "--mnemonic","math razor capable expose worth grape metal sunset metal sudden usage scheme",
-        "--gas-limit","1000000000",
-        "--base-fee","0",
-        "--balance","100000",
-        "--block-time","10"
+        "--gas-limit","1000000000"
       ]
     ports:
       - "8545:8545"

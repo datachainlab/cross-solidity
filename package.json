@@ -2,7 +2,7 @@
   "name": "cross-solidity",
   "version": "0.0.1",
   "scripts": {
-    "deploy": "npx -y -p @foundry-rs/forge@1.4.1 forge script scripts/DeployAll.s.sol --rpc-url anvil --broadcast",
+    "deploy": "npx -y -p @foundry-rs/forge@1.4.1 forge script script/DeployAll.s.sol --rpc-url anvil --broadcast",
     "compile": "npx -y -p @foundry-rs/forge@1.4.1 forge build",
     "postinstall": "npx -y -p @foundry-rs/forge@1.4.1 forge build",
     "clean": "rm -rf build"

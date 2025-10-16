@@ -11,7 +11,7 @@ function before_common() {
     if [ -n "$NO_GEN_CODE" ]; then
         return
     fi
-    ./scripts/protogen.sh
+    ./script/protogen.sh
 }
 
 function after_common() {
@@ -37,14 +37,14 @@ function chain() {
     # XXX Wait for the first block to be created
     sleep 3
     npm run deploy
-    node ./scripts/confgen.js
+    node ./script/confgen.js
 }
 
 function development {
     before_common
 
     network=development
-    export CONF_TPL="./pkg/consts/contract.go:./scripts/template/contract.go.tpl"
+    export CONF_TPL="./pkg/consts/contract.go:./script/template/contract.go.tpl"
     chain
 
     after_common

@@ -12,10 +12,10 @@ import {IBCChannel} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-c
 import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/OwnableIBCHandler.sol";
 
 // === App ===
-import {IContractModule} from "contracts/core/IContractModule.sol";
-import {CrossSimpleModule} from "contracts/core/CrossSimpleModule.sol";
+import {IContractModule} from "src/core/IContractModule.sol";
+import {CrossSimpleModule} from "src/core/CrossSimpleModule.sol";
 import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/MockClient.sol";
-import {MockCrossContract} from "contracts/example/MockCrossContract.sol";
+import {MockCrossContract} from "src/example/MockCrossContract.sol";
 
 contract DeployAll is Script, Config {
     // === Deployment artifacts (written back to deployments.toml) ===
