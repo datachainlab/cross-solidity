@@ -3,7 +3,7 @@ set -euo pipefail
 
 # --- Config ---
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPTS_DIR="$PROJECT_ROOT/scripts/migrate"
+SCRIPTS_DIR="$PROJECT_ROOT/scripts/deploy"
 BROADCAST_DIR="$PROJECT_ROOT/broadcast"
 YUI_BASE="$PROJECT_ROOT/node_modules/@hyperledger-labs/yui-ibc-solidity/contracts"
 LIB_COMMITMENT_SPEC="$YUI_BASE/core/24-host/IBCCommitment.sol:IBCCommitment"
