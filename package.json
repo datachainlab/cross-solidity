@@ -10,7 +10,9 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.3",
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#3315e5fa0f5b31d1815b0c0f62239384aa27814a",
-    "@foundry-rs/forge": "1.4.1",
     "forge-std": "github:foundry-rs/forge-std#v1.11.0"
+  },
+  "devDependencies": {
+    "@foundry-rs/forge": "1.4.1"
   }
 }
