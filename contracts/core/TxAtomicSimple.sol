@@ -29,9 +29,10 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
         PacketAcknowledgementCall.Data memory ack;
-        try getModule(packet).onContractCall(
-            CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
-        ) returns (bytes memory ret) {
+        try getModule(packet)
+            .onContractCall(
+                CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
+            ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
             emit OnContractCall(pdc.tx_id, txIndexParticipant, true, ret);
         } catch (bytes memory) {

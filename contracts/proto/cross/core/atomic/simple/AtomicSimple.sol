@@ -33,6 +33,7 @@ library PacketData {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -123,6 +124,7 @@ library PacketData {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -145,6 +147,7 @@ library PacketData {
         }
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -171,6 +174,7 @@ library PacketData {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -257,6 +261,7 @@ library Acknowledgement {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -331,6 +336,7 @@ library Acknowledgement {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -354,6 +360,7 @@ library Acknowledgement {
         }
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -380,6 +387,7 @@ library Acknowledgement {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -469,6 +477,7 @@ library Header {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -573,6 +582,7 @@ library Header {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -595,6 +605,7 @@ library Header {
         }
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -621,6 +632,7 @@ library Header {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -728,6 +740,7 @@ library HeaderField {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -802,6 +815,7 @@ library HeaderField {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -825,6 +839,7 @@ library HeaderField {
         }
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -851,6 +866,7 @@ library HeaderField {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -941,6 +957,7 @@ library PacketDataCall {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -1037,6 +1054,7 @@ library PacketDataCall {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -1060,6 +1078,7 @@ library PacketDataCall {
 
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -1086,6 +1105,7 @@ library PacketDataCall {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -1175,6 +1195,7 @@ library PacketDataCallResolvedContractTransaction {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -1392,6 +1413,7 @@ library PacketDataCallResolvedContractTransaction {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -1433,6 +1455,7 @@ library PacketDataCallResolvedContractTransaction {
         }
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -1459,6 +1482,7 @@ library PacketDataCallResolvedContractTransaction {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -1658,6 +1682,7 @@ library PacketAcknowledgementCall {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -1718,6 +1743,7 @@ library PacketAcknowledgementCall {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -1738,6 +1764,7 @@ library PacketAcknowledgementCall {
         }
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -1764,6 +1791,7 @@ library PacketAcknowledgementCall {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -1847,6 +1875,7 @@ library ReturnValue {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -1906,6 +1935,7 @@ library ReturnValue {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -1925,6 +1955,7 @@ library ReturnValue {
         }
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -1951,6 +1982,7 @@ library ReturnValue {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
