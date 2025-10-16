@@ -9,8 +9,8 @@ YUI_BASE="$PROJECT_ROOT/node_modules/@hyperledger-labs/yui-ibc-solidity/contract
 LIB_COMMITMENT_SPEC="$YUI_BASE/core/24-host/IBCCommitment.sol:IBCCommitment"
 LIB_MSGS_SPEC="$YUI_BASE/core/25-handler/IBCMsgs.sol:IBCMsgs"
 
-FORGE="npx -y -p @foundry-rs/forge forge"
-CAST="npx -y -p @foundry-rs/forge cast"
+FORGE="npx -y -p @foundry-rs/forge@1.4.1 forge"
+CAST="npx -y -p @foundry-rs/forge@1.4.1 cast"
 
 : "${RPC_URL:=http://127.0.0.1:8545}"
 : "${MNEMONIC:=math razor capable expose worth grape metal sunset metal sudden usage scheme}"

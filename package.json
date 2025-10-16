@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "migrate": "bash scripts/migrate.sh",
-    "compile": "npx -y -p @foundry-rs/forge forge build",
-    "postinstall": "npx -y -p @foundry-rs/forge forge build",
+    "compile": "npx -y -p @foundry-rs/forge@1.4.1 forge build",
+    "postinstall": "npx -y -p @foundry-rs/forge@1.4.1 forge build",
     "clean": "rm -rf build"
   },
   "dependencies": {
