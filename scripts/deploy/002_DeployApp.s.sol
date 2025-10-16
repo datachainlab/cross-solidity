@@ -17,11 +17,8 @@ contract DeployApp is Script {
         MockCrossContract mockApp = new MockCrossContract();
         console2.log("MockCrossContract:", address(mockApp));
 
-        CrossSimpleModule csm = new CrossSimpleModule(
-            IBCHandler(ibcHandlerAddr),
-            IContractModule(address(mockApp)),
-            debugMode
-        );
+        CrossSimpleModule csm =
+            new CrossSimpleModule(IBCHandler(ibcHandlerAddr), IContractModule(address(mockApp)), debugMode);
         console2.log("CrossSimpleModule:", address(csm));
 
         MockClient mockClient = new MockClient(ibcHandlerAddr);

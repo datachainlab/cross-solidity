@@ -5,6 +5,6 @@ import "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannel.
 
 // PacketHandler is a handler that handles a packet and acknowledgement
 abstract contract PacketHandler {
-    function handlePacket(Packet.Data memory packet) virtual internal returns (bytes memory acknowledgement);
-    function handleAcknowledgement(Packet.Data memory packet, bytes memory acknowledgement) virtual internal;
+    function handlePacket(Packet.Data memory packet) internal virtual returns (bytes memory acknowledgement);
+    function handleAcknowledgement(Packet.Data memory packet, bytes memory acknowledgement) internal virtual;
 }

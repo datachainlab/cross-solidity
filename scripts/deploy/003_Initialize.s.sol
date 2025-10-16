@@ -17,14 +17,12 @@ contract InitializeContracts is Script {
 
         IBCHandler ibc = IBCHandler(ibcHandlerAddr);
 
-        (bool ok1, ) = address(ibc).call(
-            abi.encodeWithSignature("bindPort(string,address)", portCross, crossSimpleModule)
-        );
+        (bool ok1,) =
+            address(ibc).call(abi.encodeWithSignature("bindPort(string,address)", portCross, crossSimpleModule));
         require(ok1, "bindPort failed");
 
-        (bool ok2, ) = address(ibc).call(
-            abi.encodeWithSignature("registerClient(string,address)", mockClientType, mockClientAddr)
-        );
+        (bool ok2,) =
+            address(ibc).call(abi.encodeWithSignature("registerClient(string,address)", mockClientType, mockClientAddr));
         require(ok2, "registerClient failed");
 
         vm.stopBroadcast();
