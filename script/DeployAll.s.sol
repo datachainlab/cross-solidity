@@ -84,7 +84,7 @@ contract DeployAll is Script, Config {
             address(ibcClient),
             address(ibcConnection),
             address(ibcChannel),
-            address(ibcChannel) // packetCommitmentKeeper
+            address(ibcChannel)
         );
         console2.log("  IBCHandler (Ownable):", address(ibcHandler));
 
