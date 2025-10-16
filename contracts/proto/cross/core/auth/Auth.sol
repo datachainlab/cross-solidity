@@ -32,6 +32,7 @@ library Account {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -122,6 +123,7 @@ library Account {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -145,6 +147,7 @@ library Account {
 
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -171,6 +174,7 @@ library Account {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
@@ -318,6 +322,7 @@ library AuthType {
         (Data memory x,) = _decode(32, bs, bs.length);
         store(x, self);
     }
+
     // inner decoder
 
     /**
@@ -413,6 +418,7 @@ library AuthType {
         }
         return bs;
     }
+
     // inner encoder
 
     /**
@@ -437,6 +443,7 @@ library AuthType {
 
         return pointer - offset;
     }
+
     // nested encoder
 
     /**
@@ -463,6 +470,7 @@ library AuthType {
         delete tmp;
         return pointer - offset;
     }
+
     // estimator
 
     /**
