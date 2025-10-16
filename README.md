@@ -14,7 +14,7 @@ A coordinator feature of the simple commit and two-phase commit will be provided
 
 ## Contract module development
 
-A developer who develops contract using Cross Framework need to implement IContractModule, which is defined in [IContractModule.sol](./contracts/core/IContractModule.sol).
+A developer who develops contract using Cross Framework need to implement IContractModule, which is defined in [IContractModule.sol](./src/core/IContractModule.sol).
 
 ```
 // IContractModule defines the expected interface of a contract module on Cross Framework
@@ -32,7 +32,7 @@ interface IContractModule {
 
 ## How to deploy a contract module
 
-[Here](./migrations/2_deploy_contracts.js) is an example of deploying with the module `CrossSimpleModule` that implements the simple commit.
+[Here](./script/DeployAll.s.sol) is an example of deploying with the module `CrossSimpleModule` that implements the simple commit.
 
 ## For Developers
 

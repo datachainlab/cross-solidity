@@ -7,8 +7,7 @@ import "./SimpleContractRegistry.sol";
 import "./IBCKeeper.sol";
 
 contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimple {
-
-    constructor(IBCHandler ibcHandler_, IContractModule module, bool debugMode) CrossModule(ibcHandler_) public {
+    constructor(IBCHandler ibcHandler_, IContractModule module, bool debugMode) public CrossModule(ibcHandler_) {
         if (debugMode) {
             _setupRole(IBC_ROLE, _msgSender());
         }
@@ -17,7 +16,11 @@ contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimpl
 
     // debug for serialization
 
-    function getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus status) public pure returns (bytes memory acknowledgement) {
+    function getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus status)
+        public
+        pure
+        returns (bytes memory acknowledgement)
+    {
         PacketAcknowledgementCall.Data memory ack;
         ack.status = status;
         return packPacketAcknowledgementCall(ack);

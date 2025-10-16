@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
 
-TRUFFLE="npx truffle"
 # the contracts to generate ABI
 CONTRACTS=(
     "OwnableIBCHandler"
@@ -12,7 +11,7 @@ function before_common() {
     if [ -n "$NO_GEN_CODE" ]; then
         return
     fi
-    ./scripts/protogen.sh
+    ./script/protogen.sh
 }
 
 function after_common() {
@@ -37,15 +36,15 @@ function chain() {
     pushd ./chains && docker compose up -d ${network} && popd
     # XXX Wait for the first block to be created
     sleep 3
-    ${TRUFFLE} migrate --reset --network=${network}
-    ${TRUFFLE} exec ./scripts/confgen.js --network=${network}
+    npm run deploy
+    node ./script/confgen.js
 }
 
 function development {
     before_common
 
     network=development
-    export CONF_TPL="./pkg/consts/contract.go:./scripts/template/contract.go.tpl"
+    export CONF_TPL="./pkg/consts/contract.go:./script/template/contract.go.tpl"
     chain
 
     after_common

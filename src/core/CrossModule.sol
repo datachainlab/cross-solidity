@@ -9,7 +9,6 @@ import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
 abstract contract CrossModule is Context, AccessControl, IIBCModule, IBCKeeper, PacketHandler {
-
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
     constructor(IBCHandler ibcHandler_) IBCKeeper(ibcHandler_) {
@@ -20,21 +19,49 @@ abstract contract CrossModule is Context, AccessControl, IIBCModule, IBCKeeper, 
 
     /// Module callbacks ///
 
-    function onRecvPacket(Packet.Data memory packet, address relayer) public virtual override returns (bytes memory acknowledgement) {
+    function onRecvPacket(Packet.Data memory packet, address relayer)
+        public
+        virtual
+        override
+        returns (bytes memory acknowledgement)
+    {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         return handlePacket(packet);
     }
 
-    function onAcknowledgementPacket(Packet.Data memory packet, bytes memory acknowledgement, address relayer) public virtual override {
+    function onAcknowledgementPacket(Packet.Data memory packet, bytes memory acknowledgement, address relayer)
+        public
+        virtual
+        override
+    {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         return handleAcknowledgement(packet, acknowledgement);
     }
 
-    function onChanOpenInit(Channel.Order, string[] calldata connectionHops, string calldata portId, string calldata channelId, ChannelCounterparty.Data calldata counterparty, string calldata version) external virtual override {}
+    function onChanOpenInit(
+        Channel.Order,
+        string[] calldata connectionHops,
+        string calldata portId,
+        string calldata channelId,
+        ChannelCounterparty.Data calldata counterparty,
+        string calldata version
+    ) external virtual override {}
 
-    function onChanOpenTry(Channel.Order, string[] calldata connectionHops, string calldata portId, string calldata channelId, ChannelCounterparty.Data calldata counterparty, string calldata version, string calldata counterpartyVersion) external virtual override {}
+    function onChanOpenTry(
+        Channel.Order,
+        string[] calldata connectionHops,
+        string calldata portId,
+        string calldata channelId,
+        ChannelCounterparty.Data calldata counterparty,
+        string calldata version,
+        string calldata counterpartyVersion
+    ) external virtual override {}
 
-    function onChanOpenAck(string calldata portId, string calldata channelId, string calldata counterpartyVersion) external virtual override {}
+    function onChanOpenAck(string calldata portId, string calldata channelId, string calldata counterpartyVersion)
+        external
+        virtual
+        override
+    {}
 
     function onChanOpenConfirm(string calldata portId, string calldata channelId) external virtual override {}
 
