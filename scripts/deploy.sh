@@ -5,9 +5,6 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCRIPTS_DIR="$PROJECT_ROOT/scripts/deploy"
 BROADCAST_DIR="$PROJECT_ROOT/broadcast"
-YUI_BASE="$PROJECT_ROOT/node_modules/@hyperledger-labs/yui-ibc-solidity/contracts"
-LIB_COMMITMENT_SPEC="$YUI_BASE/core/24-host/IBCCommitment.sol:IBCCommitment"
-LIB_MSGS_SPEC="$YUI_BASE/core/25-handler/IBCMsgs.sol:IBCMsgs"
 
 FORGE="npx -y -p @foundry-rs/forge@1.4.1 forge"
 CAST="npx -y -p @foundry-rs/forge@1.4.1 cast"
@@ -32,29 +29,10 @@ done
 CHAIN_ID="$($CAST chain-id --rpc-url "$RPC_URL")"
 echo "RPC_URL=$RPC_URL CHAIN_ID=$CHAIN_ID"
 
-# --- Deploy libraries ---
-echo "==> Deploy libraries"
-LIB_COMMITMENT="$(
-  $FORGE create "$LIB_COMMITMENT_SPEC" \
-    --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" --broadcast --json \
-  | jq -r '.deployedTo'
-)"
-LIB_MSGS="$(
-  $FORGE create "$LIB_MSGS_SPEC" \
-    --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" --broadcast --json \
-  | jq -r '.deployedTo'
-)"
-[[ -n "${LIB_COMMITMENT:-}" && "$LIB_COMMITMENT" != "null" ]] || die "failed to deploy IBCCommitment"
-[[ -n "${LIB_MSGS:-}" && "$LIB_MSGS" != "null" ]] || die "failed to deploy IBCMsgs"
-echo "  IBCCommitment: $LIB_COMMITMENT"
-echo "  IBCMsgs      : $LIB_MSGS"
-
 # --- 01_DeployCore ---
 echo "==> 01_DeployCore"
 $FORGE script "$SCRIPTS_DIR/01_DeployCore.s.sol:DeployCore" \
-  --rpc-url "$RPC_URL" --broadcast --private-key "$PRIVATE_KEY" \
-  --libraries "$LIB_COMMITMENT_SPEC:$LIB_COMMITMENT" \
-  --libraries "$LIB_MSGS_SPEC:$LIB_MSGS"
+  --rpc-url "$RPC_URL" --broadcast --private-key "$PRIVATE_KEY"
 
 CORE_JSON="$BROADCAST_DIR/01_DeployCore.s.sol/$CHAIN_ID/run-latest.json"
 [[ -f "$CORE_JSON" ]] || die "broadcast not found: $CORE_JSON"
