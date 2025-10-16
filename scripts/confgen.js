@@ -50,8 +50,8 @@ function pickAddr(json, contractName) {
   let cross = CROSS_SIMPLE_MODULE;
 
   if (!ibc || !cross) {
-    const core = latestJson("001_DeployCore.s.sol");
-    const app = latestJson("002_DeployApp.s.sol");
+    const core = latestJson("01_DeployCore.s.sol");
+    const app = latestJson("02_DeployApp.s.sol");
     ibc = ibc || pickAddr(core, "OwnableIBCHandler");
     cross = cross || pickAddr(app, "CrossSimpleModule");
   }
