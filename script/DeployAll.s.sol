@@ -7,15 +7,25 @@ import {Config} from "forge-std/src/Config.sol";
 
 // === Core ===
 import {IBCClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/02-client/IBCClient.sol";
-import {IBCConnectionSelfStateNoValidation as IBCConnection} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/03-connection/IBCConnectionSelfStateNoValidation.sol";
-import {IBCChannelHandshake} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelHandshake.sol";
-import {IBCChannelPacketSendRecv} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelPacketSendRecv.sol";
-import {IBCChannelPacketTimeout} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelPacketTimeout.sol";
+import {
+    IBCConnectionSelfStateNoValidation as IBCConnection
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/03-connection/IBCConnectionSelfStateNoValidation.sol";
+import {
+    IBCChannelHandshake
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelHandshake.sol";
+import {
+    IBCChannelPacketSendRecv
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelPacketSendRecv.sol";
+import {
+    IBCChannelPacketTimeout
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelPacketTimeout.sol";
 import {
     IBCChannelUpgradeInitTryAck,
     IBCChannelUpgradeConfirmOpenTimeoutCancel
 } from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelUpgrade.sol";
-import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/OwnableIBCHandler.sol";
+import {
+    OwnableIBCHandler as IBCHandler
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/OwnableIBCHandler.sol";
 
 // === App ===
 import {IContractModule} from "src/core/IContractModule.sol";

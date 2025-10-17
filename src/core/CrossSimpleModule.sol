@@ -32,10 +32,30 @@ contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimpl
         return (address(this), msg_.counterpartyVersion);
     }
 
-    function onChanOpenAck(IIBCModule.MsgOnChanOpenAck calldata /*msg_*/) external override {}
-    function onChanOpenConfirm(IIBCModule.MsgOnChanOpenConfirm calldata /*msg_*/) external override {}
-    function onChanCloseInit(IIBCModule.MsgOnChanCloseInit calldata /*msg_*/) external override {}
-    function onChanCloseConfirm(IIBCModule.MsgOnChanCloseConfirm calldata /*msg_*/) external override {}
+    function onChanOpenAck(
+        IIBCModule.MsgOnChanOpenAck calldata /*msg_*/
+    )
+        external
+        override
+    {}
+    function onChanOpenConfirm(
+        IIBCModule.MsgOnChanOpenConfirm calldata /*msg_*/
+    )
+        external
+        override
+    {}
+    function onChanCloseInit(
+        IIBCModule.MsgOnChanCloseInit calldata /*msg_*/
+    )
+        external
+        override
+    {}
+    function onChanCloseConfirm(
+        IIBCModule.MsgOnChanCloseConfirm calldata /*msg_*/
+    )
+        external
+        override
+    {}
 
     // ---- debug for serialization ----
     function getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus status)

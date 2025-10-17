@@ -15,7 +15,14 @@ abstract contract SimpleContractRegistry is ContractRegistry {
         contractModule = module;
     }
 
-    function getModule(Packet memory /*packet*/) internal virtual override returns (IContractModule) {
+    function getModule(
+        Packet memory /*packet*/
+    )
+        internal
+        virtual
+        override
+        returns (IContractModule)
+    {
         require(address(contractModule) != address(0), "contractModule is not initialized yet");
         return contractModule;
     }

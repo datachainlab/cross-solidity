@@ -23,12 +23,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     event OnTimeoutPacket(bytes tx_id, uint8 tx_index, uint64 sequence);
 
     /// @inheritdoc PacketHandler
-    function handlePacket(Packet memory packet)
-        internal
-        virtual
-        override
-        returns (bytes memory acknowledgement)
-    {
+    function handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
         // ルーティング先モジュール解決（1回だけ）
         IContractModule module = getModule(packet);
 
@@ -49,8 +44,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         // コール実行 & ACK 生成
         PacketAcknowledgementCall.Data memory ack;
         try module.onContractCall(
-            CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers),
-            pdc.tx.call_info
+            CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
             emit OnContractCall(pdc.tx_id, txIndexParticipant, true, ret);
@@ -63,7 +57,11 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     }
 
     /// @inheritdoc PacketHandler
-    function handleAcknowledgement(Packet memory /*packet*/, bytes memory /*acknowledgement*/)
+    function handleAcknowledgement(
+        Packet memory,
+        /*packet*/
+        bytes memory /*acknowledgement*/
+    )
         internal
         virtual
         override

@@ -3,7 +3,10 @@ pragma solidity ^0.8.20;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IIBCModule, IIBCModuleInitializer} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/26-router/IIBCModule.sol";
+import {
+    IIBCModule,
+    IIBCModuleInitializer
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/26-router/IIBCModule.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
@@ -17,21 +20,15 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 
-    // ---- ERC165 ----
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(AccessControl, IERC165)
-        returns (bool)
-    {
-        return
-            interfaceId == type(IIBCModule).interfaceId ||
-            interfaceId == type(IIBCModuleInitializer).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, IERC165) returns (bool) {
+        return interfaceId == type(IIBCModule).interfaceId || interfaceId == type(IIBCModuleInitializer).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 
-    // ---- Packet callbacks (ICS-04) ----
+    // function initiateTx() external {}
+
+    /// Module callbacks ///
+
     function onRecvPacket(Packet calldata packet, address relayer)
         public
         virtual
@@ -51,16 +48,11 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         handleAcknowledgement(packet, acknowledgement);
     }
 
-    function onTimeoutPacket(Packet calldata packet, address relayer)
-        public
-        virtual
-        override
-    {
+    function onTimeoutPacket(Packet calldata packet, address relayer) public virtual override {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         handleTimeout(packet);
     }
 
-    // ---- Channel handshake (ICS-26) ----
     function onChanOpenInit(IIBCModuleInitializer.MsgOnChanOpenInit calldata msg_)
         external
         virtual
