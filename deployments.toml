@@ -13,9 +13,6 @@ mnemonic_index = 0
 debug_mode = true
 
 [31337.address]
-ibc_client = "0x669bDE06af67B0573bfD4Ec151859f7D474328E9"
-ibc_connection = "0xB9c99Dc02185993bdB9C48Fc29544f6cC6604F87"
-ibc_channel = "0x361552A65C96621003C62C5971b910a1fdC9ba78"
 ibc_handler = "0xaa43d337145E8930d01cb4E60Abf6595C692921E"
 mock_cross_contract = "0xff77D90D6aA12db33d3Ba50A34fB25401f6e4c4F"
 cross_simple_module = "0x2F5703804E29F4252FA9405B8D357220d11b3bd9"
