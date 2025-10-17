@@ -19,7 +19,6 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret);
     event OnTimeoutPacket(bytes tx_id, uint8 tx_index, uint64 sequence);
 
-    /// @inheritdoc PacketHandler
     function handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);
 
