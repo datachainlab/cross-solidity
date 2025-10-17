@@ -24,14 +24,12 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
 
         PacketData.Data memory pd = PacketData.decode(packet.data);
         require(pd.payload.length != 0, "decoding error");
-
         Any.Data memory anyPayload = Any.decode(pd.payload);
         // TODO should be more gas efficient
         require(
             sha256(bytes(anyPayload.type_url)) == sha256(bytes("/cross.core.atomic.simple.PacketDataCall")),
             "got unexpected type_url"
         );
-
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
         PacketAcknowledgementCall.Data memory ack;
@@ -48,7 +46,6 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         return packPacketAcknowledgementCall(ack);
     }
 
-    /// @inheritdoc PacketHandler
     function handleAcknowledgement(
         Packet memory,
         /*packet*/
