@@ -59,7 +59,18 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     }
 
     function handleTimeout(Packet calldata packet) internal virtual override {
-        emit OnTimeoutPacket("", txIndexParticipant, packet.sequence);
+        bytes memory txId = new bytes(0);
+
+        PacketData.Data memory pd = PacketData.decode(packet.data);
+        if (pd.payload.length != 0) {
+            Any.Data memory anyPayload = Any.decode(pd.payload);
+            if (keccak256(bytes(anyPayload.type_url)) == keccak256(bytes("/cross.core.atomic.simple.PacketDataCall"))) {
+                PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
+                txId = pdc.tx_id;
+            }
+        }
+
+        emit OnTimeoutPacket(txId, txIndexParticipant, packet.sequence);
     }
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack)
