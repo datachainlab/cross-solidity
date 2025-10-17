@@ -11,12 +11,9 @@ import "./IBCKeeper.sol";
 
 import "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 
-/**
- * @title TxAtomicSimple
- * @notice simple-commit プロトコル対応の PacketHandler 実装
- */
+// TxAtomicSimple implements PacketHandler that supports simple-commit protocol
 abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
-    // simple-commit プロトコル上の participant index
+    // it's defined at simple-commit protocol
     uint8 private constant txIndexParticipant = 1;
 
     event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret);
@@ -24,24 +21,19 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
 
     /// @inheritdoc PacketHandler
     function handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
-        // ルーティング先モジュール解決（1回だけ）
         IContractModule module = getModule(packet);
 
-        // PacketData のデコード
         PacketData.Data memory pd = PacketData.decode(packet.data);
         require(pd.payload.length != 0, "decoding error");
 
         Any.Data memory anyPayload = Any.decode(pd.payload);
-        // type_url チェック（/cross.core.atomic.simple.PacketDataCall）
         require(
             sha256(bytes(anyPayload.type_url)) == sha256(bytes("/cross.core.atomic.simple.PacketDataCall")),
             "got unexpected type_url"
         );
 
-        // 具体 payload へデコード
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
-        // コール実行 & ACK 生成
         PacketAcknowledgementCall.Data memory ack;
         try module.onContractCall(
             CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
@@ -73,7 +65,6 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         emit OnTimeoutPacket("", txIndexParticipant, packet.sequence);
     }
 
-    // ---- ACK エンコード補助 ----
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack)
         internal
         pure
