@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import "./ContractRegistry.sol";
 import "./IContractModule.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannel.sol";
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 // SimpleContractRegistry is a simple registry that implements ContractRegistry
 abstract contract SimpleContractRegistry is ContractRegistry {
@@ -15,7 +15,14 @@ abstract contract SimpleContractRegistry is ContractRegistry {
         contractModule = module;
     }
 
-    function getModule(Packet.Data memory packet) internal virtual override returns (IContractModule) {
+    function getModule(
+        Packet memory /*packet*/
+    )
+        internal
+        virtual
+        override
+        returns (IContractModule)
+    {
         require(address(contractModule) != address(0), "contractModule is not initialized yet");
         return contractModule;
     }

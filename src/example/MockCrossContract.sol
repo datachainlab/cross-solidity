@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import "../core/IContractModule.sol";
 import "../proto/cross/core/auth/Auth.sol";
