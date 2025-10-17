@@ -26,6 +26,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         require(pd.payload.length != 0, "decoding error");
 
         Any.Data memory anyPayload = Any.decode(pd.payload);
+        // TODO should be more gas efficient
         require(
             sha256(bytes(anyPayload.type_url)) == sha256(bytes("/cross.core.atomic.simple.PacketDataCall")),
             "got unexpected type_url"
