@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IBCHandler.sol";
+import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 
 // IBCKeeper keeps the contracts of IBC
 abstract contract IBCKeeper {
-    IBCHandler ibcHandler;
+    IIBCHandler internal immutable ibcHandler;
 
-    constructor(IBCHandler handler_) {
+    constructor(IIBCHandler handler_) {
         ibcHandler = handler_;
     }
 
-    function getIBCHandler() internal view returns (IBCHandler) {
+    function getIBCHandler() internal view returns (IIBCHandler) {
         return ibcHandler;
     }
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
-import "./PacketHandler.sol";
 import "../proto/cross/core/auth/Auth.sol";
 
 // IContractModule defines the expected interface of a contract module on Cross Framework

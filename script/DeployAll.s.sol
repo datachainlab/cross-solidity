@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import "forge-std/src/Script.sol";
 import "forge-std/src/console2.sol";
@@ -7,21 +7,31 @@ import {Config} from "forge-std/src/Config.sol";
 
 // === Core ===
 import {IBCClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/02-client/IBCClient.sol";
-import {IBCConnection} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/03-connection/IBCConnection.sol";
-import {IBCChannel} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannel.sol";
-import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/OwnableIBCHandler.sol";
+import {IBCConnectionSelfStateNoValidation as IBCConnection} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/03-connection/IBCConnectionSelfStateNoValidation.sol";
+import {IBCChannelHandshake} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelHandshake.sol";
+import {IBCChannelPacketSendRecv} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelPacketSendRecv.sol";
+import {IBCChannelPacketTimeout} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelPacketTimeout.sol";
+import {
+    IBCChannelUpgradeInitTryAck,
+    IBCChannelUpgradeConfirmOpenTimeoutCancel
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IBCChannelUpgrade.sol";
+import {OwnableIBCHandler as IBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/OwnableIBCHandler.sol";
 
 // === App ===
 import {IContractModule} from "src/core/IContractModule.sol";
 import {CrossSimpleModule} from "src/core/CrossSimpleModule.sol";
-import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/MockClient.sol";
+import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/mock/MockClient.sol";
 import {MockCrossContract} from "src/example/MockCrossContract.sol";
 
 contract DeployAll is Script, Config {
     // === Deployment artifacts (written back to deployments.toml) ===
     IBCClient public ibcClient;
     IBCConnection public ibcConnection;
-    IBCChannel public ibcChannel;
+    IBCChannelHandshake public ibcChannelHandshake;
+    IBCChannelPacketSendRecv public ibcChannelPacketSendRecv;
+    IBCChannelPacketTimeout public ibcChannelPacketTimeout;
+    IBCChannelUpgradeInitTryAck public ibcChannelUpgradeInitTryAck;
+    IBCChannelUpgradeConfirmOpenTimeoutCancel public ibcChannelUpgradeConfirmOpenTimeoutCancel;
     IBCHandler public ibcHandler;
 
     MockCrossContract public mockApp;
@@ -77,14 +87,25 @@ contract DeployAll is Script, Config {
         ibcConnection = new IBCConnection();
         console2.log("  IBCConnection:", address(ibcConnection));
 
-        ibcChannel = new IBCChannel();
-        console2.log("  IBCChannel:", address(ibcChannel));
+        ibcChannelHandshake = new IBCChannelHandshake();
+        console2.log("  IBCChannelHandshake:", address(ibcChannelHandshake));
+        ibcChannelPacketSendRecv = new IBCChannelPacketSendRecv();
+        console2.log("  IBCChannelPacketSendRecv:", address(ibcChannelPacketSendRecv));
+        ibcChannelPacketTimeout = new IBCChannelPacketTimeout();
+        console2.log("  IBCChannelPacketTimeout:", address(ibcChannelPacketTimeout));
+        ibcChannelUpgradeInitTryAck = new IBCChannelUpgradeInitTryAck();
+        console2.log("  IBCChannelUpgrade (InitTryAck):", address(ibcChannelUpgradeInitTryAck));
+        ibcChannelUpgradeConfirmOpenTimeoutCancel = new IBCChannelUpgradeConfirmOpenTimeoutCancel();
+        console2.log("  IBCChannelUpgrade (ConfirmOpenTimeoutCancel):", address(ibcChannelUpgradeConfirmOpenTimeoutCancel));
 
         ibcHandler = new IBCHandler(
-            address(ibcClient),
-            address(ibcConnection),
-            address(ibcChannel),
-            address(ibcChannel)
+            ibcClient,
+            ibcConnection,
+            ibcChannelHandshake,
+            ibcChannelPacketSendRecv,
+            ibcChannelPacketTimeout,
+            ibcChannelUpgradeInitTryAck,
+            ibcChannelUpgradeConfirmOpenTimeoutCancel
         );
         console2.log("  IBCHandler (Ownable):", address(ibcHandler));
 
@@ -118,7 +139,6 @@ contract DeployAll is Script, Config {
         //    (addresses go under <chain>.address.*, meta under <chain>.meta.*)
         config.set("ibc_client", address(ibcClient));
         config.set("ibc_connection", address(ibcConnection));
-        config.set("ibc_channel", address(ibcChannel));
         config.set("ibc_handler", address(ibcHandler));
         config.set("mock_cross_contract", address(mockApp));
         config.set("cross_simple_module", address(crossSimpleModule));
