@@ -57,19 +57,59 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         external
         virtual
         override
-        returns (address moduleAddr, string memory version);
+        returns (address moduleAddr, string memory version)
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+        return (address(this), msg_.version);
+    }
 
     function onChanOpenTry(IIBCModuleInitializer.MsgOnChanOpenTry calldata msg_)
         external
         virtual
         override
-        returns (address moduleAddr, string memory version);
+        returns (address moduleAddr, string memory version)
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+        return (address(this), msg_.counterpartyVersion);
+    }
 
-    function onChanOpenAck(IIBCModule.MsgOnChanOpenAck calldata msg_) external virtual override;
+    function onChanOpenAck(
+        IIBCModule.MsgOnChanOpenAck calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
 
-    function onChanOpenConfirm(IIBCModule.MsgOnChanOpenConfirm calldata msg_) external virtual override;
+    function onChanOpenConfirm(
+        IIBCModule.MsgOnChanOpenConfirm calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
 
-    function onChanCloseInit(IIBCModule.MsgOnChanCloseInit calldata msg_) external virtual override;
+    function onChanCloseInit(
+        IIBCModule.MsgOnChanCloseInit calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
 
-    function onChanCloseConfirm(IIBCModule.MsgOnChanCloseConfirm calldata msg_) external virtual override;
+    function onChanCloseConfirm(
+        IIBCModule.MsgOnChanCloseConfirm calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
 }

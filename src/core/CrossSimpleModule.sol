@@ -15,48 +15,6 @@ contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimpl
         registerModule(module);
     }
 
-    // ---- ICS-26 handshake stubs ----
-    function onChanOpenInit(IIBCModuleInitializer.MsgOnChanOpenInit calldata msg_)
-        external
-        override
-        returns (address moduleAddr, string memory version)
-    {
-        return (address(this), msg_.version);
-    }
-
-    function onChanOpenTry(IIBCModuleInitializer.MsgOnChanOpenTry calldata msg_)
-        external
-        override
-        returns (address moduleAddr, string memory version)
-    {
-        return (address(this), msg_.counterpartyVersion);
-    }
-
-    function onChanOpenAck(
-        IIBCModule.MsgOnChanOpenAck calldata /*msg_*/
-    )
-        external
-        override
-    {}
-    function onChanOpenConfirm(
-        IIBCModule.MsgOnChanOpenConfirm calldata /*msg_*/
-    )
-        external
-        override
-    {}
-    function onChanCloseInit(
-        IIBCModule.MsgOnChanCloseInit calldata /*msg_*/
-    )
-        external
-        override
-    {}
-    function onChanCloseConfirm(
-        IIBCModule.MsgOnChanCloseConfirm calldata /*msg_*/
-    )
-        external
-        override
-    {}
-
     // ---- debug for serialization ----
     function getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus status)
         public
