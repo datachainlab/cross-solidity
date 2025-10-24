@@ -46,3 +46,10 @@ Install Slither and use it for static analysis.
 pip3 install slither-analyzer
 make slither
 ```
+
+Lint the source code using solhint
+
+```
+npm ci
+npm run lint:sol
+```
