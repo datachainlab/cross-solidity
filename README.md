@@ -39,3 +39,10 @@ interface IContractModule {
 To generate encoders and decoders in solidity from proto files, you need to use the code generator [solidity-protobuf](https://github.com/datachainlab/solidity-protobuf).
 
 Currently, [this version](https://github.com/datachainlab/solidity-protobuf/commit/3def6706178e5407497f3d01b8f0ceb17b32108d) is required.
+
+Install Slither and use it for static analysis.
+
+```
+pip3 install slither-analyzer
+make slither
+```

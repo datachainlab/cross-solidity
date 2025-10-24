@@ -36,9 +36,11 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
             CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
+            // slither-disable-next-line reentrancy-events
             emit OnContractCall(pdc.tx_id, txIndexParticipant, true, ret);
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
+            // slither-disable-next-line reentrancy-events
             emit OnContractCall(pdc.tx_id, txIndexParticipant, false, new bytes(0));
         }
 
