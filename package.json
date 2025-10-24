@@ -6,7 +6,8 @@
     "compile": "forge build",
     "postinstall": "forge build",
     "clean": "rm -rf build",
-    "test": "forge test -vvv"
+    "test": "forge test -vvv",
+    "lint:sol": "solhint -f table 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'"
   },
   "dependencies": {
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#v0.3.40",
@@ -15,6 +16,7 @@
     "forge-std": "github:foundry-rs/forge-std#v1.11.0"
   },
   "devDependencies": {
-    "@foundry-rs/forge": "1.4.1"
+    "@foundry-rs/forge": "1.4.1",
+    "solhint": "^6.0.1"
   }
 }

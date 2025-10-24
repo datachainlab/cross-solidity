@@ -29,7 +29,10 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
 
     /// Module callbacks ///
 
-    function onRecvPacket(Packet calldata packet, address relayer)
+    function onRecvPacket(
+        Packet calldata packet,
+        address /*relayer*/
+    )
         public
         virtual
         override
@@ -39,7 +42,11 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         return handlePacket(packet);
     }
 
-    function onAcknowledgementPacket(Packet calldata packet, bytes calldata acknowledgement, address relayer)
+    function onAcknowledgementPacket(
+        Packet calldata packet,
+        bytes calldata acknowledgement,
+        address /*relayer*/
+    )
         public
         virtual
         override
@@ -48,7 +55,14 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         handleAcknowledgement(packet, acknowledgement);
     }
 
-    function onTimeoutPacket(Packet calldata packet, address relayer) public virtual override {
+    function onTimeoutPacket(
+        Packet calldata packet,
+        address /*relayer*/
+    )
+        public
+        virtual
+        override
+    {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
         handleTimeout(packet);
     }

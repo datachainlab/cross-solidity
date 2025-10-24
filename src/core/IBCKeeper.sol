@@ -5,13 +5,13 @@ import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-
 
 // IBCKeeper keeps the contracts of IBC
 abstract contract IBCKeeper {
-    IIBCHandler internal immutable ibcHandler;
+    IIBCHandler internal immutable IBC_HANDLER;
 
     constructor(IIBCHandler handler_) {
-        ibcHandler = handler_;
+        IBC_HANDLER = handler_;
     }
 
     function getIBCHandler() internal view returns (IIBCHandler) {
-        return ibcHandler;
+        return IBC_HANDLER;
     }
 }

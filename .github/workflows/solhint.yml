@@ -1,0 +1,27 @@
+name: Solhint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  solhint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '25'
+
+      - uses: actions/checkout@v3
+
+      - name: Install Node dependencies
+        run: |
+          npm ci
+
+      - name: Run solhint
+        run: |
+          npm run lint:sol

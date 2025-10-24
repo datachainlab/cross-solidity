@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"errors"
@@ -16,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -97,21 +97,45 @@ func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*
 	if err != nil {
 		return nil, err
 	}
-	iter, err := filter.FilterOnContractCall(&bind.FilterOpts{Context: ctx})
+
+	idHash := crypto.Keccak256Hash(txID)
+
+	iter, err := filter.FilterOnContractCall(
+		&bind.FilterOpts{Context: ctx},
+		[][]byte{txID}, // txId
+		nil,            // txIndex
+		nil,            // success
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer iter.Close()
+
 	for iter.Next() {
-		if bytes.Equal(txID, iter.Event.TxId) {
-			return iter.Event, nil
+		ev := iter.Event
+		if ev.TxId == idHash {
+			return ev, nil
 		}
 	}
-	return nil, fmt.Errorf("event not found: txID=%v", string(txID))
+	return nil, fmt.Errorf("event not found: txID(hash)=%s", idHash.Hex())
 }
 
 func (chain *Chain) TxOpts(ctx context.Context, index uint32) *bind.TransactOpts {
 	return makeGenTxOpts(big.NewInt(chain.chainID), chain.prvKey(index))(ctx)
+}
+
+func (c *Chain) LegacyTxOpts(ctx context.Context, nonceAdd uint32) *bind.TransactOpts {
+	opts := c.TxOpts(ctx, nonceAdd)
+
+	gp, err := c.ETHClient.SuggestGasPrice(ctx)
+	if err != nil {
+		gp = big.NewInt(1_000_000_000)
+	}
+	opts.GasPrice = gp
+	opts.GasFeeCap = nil
+	opts.GasTipCap = nil
+
+	return opts
 }
 
 func (chain *Chain) CallOpts(ctx context.Context, index uint32) *bind.CallOpts {

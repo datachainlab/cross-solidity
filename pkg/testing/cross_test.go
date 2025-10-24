@@ -14,6 +14,7 @@ import (
 	xcctypes "github.com/datachainlab/cross/x/core/xcc/types"
 	"github.com/datachainlab/cross/x/packets"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
@@ -55,8 +56,8 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		// 2. call OnRecvPacket with the packet
 		suite.Require().NoError(suite.chain.TxSyncIfNoError(ctx)(
 			suite.chain.CrossSimpleModule.OnRecvPacket(
-				suite.chain.TxOpts(ctx, 0),
-				crosssimplemodule.PacketData{
+				suite.chain.LegacyTxOpts(ctx, 0),
+				crosssimplemodule.Packet{
 					Data: packetData,
 				},
 				relayerAddr,
@@ -68,7 +69,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		suite.Require().NoError(err)
 		suite.Require().True(event.Success)
 		suite.Require().Equal(event.Ret, successMsg)
-		suite.Require().Equal(event.TxId, txID)
+		suite.Require().Equal(event.TxId, crypto.Keccak256Hash(txID))
 		suite.Require().Equal(event.TxIndex, uint8(1))
 	}
 
@@ -83,8 +84,8 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		// 2. call OnRecvPacket with the packet
 		suite.Require().NoError(suite.chain.TxSyncIfNoError(ctx)(
 			suite.chain.CrossSimpleModule.OnRecvPacket(
-				suite.chain.TxOpts(ctx, 0),
-				crosssimplemodule.PacketData{
+				suite.chain.LegacyTxOpts(ctx, 0),
+				crosssimplemodule.Packet{
 					Data: packetData,
 				},
 				relayerAddr,
@@ -96,7 +97,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		suite.Require().NoError(err)
 		suite.Require().False(event.Success)
 		suite.Require().Empty(event.Ret)
-		suite.Require().Equal(event.TxId, txID)
+		suite.Require().Equal(event.TxId, crypto.Keccak256Hash(txID))
 		suite.Require().Equal(event.TxIndex, uint8(1))
 	}
 }
