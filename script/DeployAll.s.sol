@@ -95,12 +95,22 @@ contract DeployAll is Script, Config {
     // ---------- entry ----------
     function run() external {
         // 1) Load config with write-back enabled (stores results after deployment)
-        _loadConfig("./deployments.toml", true);
+        _loadConfig(
+            "./deployments.toml",
+            /*writeBack=*/
+            true
+        );
 
         uint256 chainId = block.chainid;
         console2.log("Deploying to chain:", chainId);
 
-        // 2) Read configuration values
+        // 2) Read configuration values (resolved for the current chain)
+        //    - Required:
+        //        string:  mnemonic
+        //        uint:    mnemonic_index
+        //        bool:    debug_mode
+        //        string:  port_cross
+        //        string:  mock_client_type
         string memory mnemonic = config.get("mnemonic").toString();
         uint256 mnemonicIndexU256 = config.get("mnemonic_index").toUint256();
         // solhint-disable-next-line gas-strict-inequalities
@@ -117,7 +127,7 @@ contract DeployAll is Script, Config {
         console2.log("  mock_client_type:", mockClientType);
         console2.log("  mnemonic_index  :", mnemonicIndex);
 
-        // 3) Derive deployer private key from mnemonic + index
+        // 3) Derive deployer private key from mnemonic + index (Foundry cheatcode)
         uint256 deployerPk = vm.deriveKey(mnemonic, mnemonicIndex);
         address deployer = vm.addr(deployerPk);
         console2.log("Deployer:", deployer);
@@ -132,10 +142,13 @@ contract DeployAll is Script, Config {
         vm.stopBroadcast();
 
         // 5) Write back: save addresses & metadata to deployments.toml
+        //    (addresses go under <chain>.address.*, meta under <chain>.meta.*)
         config.set("ibc_handler", address(ibcHandler));
         config.set("mock_cross_contract", address(mockApp));
         config.set("cross_simple_module", address(crossSimpleModule));
         config.set("mock_client", address(mockClient));
+
+        // Meta
         config.set("deployer", deployer);
 
         console2.log("\nDeployment complete! Addresses saved to deployments.toml");
