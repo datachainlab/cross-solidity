@@ -19,3 +19,7 @@ else
 	@echo "'SOURCE={ContractName}' is required, e.g. make abi SOURCE=CrossSimpleModule"
 	@exit 1
 endif
+
+.PHONY: slither
+slither:
+	slither .

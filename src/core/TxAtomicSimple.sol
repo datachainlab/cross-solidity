@@ -31,14 +31,18 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         );
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
-        PacketAcknowledgementCall.Data memory ack;
+        PacketAcknowledgementCall.Data memory ack = PacketAcknowledgementCall.Data({
+            status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_UNKNOWN
+        });
         try module.onContractCall(
             CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
+            // slither-disable-next-line reentrancy-events
             emit OnContractCall(pdc.tx_id, txIndexParticipant, true, ret);
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
+            // slither-disable-next-line reentrancy-events
             emit OnContractCall(pdc.tx_id, txIndexParticipant, false, new bytes(0));
         }
 
@@ -72,7 +76,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         pure
         returns (bytes memory)
     {
-        HeaderField.Data[] memory fields;
+        HeaderField.Data[] memory fields = new HeaderField.Data[](0);
         return Acknowledgement.encode(
             Acknowledgement.Data({
                 is_success: true,
