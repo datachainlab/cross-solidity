@@ -1,25 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/05-port/IIBCModule.sol";
-import "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IBCHandler.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {
+    IIBCModule,
+    IIBCModuleInitializer
+} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/26-router/IIBCModule.sol";
+import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+
 import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
-abstract contract CrossModule is Context, AccessControl, IIBCModule, IBCKeeper, PacketHandler {
+abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHandler {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IBCHandler ibcHandler_) IBCKeeper(ibcHandler_) {
-        _setupRole(IBC_ROLE, address(ibcHandler_));
+    constructor(IIBCHandler ibcHandler_) IBCKeeper(ibcHandler_) {
+        _grantRole(IBC_ROLE, address(ibcHandler_));
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, IERC165) returns (bool) {
+        return interfaceId == type(IIBCModule).interfaceId || interfaceId == type(IIBCModuleInitializer).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 
     // function initiateTx() external {}
 
     /// Module callbacks ///
 
-    function onRecvPacket(Packet.Data memory packet, address relayer)
+    function onRecvPacket(Packet calldata packet, address relayer)
         public
         virtual
         override
@@ -29,43 +39,77 @@ abstract contract CrossModule is Context, AccessControl, IIBCModule, IBCKeeper, 
         return handlePacket(packet);
     }
 
-    function onAcknowledgementPacket(Packet.Data memory packet, bytes memory acknowledgement, address relayer)
+    function onAcknowledgementPacket(Packet calldata packet, bytes calldata acknowledgement, address relayer)
         public
         virtual
         override
     {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
-        return handleAcknowledgement(packet, acknowledgement);
+        handleAcknowledgement(packet, acknowledgement);
     }
 
-    function onChanOpenInit(
-        Channel.Order,
-        string[] calldata connectionHops,
-        string calldata portId,
-        string calldata channelId,
-        ChannelCounterparty.Data calldata counterparty,
-        string calldata version
-    ) external virtual override {}
+    function onTimeoutPacket(Packet calldata packet, address relayer) public virtual override {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+        handleTimeout(packet);
+    }
 
-    function onChanOpenTry(
-        Channel.Order,
-        string[] calldata connectionHops,
-        string calldata portId,
-        string calldata channelId,
-        ChannelCounterparty.Data calldata counterparty,
-        string calldata version,
-        string calldata counterpartyVersion
-    ) external virtual override {}
-
-    function onChanOpenAck(string calldata portId, string calldata channelId, string calldata counterpartyVersion)
+    function onChanOpenInit(IIBCModuleInitializer.MsgOnChanOpenInit calldata msg_)
         external
         virtual
         override
-    {}
+        returns (address moduleAddr, string memory version)
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+        return (address(this), msg_.version);
+    }
 
-    function onChanOpenConfirm(string calldata portId, string calldata channelId) external virtual override {}
+    function onChanOpenTry(IIBCModuleInitializer.MsgOnChanOpenTry calldata msg_)
+        external
+        virtual
+        override
+        returns (address moduleAddr, string memory version)
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+        return (address(this), msg_.counterpartyVersion);
+    }
 
-    function onChanCloseInit(string calldata portId, string calldata channelId) external virtual override {}
+    function onChanOpenAck(
+        IIBCModule.MsgOnChanOpenAck calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
 
-    function onChanCloseConfirm(string calldata portId, string calldata channelId) external virtual override {}
+    function onChanOpenConfirm(
+        IIBCModule.MsgOnChanOpenConfirm calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
+
+    function onChanCloseInit(
+        IIBCModule.MsgOnChanCloseInit calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
+
+    function onChanCloseConfirm(
+        IIBCModule.MsgOnChanCloseConfirm calldata /*msg_*/
+    )
+        external
+        virtual
+        override
+    {
+        require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
+    }
 }

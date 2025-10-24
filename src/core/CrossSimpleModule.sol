@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import "./CrossModule.sol";
 import "./TxAtomicSimple.sol";
 import "./SimpleContractRegistry.sol";
-import "./IBCKeeper.sol";
+import "./IContractModule.sol";
+import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 
 contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimple {
-    constructor(IBCHandler ibcHandler_, IContractModule module, bool debugMode) public CrossModule(ibcHandler_) {
+    constructor(IIBCHandler ibcHandler_, IContractModule module, bool debugMode) CrossModule(ibcHandler_) {
         if (debugMode) {
-            _setupRole(IBC_ROLE, _msgSender());
+            _grantRole(IBC_ROLE, _msgSender());
         }
         registerModule(module);
     }
 
-    // debug for serialization
-
+    // ---- debug for serialization ----
     function getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus status)
         public
         pure

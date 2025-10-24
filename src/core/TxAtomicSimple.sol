@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import {GoogleProtobufAny as Any} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+
 import "./PacketHandler.sol";
 import "./ContractRegistry.sol";
 import "./IContractModule.sol";
 import "./IBCKeeper.sol";
+
 import "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 // TxAtomicSimple implements PacketHandler that supports simple-commit protocol
@@ -15,7 +18,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
 
     event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret);
 
-    function handlePacket(Packet.Data memory packet) internal virtual override returns (bytes memory acknowledgement) {
+    function handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);
 
         PacketData.Data memory pd = PacketData.decode(packet.data);
@@ -29,10 +32,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
         PacketAcknowledgementCall.Data memory ack;
-        try getModule(packet)
-            .onContractCall(
-                CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
-            ) returns (bytes memory ret) {
+        try module.onContractCall(
+            CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
+        ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
             emit OnContractCall(pdc.tx_id, txIndexParticipant, true, ret);
         } catch (bytes memory) {
@@ -43,7 +45,25 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         return packPacketAcknowledgementCall(ack);
     }
 
-    function handleAcknowledgement(Packet.Data memory packet, bytes memory acknowledgement) internal virtual override {
+    function handleAcknowledgement(
+        Packet memory,
+        /*packet*/
+        bytes memory /*acknowledgement*/
+    )
+        internal
+        virtual
+        override
+    {
+        revert("not implemented error");
+    }
+
+    function handleTimeout(
+        Packet calldata /*packet*/
+    )
+        internal
+        virtual
+        override
+    {
         revert("not implemented error");
     }
 
