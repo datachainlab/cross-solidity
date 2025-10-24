@@ -4,6 +4,7 @@
 package crosssimplemodule
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -24,6 +26,7 @@ var (
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
 
 // ChannelCounterpartyData is an auto generated low-level Go binding around an user-defined struct.
@@ -38,8 +41,53 @@ type HeightData struct {
 	RevisionHeight uint64
 }
 
-// PacketData is an auto generated low-level Go binding around an user-defined struct.
-type PacketData struct {
+// IIBCModuleInitializerMsgOnChanOpenInit is an auto generated low-level Go binding around an user-defined struct.
+type IIBCModuleInitializerMsgOnChanOpenInit struct {
+	Order          uint8
+	ConnectionHops []string
+	PortId         string
+	ChannelId      string
+	Counterparty   ChannelCounterpartyData
+	Version        string
+}
+
+// IIBCModuleInitializerMsgOnChanOpenTry is an auto generated low-level Go binding around an user-defined struct.
+type IIBCModuleInitializerMsgOnChanOpenTry struct {
+	Order               uint8
+	ConnectionHops      []string
+	PortId              string
+	ChannelId           string
+	Counterparty        ChannelCounterpartyData
+	CounterpartyVersion string
+}
+
+// IIBCModuleMsgOnChanCloseConfirm is an auto generated low-level Go binding around an user-defined struct.
+type IIBCModuleMsgOnChanCloseConfirm struct {
+	PortId    string
+	ChannelId string
+}
+
+// IIBCModuleMsgOnChanCloseInit is an auto generated low-level Go binding around an user-defined struct.
+type IIBCModuleMsgOnChanCloseInit struct {
+	PortId    string
+	ChannelId string
+}
+
+// IIBCModuleMsgOnChanOpenAck is an auto generated low-level Go binding around an user-defined struct.
+type IIBCModuleMsgOnChanOpenAck struct {
+	PortId              string
+	ChannelId           string
+	CounterpartyVersion string
+}
+
+// IIBCModuleMsgOnChanOpenConfirm is an auto generated low-level Go binding around an user-defined struct.
+type IIBCModuleMsgOnChanOpenConfirm struct {
+	PortId    string
+	ChannelId string
+}
+
+// Packet is an auto generated low-level Go binding around an user-defined struct.
+type Packet struct {
 	Sequence           uint64
 	SourcePort         string
 	SourceChannel      string
@@ -50,8 +98,14 @@ type PacketData struct {
 	TimeoutTimestamp   uint64
 }
 
+// CrosssimplemoduleMetaData contains all meta data concerning the Crosssimplemodule contract.
+var CrosssimplemoduleMetaData = &bind.MetaData{
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"ibcHandler_\",\"type\":\"address\",\"internalType\":\"contractIIBCHandler\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"contractIContractModule\"},{\"name\":\"debugMode\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"DEFAULT_ADMIN_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"IBC_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPacketAcknowledgementCall\",\"inputs\":[{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumPacketAcknowledgementCall.CommitStatus\"}],\"outputs\":[{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRoleAdmin\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"grantRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"hasRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onAcknowledgementPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanCloseConfirm\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanCloseConfirm\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanCloseInit\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanCloseInit\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenAck\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanOpenAck\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterpartyVersion\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenConfirm\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanOpenConfirm\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenInit\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structIIBCModuleInitializer.MsgOnChanOpenInit\",\"components\":[{\"name\":\"order\",\"type\":\"uint8\",\"internalType\":\"enumChannel.Order\"},{\"name\":\"connectionHops\",\"type\":\"string[]\",\"internalType\":\"string[]\"},{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterparty\",\"type\":\"tuple\",\"internalType\":\"structChannelCounterparty.Data\",\"components\":[{\"name\":\"port_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channel_id\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[{\"name\":\"moduleAddr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenTry\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structIIBCModuleInitializer.MsgOnChanOpenTry\",\"components\":[{\"name\":\"order\",\"type\":\"uint8\",\"internalType\":\"enumChannel.Order\"},{\"name\":\"connectionHops\",\"type\":\"string[]\",\"internalType\":\"string[]\"},{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterparty\",\"type\":\"tuple\",\"internalType\":\"structChannelCounterparty.Data\",\"components\":[{\"name\":\"port_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channel_id\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"counterpartyVersion\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[{\"name\":\"moduleAddr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRecvPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onTimeoutPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"renounceRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"callerConfirmation\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"revokeRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"OnContractCall\",\"inputs\":[{\"name\":\"txId\",\"type\":\"bytes\",\"indexed\":true,\"internalType\":\"bytes\"},{\"name\":\"txIndex\",\"type\":\"uint8\",\"indexed\":true,\"internalType\":\"uint8\"},{\"name\":\"success\",\"type\":\"bool\",\"indexed\":true,\"internalType\":\"bool\"},{\"name\":\"ret\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleAdminChanged\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"previousAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"newAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleGranted\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleRevoked\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AccessControlBadConfirmation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AccessControlUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"neededRole\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"ModuleAlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ModuleNotInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotImplemented\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"PayloadDecodeFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnexpectedTypeURL\",\"inputs\":[]}]",
+}
+
 // CrosssimplemoduleABI is the input ABI used to generate the binding from.
-const CrosssimplemoduleABI = "[{\"inputs\":[{\"internalType\":\"contractIBCHandler\",\"name\":\"ibcHandler_\",\"type\":\"address\"},{\"internalType\":\"contractIContractModule\",\"name\":\"module\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"debugMode\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"tx_id\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"tx_index\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"ret\",\"type\":\"bytes\"}],\"name\":\"OnContractCall\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[],\"name\":\"IBC_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"sequence\",\"type\":\"uint64\"},{\"internalType\":\"string\",\"name\":\"source_port\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"source_channel\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"destination_port\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"destination_channel\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint64\",\"name\":\"revision_number\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revision_height\",\"type\":\"uint64\"}],\"internalType\":\"structHeight.Data\",\"name\":\"timeout_height\",\"type\":\"tuple\"},{\"internalType\":\"uint64\",\"name\":\"timeout_timestamp\",\"type\":\"uint64\"}],\"internalType\":\"structPacket.Data\",\"name\":\"packet\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"acknowledgement\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"relayer\",\"type\":\"address\"}],\"name\":\"onAcknowledgementPacket\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"portId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"}],\"name\":\"onChanCloseConfirm\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"portId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"}],\"name\":\"onChanCloseInit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"portId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"counterpartyVersion\",\"type\":\"string\"}],\"name\":\"onChanOpenAck\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"portId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"}],\"name\":\"onChanOpenConfirm\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"enumChannel.Order\",\"name\":\"\",\"type\":\"uint8\"},{\"internalType\":\"string[]\",\"name\":\"connectionHops\",\"type\":\"string[]\"},{\"internalType\":\"string\",\"name\":\"portId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"port_id\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channel_id\",\"type\":\"string\"}],\"internalType\":\"structChannelCounterparty.Data\",\"name\":\"counterparty\",\"type\":\"tuple\"},{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"}],\"name\":\"onChanOpenInit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"enumChannel.Order\",\"name\":\"\",\"type\":\"uint8\"},{\"internalType\":\"string[]\",\"name\":\"connectionHops\",\"type\":\"string[]\"},{\"internalType\":\"string\",\"name\":\"portId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"port_id\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"channel_id\",\"type\":\"string\"}],\"internalType\":\"structChannelCounterparty.Data\",\"name\":\"counterparty\",\"type\":\"tuple\"},{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"counterpartyVersion\",\"type\":\"string\"}],\"name\":\"onChanOpenTry\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"sequence\",\"type\":\"uint64\"},{\"internalType\":\"string\",\"name\":\"source_port\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"source_channel\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"destination_port\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"destination_channel\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint64\",\"name\":\"revision_number\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"revision_height\",\"type\":\"uint64\"}],\"internalType\":\"structHeight.Data\",\"name\":\"timeout_height\",\"type\":\"tuple\"},{\"internalType\":\"uint64\",\"name\":\"timeout_timestamp\",\"type\":\"uint64\"}],\"internalType\":\"structPacket.Data\",\"name\":\"packet\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"relayer\",\"type\":\"address\"}],\"name\":\"onRecvPacket\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"acknowledgement\",\"type\":\"bytes\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\",\"constant\":true},{\"inputs\":[{\"internalType\":\"enumPacketAcknowledgementCall.CommitStatus\",\"name\":\"status\",\"type\":\"uint8\"}],\"name\":\"getPacketAcknowledgementCall\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"acknowledgement\",\"type\":\"bytes\"}],\"stateMutability\":\"pure\",\"type\":\"function\",\"constant\":true}]"
+// Deprecated: Use CrosssimplemoduleMetaData.ABI instead.
+var CrosssimplemoduleABI = CrosssimplemoduleMetaData.ABI
 
 // Crosssimplemodule is an auto generated Go binding around an Ethereum contract.
 type Crosssimplemodule struct {
@@ -150,11 +204,11 @@ func NewCrosssimplemoduleFilterer(address common.Address, filterer bind.Contract
 
 // bindCrosssimplemodule binds a generic wrapper to an already deployed contract.
 func bindCrosssimplemodule(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(CrosssimplemoduleABI))
+	parsed, err := CrosssimplemoduleMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+	return bind.NewBoundContract(address, *parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -404,191 +458,212 @@ func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) GrantRole(role [32
 
 // OnAcknowledgementPacket is a paid mutator transaction binding the contract method 0xfb8b532e.
 //
-// Solidity: function onAcknowledgementPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, bytes acknowledgement, address relayer) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnAcknowledgementPacket(opts *bind.TransactOpts, packet PacketData, acknowledgement []byte, relayer common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onAcknowledgementPacket", packet, acknowledgement, relayer)
+// Solidity: function onAcknowledgementPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, bytes acknowledgement, address ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnAcknowledgementPacket(opts *bind.TransactOpts, packet Packet, acknowledgement []byte, arg2 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onAcknowledgementPacket", packet, acknowledgement, arg2)
 }
 
 // OnAcknowledgementPacket is a paid mutator transaction binding the contract method 0xfb8b532e.
 //
-// Solidity: function onAcknowledgementPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, bytes acknowledgement, address relayer) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnAcknowledgementPacket(packet PacketData, acknowledgement []byte, relayer common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnAcknowledgementPacket(&_Crosssimplemodule.TransactOpts, packet, acknowledgement, relayer)
+// Solidity: function onAcknowledgementPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, bytes acknowledgement, address ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnAcknowledgementPacket(packet Packet, acknowledgement []byte, arg2 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnAcknowledgementPacket(&_Crosssimplemodule.TransactOpts, packet, acknowledgement, arg2)
 }
 
 // OnAcknowledgementPacket is a paid mutator transaction binding the contract method 0xfb8b532e.
 //
-// Solidity: function onAcknowledgementPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, bytes acknowledgement, address relayer) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnAcknowledgementPacket(packet PacketData, acknowledgement []byte, relayer common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnAcknowledgementPacket(&_Crosssimplemodule.TransactOpts, packet, acknowledgement, relayer)
+// Solidity: function onAcknowledgementPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, bytes acknowledgement, address ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnAcknowledgementPacket(packet Packet, acknowledgement []byte, arg2 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnAcknowledgementPacket(&_Crosssimplemodule.TransactOpts, packet, acknowledgement, arg2)
 }
 
-// OnChanCloseConfirm is a paid mutator transaction binding the contract method 0xef4776d2.
+// OnChanCloseConfirm is a paid mutator transaction binding the contract method 0x38c858bc.
 //
-// Solidity: function onChanCloseConfirm(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanCloseConfirm(opts *bind.TransactOpts, portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onChanCloseConfirm", portId, channelId)
+// Solidity: function onChanCloseConfirm((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanCloseConfirm(opts *bind.TransactOpts, arg0 IIBCModuleMsgOnChanCloseConfirm) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onChanCloseConfirm", arg0)
 }
 
-// OnChanCloseConfirm is a paid mutator transaction binding the contract method 0xef4776d2.
+// OnChanCloseConfirm is a paid mutator transaction binding the contract method 0x38c858bc.
 //
-// Solidity: function onChanCloseConfirm(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanCloseConfirm(portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanCloseConfirm(&_Crosssimplemodule.TransactOpts, portId, channelId)
+// Solidity: function onChanCloseConfirm((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanCloseConfirm(arg0 IIBCModuleMsgOnChanCloseConfirm) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanCloseConfirm(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanCloseConfirm is a paid mutator transaction binding the contract method 0xef4776d2.
+// OnChanCloseConfirm is a paid mutator transaction binding the contract method 0x38c858bc.
 //
-// Solidity: function onChanCloseConfirm(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanCloseConfirm(portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanCloseConfirm(&_Crosssimplemodule.TransactOpts, portId, channelId)
+// Solidity: function onChanCloseConfirm((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanCloseConfirm(arg0 IIBCModuleMsgOnChanCloseConfirm) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanCloseConfirm(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanCloseInit is a paid mutator transaction binding the contract method 0xe74a1ac2.
+// OnChanCloseInit is a paid mutator transaction binding the contract method 0x3c7df3fb.
 //
-// Solidity: function onChanCloseInit(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanCloseInit(opts *bind.TransactOpts, portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onChanCloseInit", portId, channelId)
+// Solidity: function onChanCloseInit((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanCloseInit(opts *bind.TransactOpts, arg0 IIBCModuleMsgOnChanCloseInit) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onChanCloseInit", arg0)
 }
 
-// OnChanCloseInit is a paid mutator transaction binding the contract method 0xe74a1ac2.
+// OnChanCloseInit is a paid mutator transaction binding the contract method 0x3c7df3fb.
 //
-// Solidity: function onChanCloseInit(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanCloseInit(portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanCloseInit(&_Crosssimplemodule.TransactOpts, portId, channelId)
+// Solidity: function onChanCloseInit((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanCloseInit(arg0 IIBCModuleMsgOnChanCloseInit) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanCloseInit(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanCloseInit is a paid mutator transaction binding the contract method 0xe74a1ac2.
+// OnChanCloseInit is a paid mutator transaction binding the contract method 0x3c7df3fb.
 //
-// Solidity: function onChanCloseInit(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanCloseInit(portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanCloseInit(&_Crosssimplemodule.TransactOpts, portId, channelId)
+// Solidity: function onChanCloseInit((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanCloseInit(arg0 IIBCModuleMsgOnChanCloseInit) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanCloseInit(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanOpenAck is a paid mutator transaction binding the contract method 0x4942d1ac.
+// OnChanOpenAck is a paid mutator transaction binding the contract method 0x12f6ff6f.
 //
-// Solidity: function onChanOpenAck(string portId, string channelId, string counterpartyVersion) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenAck(opts *bind.TransactOpts, portId string, channelId string, counterpartyVersion string) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenAck", portId, channelId, counterpartyVersion)
+// Solidity: function onChanOpenAck((string,string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenAck(opts *bind.TransactOpts, arg0 IIBCModuleMsgOnChanOpenAck) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenAck", arg0)
 }
 
-// OnChanOpenAck is a paid mutator transaction binding the contract method 0x4942d1ac.
+// OnChanOpenAck is a paid mutator transaction binding the contract method 0x12f6ff6f.
 //
-// Solidity: function onChanOpenAck(string portId, string channelId, string counterpartyVersion) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenAck(portId string, channelId string, counterpartyVersion string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenAck(&_Crosssimplemodule.TransactOpts, portId, channelId, counterpartyVersion)
+// Solidity: function onChanOpenAck((string,string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenAck(arg0 IIBCModuleMsgOnChanOpenAck) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenAck(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanOpenAck is a paid mutator transaction binding the contract method 0x4942d1ac.
+// OnChanOpenAck is a paid mutator transaction binding the contract method 0x12f6ff6f.
 //
-// Solidity: function onChanOpenAck(string portId, string channelId, string counterpartyVersion) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenAck(portId string, channelId string, counterpartyVersion string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenAck(&_Crosssimplemodule.TransactOpts, portId, channelId, counterpartyVersion)
+// Solidity: function onChanOpenAck((string,string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenAck(arg0 IIBCModuleMsgOnChanOpenAck) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenAck(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanOpenConfirm is a paid mutator transaction binding the contract method 0xa113e411.
+// OnChanOpenConfirm is a paid mutator transaction binding the contract method 0x81b174dc.
 //
-// Solidity: function onChanOpenConfirm(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenConfirm(opts *bind.TransactOpts, portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenConfirm", portId, channelId)
+// Solidity: function onChanOpenConfirm((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenConfirm(opts *bind.TransactOpts, arg0 IIBCModuleMsgOnChanOpenConfirm) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenConfirm", arg0)
 }
 
-// OnChanOpenConfirm is a paid mutator transaction binding the contract method 0xa113e411.
+// OnChanOpenConfirm is a paid mutator transaction binding the contract method 0x81b174dc.
 //
-// Solidity: function onChanOpenConfirm(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenConfirm(portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenConfirm(&_Crosssimplemodule.TransactOpts, portId, channelId)
+// Solidity: function onChanOpenConfirm((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenConfirm(arg0 IIBCModuleMsgOnChanOpenConfirm) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenConfirm(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanOpenConfirm is a paid mutator transaction binding the contract method 0xa113e411.
+// OnChanOpenConfirm is a paid mutator transaction binding the contract method 0x81b174dc.
 //
-// Solidity: function onChanOpenConfirm(string portId, string channelId) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenConfirm(portId string, channelId string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenConfirm(&_Crosssimplemodule.TransactOpts, portId, channelId)
+// Solidity: function onChanOpenConfirm((string,string) ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenConfirm(arg0 IIBCModuleMsgOnChanOpenConfirm) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenConfirm(&_Crosssimplemodule.TransactOpts, arg0)
 }
 
-// OnChanOpenInit is a paid mutator transaction binding the contract method 0x44dd9638.
+// OnChanOpenInit is a paid mutator transaction binding the contract method 0x0b7b4ccb.
 //
-// Solidity: function onChanOpenInit(uint8 , string[] connectionHops, string portId, string channelId, (string,string) counterparty, string version) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenInit(opts *bind.TransactOpts, arg0 uint8, connectionHops []string, portId string, channelId string, counterparty ChannelCounterpartyData, version string) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenInit", arg0, connectionHops, portId, channelId, counterparty, version)
+// Solidity: function onChanOpenInit((uint8,string[],string,string,(string,string),string) msg_) returns(address moduleAddr, string version)
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenInit(opts *bind.TransactOpts, msg_ IIBCModuleInitializerMsgOnChanOpenInit) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenInit", msg_)
 }
 
-// OnChanOpenInit is a paid mutator transaction binding the contract method 0x44dd9638.
+// OnChanOpenInit is a paid mutator transaction binding the contract method 0x0b7b4ccb.
 //
-// Solidity: function onChanOpenInit(uint8 , string[] connectionHops, string portId, string channelId, (string,string) counterparty, string version) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenInit(arg0 uint8, connectionHops []string, portId string, channelId string, counterparty ChannelCounterpartyData, version string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenInit(&_Crosssimplemodule.TransactOpts, arg0, connectionHops, portId, channelId, counterparty, version)
+// Solidity: function onChanOpenInit((uint8,string[],string,string,(string,string),string) msg_) returns(address moduleAddr, string version)
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenInit(msg_ IIBCModuleInitializerMsgOnChanOpenInit) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenInit(&_Crosssimplemodule.TransactOpts, msg_)
 }
 
-// OnChanOpenInit is a paid mutator transaction binding the contract method 0x44dd9638.
+// OnChanOpenInit is a paid mutator transaction binding the contract method 0x0b7b4ccb.
 //
-// Solidity: function onChanOpenInit(uint8 , string[] connectionHops, string portId, string channelId, (string,string) counterparty, string version) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenInit(arg0 uint8, connectionHops []string, portId string, channelId string, counterparty ChannelCounterpartyData, version string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenInit(&_Crosssimplemodule.TransactOpts, arg0, connectionHops, portId, channelId, counterparty, version)
+// Solidity: function onChanOpenInit((uint8,string[],string,string,(string,string),string) msg_) returns(address moduleAddr, string version)
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenInit(msg_ IIBCModuleInitializerMsgOnChanOpenInit) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenInit(&_Crosssimplemodule.TransactOpts, msg_)
 }
 
-// OnChanOpenTry is a paid mutator transaction binding the contract method 0x981389f2.
+// OnChanOpenTry is a paid mutator transaction binding the contract method 0xa7a61e66.
 //
-// Solidity: function onChanOpenTry(uint8 , string[] connectionHops, string portId, string channelId, (string,string) counterparty, string version, string counterpartyVersion) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenTry(opts *bind.TransactOpts, arg0 uint8, connectionHops []string, portId string, channelId string, counterparty ChannelCounterpartyData, version string, counterpartyVersion string) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenTry", arg0, connectionHops, portId, channelId, counterparty, version, counterpartyVersion)
+// Solidity: function onChanOpenTry((uint8,string[],string,string,(string,string),string) msg_) returns(address moduleAddr, string version)
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnChanOpenTry(opts *bind.TransactOpts, msg_ IIBCModuleInitializerMsgOnChanOpenTry) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onChanOpenTry", msg_)
 }
 
-// OnChanOpenTry is a paid mutator transaction binding the contract method 0x981389f2.
+// OnChanOpenTry is a paid mutator transaction binding the contract method 0xa7a61e66.
 //
-// Solidity: function onChanOpenTry(uint8 , string[] connectionHops, string portId, string channelId, (string,string) counterparty, string version, string counterpartyVersion) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenTry(arg0 uint8, connectionHops []string, portId string, channelId string, counterparty ChannelCounterpartyData, version string, counterpartyVersion string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenTry(&_Crosssimplemodule.TransactOpts, arg0, connectionHops, portId, channelId, counterparty, version, counterpartyVersion)
+// Solidity: function onChanOpenTry((uint8,string[],string,string,(string,string),string) msg_) returns(address moduleAddr, string version)
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnChanOpenTry(msg_ IIBCModuleInitializerMsgOnChanOpenTry) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenTry(&_Crosssimplemodule.TransactOpts, msg_)
 }
 
-// OnChanOpenTry is a paid mutator transaction binding the contract method 0x981389f2.
+// OnChanOpenTry is a paid mutator transaction binding the contract method 0xa7a61e66.
 //
-// Solidity: function onChanOpenTry(uint8 , string[] connectionHops, string portId, string channelId, (string,string) counterparty, string version, string counterpartyVersion) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenTry(arg0 uint8, connectionHops []string, portId string, channelId string, counterparty ChannelCounterpartyData, version string, counterpartyVersion string) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnChanOpenTry(&_Crosssimplemodule.TransactOpts, arg0, connectionHops, portId, channelId, counterparty, version, counterpartyVersion)
-}
-
-// OnRecvPacket is a paid mutator transaction binding the contract method 0x2301c6f5.
-//
-// Solidity: function onRecvPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address relayer) returns(bytes acknowledgement)
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnRecvPacket(opts *bind.TransactOpts, packet PacketData, relayer common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "onRecvPacket", packet, relayer)
+// Solidity: function onChanOpenTry((uint8,string[],string,string,(string,string),string) msg_) returns(address moduleAddr, string version)
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnChanOpenTry(msg_ IIBCModuleInitializerMsgOnChanOpenTry) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnChanOpenTry(&_Crosssimplemodule.TransactOpts, msg_)
 }
 
 // OnRecvPacket is a paid mutator transaction binding the contract method 0x2301c6f5.
 //
-// Solidity: function onRecvPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address relayer) returns(bytes acknowledgement)
-func (_Crosssimplemodule *CrosssimplemoduleSession) OnRecvPacket(packet PacketData, relayer common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnRecvPacket(&_Crosssimplemodule.TransactOpts, packet, relayer)
+// Solidity: function onRecvPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address ) returns(bytes acknowledgement)
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnRecvPacket(opts *bind.TransactOpts, packet Packet, arg1 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onRecvPacket", packet, arg1)
 }
 
 // OnRecvPacket is a paid mutator transaction binding the contract method 0x2301c6f5.
 //
-// Solidity: function onRecvPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address relayer) returns(bytes acknowledgement)
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnRecvPacket(packet PacketData, relayer common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.OnRecvPacket(&_Crosssimplemodule.TransactOpts, packet, relayer)
+// Solidity: function onRecvPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address ) returns(bytes acknowledgement)
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnRecvPacket(packet Packet, arg1 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnRecvPacket(&_Crosssimplemodule.TransactOpts, packet, arg1)
+}
+
+// OnRecvPacket is a paid mutator transaction binding the contract method 0x2301c6f5.
+//
+// Solidity: function onRecvPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address ) returns(bytes acknowledgement)
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnRecvPacket(packet Packet, arg1 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnRecvPacket(&_Crosssimplemodule.TransactOpts, packet, arg1)
+}
+
+// OnTimeoutPacket is a paid mutator transaction binding the contract method 0x52c7157d.
+//
+// Solidity: function onTimeoutPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) OnTimeoutPacket(opts *bind.TransactOpts, packet Packet, arg1 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "onTimeoutPacket", packet, arg1)
+}
+
+// OnTimeoutPacket is a paid mutator transaction binding the contract method 0x52c7157d.
+//
+// Solidity: function onTimeoutPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleSession) OnTimeoutPacket(packet Packet, arg1 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnTimeoutPacket(&_Crosssimplemodule.TransactOpts, packet, arg1)
+}
+
+// OnTimeoutPacket is a paid mutator transaction binding the contract method 0x52c7157d.
+//
+// Solidity: function onTimeoutPacket((uint64,string,string,string,string,bytes,(uint64,uint64),uint64) packet, address ) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) OnTimeoutPacket(packet Packet, arg1 common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.OnTimeoutPacket(&_Crosssimplemodule.TransactOpts, packet, arg1)
 }
 
 // RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
 //
-// Solidity: function renounceRole(bytes32 role, address account) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactor) RenounceRole(opts *bind.TransactOpts, role [32]byte, account common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.contract.Transact(opts, "renounceRole", role, account)
+// Solidity: function renounceRole(bytes32 role, address callerConfirmation) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) RenounceRole(opts *bind.TransactOpts, role [32]byte, callerConfirmation common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "renounceRole", role, callerConfirmation)
 }
 
 // RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
 //
-// Solidity: function renounceRole(bytes32 role, address account) returns()
-func (_Crosssimplemodule *CrosssimplemoduleSession) RenounceRole(role [32]byte, account common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.RenounceRole(&_Crosssimplemodule.TransactOpts, role, account)
+// Solidity: function renounceRole(bytes32 role, address callerConfirmation) returns()
+func (_Crosssimplemodule *CrosssimplemoduleSession) RenounceRole(role [32]byte, callerConfirmation common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.RenounceRole(&_Crosssimplemodule.TransactOpts, role, callerConfirmation)
 }
 
 // RenounceRole is a paid mutator transaction binding the contract method 0x36568abe.
 //
-// Solidity: function renounceRole(bytes32 role, address account) returns()
-func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) RenounceRole(role [32]byte, account common.Address) (*types.Transaction, error) {
-	return _Crosssimplemodule.Contract.RenounceRole(&_Crosssimplemodule.TransactOpts, role, account)
+// Solidity: function renounceRole(bytes32 role, address callerConfirmation) returns()
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) RenounceRole(role [32]byte, callerConfirmation common.Address) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.RenounceRole(&_Crosssimplemodule.TransactOpts, role, callerConfirmation)
 }
 
 // RevokeRole is a paid mutator transaction binding the contract method 0xd547741f.
@@ -681,7 +756,7 @@ func (it *CrosssimplemoduleOnContractCallIterator) Close() error {
 
 // CrosssimplemoduleOnContractCall represents a OnContractCall event raised by the Crosssimplemodule contract.
 type CrosssimplemoduleOnContractCall struct {
-	TxId    []byte
+	TxId    common.Hash
 	TxIndex uint8
 	Success bool
 	Ret     []byte
@@ -690,10 +765,23 @@ type CrosssimplemoduleOnContractCall struct {
 
 // FilterOnContractCall is a free log retrieval operation binding the contract event 0x3cf6800c9da1119c1bcca8a173f94e0cd281ab3fae5f1e09ebbb95a64092584f.
 //
-// Solidity: event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret)
-func (_Crosssimplemodule *CrosssimplemoduleFilterer) FilterOnContractCall(opts *bind.FilterOpts) (*CrosssimplemoduleOnContractCallIterator, error) {
+// Solidity: event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret)
+func (_Crosssimplemodule *CrosssimplemoduleFilterer) FilterOnContractCall(opts *bind.FilterOpts, txId [][]byte, txIndex []uint8, success []bool) (*CrosssimplemoduleOnContractCallIterator, error) {
 
-	logs, sub, err := _Crosssimplemodule.contract.FilterLogs(opts, "OnContractCall")
+	var txIdRule []interface{}
+	for _, txIdItem := range txId {
+		txIdRule = append(txIdRule, txIdItem)
+	}
+	var txIndexRule []interface{}
+	for _, txIndexItem := range txIndex {
+		txIndexRule = append(txIndexRule, txIndexItem)
+	}
+	var successRule []interface{}
+	for _, successItem := range success {
+		successRule = append(successRule, successItem)
+	}
+
+	logs, sub, err := _Crosssimplemodule.contract.FilterLogs(opts, "OnContractCall", txIdRule, txIndexRule, successRule)
 	if err != nil {
 		return nil, err
 	}
@@ -702,10 +790,23 @@ func (_Crosssimplemodule *CrosssimplemoduleFilterer) FilterOnContractCall(opts *
 
 // WatchOnContractCall is a free log subscription operation binding the contract event 0x3cf6800c9da1119c1bcca8a173f94e0cd281ab3fae5f1e09ebbb95a64092584f.
 //
-// Solidity: event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret)
-func (_Crosssimplemodule *CrosssimplemoduleFilterer) WatchOnContractCall(opts *bind.WatchOpts, sink chan<- *CrosssimplemoduleOnContractCall) (event.Subscription, error) {
+// Solidity: event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret)
+func (_Crosssimplemodule *CrosssimplemoduleFilterer) WatchOnContractCall(opts *bind.WatchOpts, sink chan<- *CrosssimplemoduleOnContractCall, txId [][]byte, txIndex []uint8, success []bool) (event.Subscription, error) {
 
-	logs, sub, err := _Crosssimplemodule.contract.WatchLogs(opts, "OnContractCall")
+	var txIdRule []interface{}
+	for _, txIdItem := range txId {
+		txIdRule = append(txIdRule, txIdItem)
+	}
+	var txIndexRule []interface{}
+	for _, txIndexItem := range txIndex {
+		txIndexRule = append(txIndexRule, txIndexItem)
+	}
+	var successRule []interface{}
+	for _, successItem := range success {
+		successRule = append(successRule, successItem)
+	}
+
+	logs, sub, err := _Crosssimplemodule.contract.WatchLogs(opts, "OnContractCall", txIdRule, txIndexRule, successRule)
 	if err != nil {
 		return nil, err
 	}
@@ -739,7 +840,7 @@ func (_Crosssimplemodule *CrosssimplemoduleFilterer) WatchOnContractCall(opts *b
 
 // ParseOnContractCall is a log parse operation binding the contract event 0x3cf6800c9da1119c1bcca8a173f94e0cd281ab3fae5f1e09ebbb95a64092584f.
 //
-// Solidity: event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret)
+// Solidity: event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret)
 func (_Crosssimplemodule *CrosssimplemoduleFilterer) ParseOnContractCall(log types.Log) (*CrosssimplemoduleOnContractCall, error) {
 	event := new(CrosssimplemoduleOnContractCall)
 	if err := _Crosssimplemodule.contract.UnpackLog(event, "OnContractCall", log); err != nil {
