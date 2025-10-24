@@ -5,7 +5,8 @@
     "deploy": "forge script script/DeployAll.s.sol --rpc-url anvil --broadcast",
     "compile": "forge build",
     "postinstall": "forge build",
-    "clean": "rm -rf build"
+    "clean": "rm -rf build",
+    "test": "forge test -vvv"
   },
   "dependencies": {
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#v0.3.40",
