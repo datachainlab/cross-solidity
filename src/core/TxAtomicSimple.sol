@@ -31,7 +31,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         );
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
-        PacketAcknowledgementCall.Data memory ack;
+        PacketAcknowledgementCall.Data memory ack = PacketAcknowledgementCall.Data({
+            status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_UNKNOWN
+        });
         try module.onContractCall(
             CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
@@ -74,7 +76,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         pure
         returns (bytes memory)
     {
-        HeaderField.Data[] memory fields;
+        HeaderField.Data[] memory fields = new HeaderField.Data[](0);
         return Acknowledgement.encode(
             Acknowledgement.Data({
                 is_success: true,
