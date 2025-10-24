@@ -1,4 +1,4 @@
-name: slither
+name: Slither
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 
 jobs:
   slither:
-    name: slither
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +33,8 @@ jobs:
           echo "value=${value}" >> $GITHUB_OUTPUT
 
       - name: Create/update checklist as PR comment
+        if: ${{ github.event_name == 'pull_request' && steps.formatted_slither.outputs.value != '' }}
         uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
         with:
           script: |
             const script = require(".github/scripts/slither_pr_comment")
