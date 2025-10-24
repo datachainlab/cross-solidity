@@ -21,9 +21,8 @@ contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimpl
         pure
         returns (bytes memory acknowledgement)
     {
-        PacketAcknowledgementCall.Data memory ack = PacketAcknowledgementCall.Data({
-            status: status
-        });
+        PacketAcknowledgementCall.Data memory ack;
+        ack.status = status;
         return packPacketAcknowledgementCall(ack);
     }
 }
