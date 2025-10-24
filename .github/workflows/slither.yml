@@ -31,9 +31,11 @@ jobs:
           value="${value//$'\n'/'%0A'}"
           value="${value//$'\r'/'%0D'}"
           echo "value=${value}" >> $GITHUB_OUTPUT
+          count=$(jq '[.runs[].results[]] | length' results.sarif 2>/dev/null || echo 0)
+          echo "results_count=${count}" >> $GITHUB_OUTPUT
 
       - name: Create/update checklist as PR comment
-        if: ${{ github.event_name == 'pull_request' && steps.formatted_slither.outputs.value != '' }}
+        if: ${{ github.event_name == 'pull_request' && steps.formatted_slither.outputs.results_count != '0' }}
         uses: actions/github-script@v6
         with:
           script: |
