@@ -23,7 +23,7 @@ contract IBCKeeperTest is Test {
         keeper = new TestableIBCKeeper(IIBCHandler(address(dummy)));
     }
 
-    function test_GetIBCHandlerReturnsSameAddress() public view{
+    function test_GetIBCHandlerReturnsSameAddress() public view {
         address h = keeper.handlerAddr();
         assertEq(h, address(dummy));
     }
