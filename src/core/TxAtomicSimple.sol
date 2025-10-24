@@ -17,7 +17,6 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     uint8 private constant txIndexParticipant = 1;
 
     event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret);
-    event OnTimeoutPacket(bytes tx_id, uint8 tx_index, uint64 sequence);
 
     function handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);
@@ -58,19 +57,14 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         revert("not implemented error");
     }
 
-    function handleTimeout(Packet calldata packet) internal virtual override {
-        bytes memory txId = new bytes(0);
-
-        PacketData.Data memory pd = PacketData.decode(packet.data);
-        if (pd.payload.length != 0) {
-            Any.Data memory anyPayload = Any.decode(pd.payload);
-            if (keccak256(bytes(anyPayload.type_url)) == keccak256(bytes("/cross.core.atomic.simple.PacketDataCall"))) {
-                PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
-                txId = pdc.tx_id;
-            }
-        }
-
-        emit OnTimeoutPacket(txId, txIndexParticipant, packet.sequence);
+    function handleTimeout(
+        Packet calldata /*packet*/
+    )
+        internal
+        virtual
+        override
+    {
+        revert("not implemented error");
     }
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack)
