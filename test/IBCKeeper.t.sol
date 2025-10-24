@@ -23,12 +23,12 @@ contract IBCKeeperTest is Test {
         keeper = new TestableIBCKeeper(IIBCHandler(address(dummy)));
     }
 
-    function test_GetIBCHandlerReturnsSameAddress() public view {
+    function test_GetIBCHandler_GetIBCHandlerReturnsSameAddress() public view {
         address h = keeper.handlerAddr();
         assertEq(h, address(dummy));
     }
 
-    function test_AllowsZeroAddress() public {
+    function test_Constructor_AllowsZeroAddress() public {
         TestableIBCKeeper k = new TestableIBCKeeper(IIBCHandler(address(0)));
         assertEq(k.handlerAddr(), address(0));
     }
