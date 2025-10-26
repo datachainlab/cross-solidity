@@ -1,9 +1,4 @@
-name: Coverage Report
-
 on:
-  push:
-    branches:
-      - main
   pull_request:
 
 permissions:
@@ -14,26 +9,20 @@ jobs:
   coverage-report:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '25'
           cache: 'npm'
 
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Run coverage
-        run: npm run coverage:sol
-        id: forge_coverage
-
-      - name: Setup LCOV
-        uses: hrishikesh-kadam/setup-lcov@v1
+      - run: npm ci
+      - run: npm run coverage:sol
+      - uses: hrishikesh-kadam/setup-lcov@v1
 
       - name: Report code coverage
-        uses: zgosalvez/github-actions-report-lcov@v3
+        uses: zgosalvez/github-actions-report-lcov@v5
         with:
           coverage-files: lcov.info
           minimum-coverage: 100
