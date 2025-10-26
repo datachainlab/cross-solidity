@@ -8,7 +8,8 @@
     "clean": "rm -rf build",
     "test": "forge test -vvv",
     "lint:sol": "solhint -f table 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
-    "fmt:sol": "forge fmt"
+    "fmt:sol": "forge fmt",
+    "coverage:sol": "forge coverage --report lcov"
   },
   "dependencies": {
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#v0.3.40",
