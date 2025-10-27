@@ -1,0 +1,44 @@
+name: Slither
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Slither Analysis
+        uses: crytic/slither-action@v0.4.1
+        id: slither
+        with:
+          slither-config: slither.config.json
+          sarif: results.sarif
+          fail-on: none
+          slither-args: --checklist --markdown-root ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/
+
+      - name: Format slither output
+        id: formatted_slither
+        run: |
+          value=$(echo "${{ steps.slither.outputs.stdout }}" | sed -e '1d')
+          value="${value//'%'/'%25'}"
+          value="${value//$'\n'/'%0A'}"
+          value="${value//$'\r'/'%0D'}"
+          echo "value=${value}" >> $GITHUB_OUTPUT
+          count=$(jq '[.runs[].results[]] | length' results.sarif 2>/dev/null || echo 0)
+          echo "results_count=${count}" >> $GITHUB_OUTPUT
+
+      - name: Create/update checklist as PR comment
+        if: ${{ github.event_name == 'pull_request' && steps.formatted_slither.outputs.results_count != '0' }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const script = require(".github/scripts/slither_pr_comment")
+            const header = '# Slither report'
+            const body = `${{ steps.formatted_slither.outputs.value }}`
+            const comment = [header, body].join("\n");
+            await script({github, context, header, body})

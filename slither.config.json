@@ -1,0 +1,5 @@
+{
+  "exclude_dependencies": true,
+  "exclude_informational": true,
+  "filter_paths": "node_modules|src/proto"
+}
