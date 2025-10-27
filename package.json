@@ -4,10 +4,12 @@
   "scripts": {
     "deploy": "forge script script/DeployAll.s.sol --rpc-url anvil --broadcast",
     "compile": "forge build",
-    "postinstall": "forge build",
+    "postinstall": "husky && forge build",
     "clean": "rm -rf build",
     "test": "forge test -vvv",
-    "lint:sol": "solhint -f table 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'"
+    "lint:sol": "solhint -f table 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
+    "fmt:sol": "forge fmt",
+    "coverage:sol": "forge coverage --report lcov"
   },
   "dependencies": {
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#v0.3.40",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@foundry-rs/forge": "1.4.1",
+    "husky": "^9.1.7",
     "solhint": "^6.0.1"
   }
 }
