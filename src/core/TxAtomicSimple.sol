@@ -11,14 +11,14 @@ import "./IBCKeeper.sol";
 
 import "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 
-error PayloadDecodeFailed();
-error UnexpectedTypeURL();
-error NotImplemented();
-
 // TxAtomicSimple implements PacketHandler that supports simple-commit protocol
 abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     // it's defined at simple-commit protocol
     uint8 private constant TX_INDEX_PARTICIPANT = 1;
+
+    error PayloadDecodeFailed();
+    error UnexpectedTypeURL();
+    error NotImplemented();
 
     event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret);
 
