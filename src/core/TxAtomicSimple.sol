@@ -14,36 +14,40 @@ import "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 // TxAtomicSimple implements PacketHandler that supports simple-commit protocol
 abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     // it's defined at simple-commit protocol
-    uint8 private constant txIndexParticipant = 1;
+    uint8 private constant TX_INDEX_PARTICIPANT = 1;
 
-    event OnContractCall(bytes tx_id, uint8 tx_index, bool success, bytes ret);
+    error PayloadDecodeFailed();
+    error UnexpectedTypeURL();
+    error NotImplemented();
+
+    event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret);
 
     function handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);
 
         PacketData.Data memory pd = PacketData.decode(packet.data);
-        require(pd.payload.length != 0, "decoding error");
+        if (pd.payload.length == 0) revert PayloadDecodeFailed();
+
         Any.Data memory anyPayload = Any.decode(pd.payload);
         // TODO should be more gas efficient
-        require(
-            sha256(bytes(anyPayload.type_url)) == sha256(bytes("/cross.core.atomic.simple.PacketDataCall")),
-            "got unexpected type_url"
-        );
+        // solhint-disable-next-line gas-small-strings
+        if (sha256(bytes(anyPayload.type_url)) != sha256(bytes("/cross.core.atomic.simple.PacketDataCall"))) {
+            revert UnexpectedTypeURL();
+        }
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
-        PacketAcknowledgementCall.Data memory ack = PacketAcknowledgementCall.Data({
-            status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_UNKNOWN
-        });
+        PacketAcknowledgementCall.Data memory ack =
+            PacketAcknowledgementCall.Data({status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_UNKNOWN});
         try module.onContractCall(
-            CrossContext(pdc.tx_id, txIndexParticipant, pdc.tx.signers), pdc.tx.call_info
+            CrossContext(pdc.tx_id, TX_INDEX_PARTICIPANT, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
             // slither-disable-next-line reentrancy-events
-            emit OnContractCall(pdc.tx_id, txIndexParticipant, true, ret);
+            emit OnContractCall(pdc.tx_id, TX_INDEX_PARTICIPANT, true, ret);
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
             // slither-disable-next-line reentrancy-events
-            emit OnContractCall(pdc.tx_id, txIndexParticipant, false, new bytes(0));
+            emit OnContractCall(pdc.tx_id, TX_INDEX_PARTICIPANT, false, new bytes(0));
         }
 
         return packPacketAcknowledgementCall(ack);
@@ -58,7 +62,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         virtual
         override
     {
-        revert("not implemented error");
+        revert NotImplemented();
     }
 
     function handleTimeout(
@@ -68,7 +72,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
         virtual
         override
     {
-        revert("not implemented error");
+        revert NotImplemented();
     }
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack)
@@ -84,6 +88,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
                     PacketData.Data({
                         header: Header.Data({fields: fields}),
                         payload: Any.encode(
+                            // solhint-disable-next-line gas-small-strings
                             Any.Data({
                                 type_url: "/cross.core.atomic.simple.PacketAcknowledgementCall",
                                 value: PacketAcknowledgementCall.encode(ack)

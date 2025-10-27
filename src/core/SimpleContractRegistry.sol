@@ -8,10 +8,13 @@ import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-chann
 // SimpleContractRegistry is a simple registry that implements ContractRegistry
 abstract contract SimpleContractRegistry is ContractRegistry {
     // it keeps only one module.
-    IContractModule contractModule;
+    IContractModule internal contractModule;
+
+    error ModuleAlreadyInitialized();
+    error ModuleNotInitialized();
 
     function registerModule(IContractModule module) internal virtual override {
-        require(address(contractModule) == address(0), "contractModule is already initialized");
+        if (address(contractModule) != address(0)) revert ModuleAlreadyInitialized();
         contractModule = module;
     }
 
@@ -23,7 +26,7 @@ abstract contract SimpleContractRegistry is ContractRegistry {
         override
         returns (IContractModule)
     {
-        require(address(contractModule) != address(0), "contractModule is not initialized yet");
+        if (address(contractModule) == address(0)) revert ModuleNotInitialized();
         return contractModule;
     }
 }
