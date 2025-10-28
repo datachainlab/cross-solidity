@@ -39,11 +39,13 @@ import {IIBCModuleInitializer} from "@hyperledger-labs/yui-ibc-solidity/contract
 import {ILightClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/02-client/ILightClient.sol";
 
 contract DeployAll is Script, Config {
+    // === Deployment artifacts (written back to deployments.toml) ===
     IBCHandler public ibcHandler;
     MockCrossContract public mockApp;
     CrossSimpleModule public crossSimpleModule;
     MockClient public mockClient;
 
+    // ---------- helpers ----------
     function _deployCore() internal returns (IBCHandler) {
         console2.log("==> 01_DeployCore");
         IBCHandler handler = new IBCHandler(
@@ -148,14 +150,19 @@ contract DeployAll is Script, Config {
     }
 
     function _writeBack(address deployer) internal {
+        // save addresses & metadata to deployments.toml
+        // (addresses go under <chain>.address.*, meta under <chain>.meta.*)
         config.set("ibc_handler", address(ibcHandler));
         config.set("mock_cross_contract", address(mockApp));
         config.set("cross_simple_module", address(crossSimpleModule));
         config.set("mock_client", address(mockClient));
+
+        // Meta
         config.set("deployer", deployer);
         console2.log("\nDeployment complete! Addresses saved to deployments.toml");
     }
 
+    // ---------- entry ----------
     function run() external {
         _loadConfig("./deployments.toml", true);
 
