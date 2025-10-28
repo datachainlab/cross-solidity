@@ -35,16 +35,13 @@ jobs:
             'src/core/PacketHandler.sol' \
             'src/core/ContractRegistry.sol' \
             'src/core/IContractModule.sol' \
-            --ignore-errors unused \
             -o lcov.filtered.info
-          lcov --summary lcov.filtered.info || true
 
       - name: Report code coverage
         uses: zgosalvez/github-actions-report-lcov@v5
         with:
           coverage-files: lcov.filtered.info
-          minimum-coverage: 0 # TODO: Once new tests are added, increase minimum-coverage from 0 to a realistic gate (e.g., 5–10%), and keep bumping it as coverage improves.
+          minimum-coverage: 100
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
           update-comment: true
-          filter-changed-files: false
