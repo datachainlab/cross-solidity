@@ -23,12 +23,26 @@ jobs:
 
       - run: npm ci
       - run: npm run coverage:sol
+
       - uses: hrishikesh-kadam/setup-lcov@v1
+
+      - name: Filter LCOV
+        run: |
+          lcov --remove lcov.info \
+            'test/*' \
+            'script/*' \
+            'src/proto/**' \
+            'third_party/**' \
+            'src/**/I*.sol' \
+            'src/core/PacketHandler.sol' \
+            'src/core/ContractRegistry.sol' \
+            -o lcov.filtered.info
+          lcov --summary lcov.filtered.info
 
       - name: Report code coverage
         uses: zgosalvez/github-actions-report-lcov@v5
         with:
-          coverage-files: lcov.info
+          coverage-files: lcov.filtered.info
           minimum-coverage: 0 # TODO: Once new tests are added, increase minimum-coverage from 0 to a realistic gate (e.g., 5–10%), and keep bumping it as coverage improves.
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
