@@ -59,7 +59,7 @@ contract MockCrossContractTest is Test {
     }
 
     function test_onContractCall_Reverts_WhenAuthModeIsNotChannel() public {
-        CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode(uint8(0)));
+        CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         vm.expectRevert(bytes("auth mode must be CHANNEL"));
         mock.onContractCall(ctx, hex"01");
