@@ -82,8 +82,12 @@ contract MockCrossContractTest is Test {
     function test_onContractCall_Reverts_WhenCallInfoLenIsTwo() public {
         CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
 
+        bytes memory callInfo = new bytes(2);
+        callInfo[0] = 0x01;
+        callInfo[1] = 0x02;
+
         vm.expectRevert(bytes("the length of callInfo must be 1"));
-        mock.onContractCall(ctx, hex"0102");
+        mock.onContractCall(ctx, callInfo);
     }
 
     function test_onContractCall_Reverts_WhenCallInfoIsNot0x01() public {
