@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// solhint-disable one-contract-per-file, func-name-mixedcase
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -15,8 +16,8 @@ contract TestableIBCKeeper is IBCKeeper {
 }
 
 contract IBCKeeperTest is Test {
-    DummyHandler dummy;
-    TestableIBCKeeper keeper;
+    DummyHandler private dummy;
+    TestableIBCKeeper private keeper;
 
     function setUp() public {
         dummy = new DummyHandler();

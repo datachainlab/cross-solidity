@@ -39,14 +39,11 @@ import {IIBCModuleInitializer} from "@hyperledger-labs/yui-ibc-solidity/contract
 import {ILightClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/02-client/ILightClient.sol";
 
 contract DeployAll is Script, Config {
-    // === Deployment artifacts (written back to deployments.toml) ===
     IBCHandler public ibcHandler;
-
     MockCrossContract public mockApp;
     CrossSimpleModule public crossSimpleModule;
     MockClient public mockClient;
 
-    // ---------- helpers ----------
     function _deployCore() internal returns (IBCHandler) {
         console2.log("==> 01_DeployCore");
         IBCHandler handler = new IBCHandler(
@@ -92,65 +89,91 @@ contract DeployAll is Script, Config {
         console2.log("  Initialized. port=%s, clientType=%s", portCross, mockClientType);
     }
 
-    // ---------- entry ----------
-    function run() external {
-        // 1) Load config with write-back enabled (stores results after deployment)
-        _loadConfig(
-            "./deployments.toml",
-            /*writeBack=*/
-            true
-        );
+    function _readConfig()
+        internal
+        returns (
+            string memory mnemonic,
+            uint32 mnemonicIndex,
+            bool debugMode,
+            string memory portCross,
+            string memory mockClientType
+        )
+    {
+        string memory m = config.get("mnemonic").toString();
+        uint256 idxU256 = config.get("mnemonic_index").toUint256();
+        require(idxU256 < 2 ** 32, "mnemonic_index too large");
+        uint32 idx = uint32(idxU256);
+        bool dbg = config.get("debug_mode").toBool();
+        string memory port = config.get("port_cross").toString();
+        string memory cli = config.get("mock_client_type").toString();
+        return (m, idx, dbg, port, cli);
+    }
 
-        uint256 chainId = block.chainid;
+    function _logConfig(
+        uint256 chainId,
+        bool debugMode,
+        string memory portCross,
+        string memory mockClientType,
+        uint32 mnemonicIndex
+    ) internal {
         console2.log("Deploying to chain:", chainId);
-
-        // 2) Read configuration values (resolved for the current chain)
-        //    - Required:
-        //        string:  mnemonic
-        //        uint:    mnemonic_index
-        //        bool:    debug_mode
-        //        string:  port_cross
-        //        string:  mock_client_type
-        string memory mnemonic = config.get("mnemonic").toString();
-        uint256 mnemonicIndexU256 = config.get("mnemonic_index").toUint256();
-        // solhint-disable-next-line gas-strict-inequalities
-        require(mnemonicIndexU256 <= type(uint32).max, "mnemonic_index too large");
-        uint32 mnemonicIndex = uint32(mnemonicIndexU256);
-
-        bool debugMode = config.get("debug_mode").toBool();
-        string memory portCross = config.get("port_cross").toString();
-        string memory mockClientType = config.get("mock_client_type").toString();
-
         console2.log("Config:");
         console2.log("  debug_mode      :", debugMode);
         console2.log("  port_cross      :", portCross);
         console2.log("  mock_client_type:", mockClientType);
         console2.log("  mnemonic_index  :", mnemonicIndex);
+    }
 
-        // 3) Derive deployer private key from mnemonic + index (Foundry cheatcode)
-        uint256 deployerPk = vm.deriveKey(mnemonic, mnemonicIndex);
-        address deployer = vm.addr(deployerPk);
-        console2.log("Deployer:", deployer);
+    function _deriveDeployer(string memory mnemonic, uint32 mnemonicIndex)
+        internal
+        returns (uint256 deployerPk, address deployer)
+    {
+        uint256 pk = vm.deriveKey(mnemonic, mnemonicIndex);
+        address addr = vm.addr(pk);
+        console2.log("Deployer:", addr);
+        return (pk, addr);
+    }
 
-        // 4) Deploy + Initialize (single broadcast session)
+    function _broadcastDeployAndInit(
+        uint256 deployerPk,
+        bool debugMode,
+        string memory portCross,
+        string memory mockClientType
+    ) internal {
         vm.startBroadcast(deployerPk);
-
         ibcHandler = _deployCore();
         (mockApp, crossSimpleModule, mockClient) = _deployApp(ibcHandler, debugMode);
         _initialize(ibcHandler, crossSimpleModule, portCross, mockClientType, mockClient);
-
         vm.stopBroadcast();
+    }
 
-        // 5) Write back: save addresses & metadata to deployments.toml
-        //    (addresses go under <chain>.address.*, meta under <chain>.meta.*)
+    function _writeBack(address deployer) internal {
         config.set("ibc_handler", address(ibcHandler));
         config.set("mock_cross_contract", address(mockApp));
         config.set("cross_simple_module", address(crossSimpleModule));
         config.set("mock_client", address(mockClient));
-
-        // Meta
         config.set("deployer", deployer);
-
         console2.log("\nDeployment complete! Addresses saved to deployments.toml");
+    }
+
+    function run() external {
+        _loadConfig("./deployments.toml", true);
+
+        uint256 chainId = block.chainid;
+        (
+            string memory mnemonic,
+            uint32 mnemonicIndex,
+            bool debugMode,
+            string memory portCross,
+            string memory mockClientType
+        ) = _readConfig();
+
+        _logConfig(chainId, debugMode, portCross, mockClientType, mnemonicIndex);
+
+        (uint256 deployerPk, address deployer) = _deriveDeployer(mnemonic, mnemonicIndex);
+
+        _broadcastDeployAndInit(deployerPk, debugMode, portCross, mockClientType);
+
+        _writeBack(deployer);
     }
 }
