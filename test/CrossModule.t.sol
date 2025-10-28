@@ -12,6 +12,8 @@ import {
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
+
 contract DummyHandler {}
 
 contract TestableCrossModule is CrossModule {
@@ -72,9 +74,11 @@ contract CrossModuleTest is Test {
         assertTrue(mod.hasRole(mod.IBC_ROLE(), address(handler)));
     }
 
-    function test_SupportsInterface_IIBCModule_And_IIBCModuleInitializer() public view {
+    function test_SupportsInterface_IIBC_IAccessControl_And_Unsupported() public view {
         assertTrue(mod.supportsInterface(type(IIBCModule).interfaceId));
         assertTrue(mod.supportsInterface(type(IIBCModuleInitializer).interfaceId));
+        assertTrue(mod.supportsInterface(type(IAccessControl).interfaceId));
+        assertFalse(mod.supportsInterface(0xDEADBEEF));
     }
 
     function test_onRecvPacket_Reverts_WithoutIbcRole() public {
