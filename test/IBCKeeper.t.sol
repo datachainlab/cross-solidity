@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// solhint-disable one-contract-per-file, func-name-mixedcase
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -6,30 +7,30 @@ import "../src/core/IBCKeeper.sol";
 
 contract DummyHandler {}
 
-contract TestableIBCKeeper is IBCKeeper {
+contract IBCKeeperHarness is IBCKeeper {
     constructor(IIBCHandler h) IBCKeeper(h) {}
 
-    function handlerAddr() external view returns (address) {
+    function exposed_getIBCHandler() external view returns (address) {
         return address(getIBCHandler());
     }
 }
 
 contract IBCKeeperTest is Test {
-    DummyHandler dummy;
-    TestableIBCKeeper keeper;
+    DummyHandler private dummy;
+    IBCKeeperHarness private keeper;
 
     function setUp() public {
         dummy = new DummyHandler();
-        keeper = new TestableIBCKeeper(IIBCHandler(address(dummy)));
+        keeper = new IBCKeeperHarness(IIBCHandler(address(dummy)));
     }
 
-    function test_GetIBCHandler_GetIBCHandlerReturnsSameAddress() public view {
-        address h = keeper.handlerAddr();
+    function test_getIBCHandler_ReturnsSameAddress() public view {
+        address h = keeper.exposed_getIBCHandler();
         assertEq(h, address(dummy));
     }
 
-    function test_Constructor_AllowsZeroAddress() public {
-        TestableIBCKeeper k = new TestableIBCKeeper(IIBCHandler(address(0)));
-        assertEq(k.handlerAddr(), address(0));
+    function test_constructor_AllowsZeroAddress() public {
+        IBCKeeperHarness k = new IBCKeeperHarness(IIBCHandler(address(0)));
+        assertEq(k.exposed_getIBCHandler(), address(0));
     }
 }
