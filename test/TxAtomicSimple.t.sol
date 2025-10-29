@@ -135,7 +135,7 @@ contract TxAtomicSimpleTest is Test {
         return pac.status;
     }
 
-    function test_handlePacket_Success_ReturnsOK_AndEmitsEvent() public {
+    function test_handlePacket_ReturnsOkAndEmitsEventWhenModuleSucceeds() public {
         bytes memory ret = hex"010203";
         harness.workaround_setModule(new SuccessModule(ret));
 
@@ -155,7 +155,7 @@ contract TxAtomicSimpleTest is Test {
         );
     }
 
-    function test_handlePacket_RevertInModule_ReturnsFAILED_AndEmitsEvent() public {
+    function test_handlePacket_ReturnsFailedAndEmitsEventWhenModuleReverts() public {
         harness.workaround_setModule(new RevertingModule());
 
         bytes memory txId = hex"bead";
@@ -174,7 +174,7 @@ contract TxAtomicSimpleTest is Test {
         );
     }
 
-    function test_handlePacket_Reverts_WhenPayloadEmpty() public {
+    function test_handlePacket_RevertWhen_PayloadEmpty() public {
         HeaderField.Data[] memory fields;
         bytes memory packetDataBytes =
             PacketData.encode(PacketData.Data({header: Header.Data({fields: fields}), payload: bytes("")}));
@@ -185,7 +185,7 @@ contract TxAtomicSimpleTest is Test {
         harness.exposed_handlePacket(p);
     }
 
-    function test_handlePacket_Reverts_WhenTypeURLUnexpected() public {
+    function test_handlePacket_RevertWhen_TypeURLUnexpected() public {
         bytes memory bogus = Any.encode(Any.Data({type_url: "/not.expected", value: hex"01"}));
         HeaderField.Data[] memory fields;
         bytes memory packetDataBytes =
@@ -197,13 +197,13 @@ contract TxAtomicSimpleTest is Test {
         harness.exposed_handlePacket(p);
     }
 
-    function test_handleAcknowledgement_Reverts_NotImplemented() public {
+    function test_handleAcknowledgement_RevertOn_NotImplemented() public {
         Packet memory p;
         vm.expectRevert(TxAtomicSimple.NotImplemented.selector);
         harness.exposed_handleAcknowledgement(p, hex"");
     }
 
-    function test_handleTimeout_Reverts_NotImplemented() public {
+    function test_handleTimeout_RevertOn_NotImplemented() public {
         Packet memory p;
         vm.expectRevert(TxAtomicSimple.NotImplemented.selector);
         harness.exposed_handleTimeout(p);

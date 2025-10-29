@@ -30,7 +30,7 @@ contract MockCrossContractTest is Test {
         ctx = CrossContext({txId: hex"11", txIndex: 1, signers: signers});
     }
 
-    function test_onContractCall_Success_ReturnsExpectedBytes() public {
+    function test_onContractCall_ReturnsExpectedBytes() public {
         CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
         bytes memory callInfo = hex"01";
 
@@ -39,7 +39,7 @@ contract MockCrossContractTest is Test {
         assertEq(ret, bytes("mock call succeed"));
     }
 
-    function test_onContractCall_Reverts_WhenSignersLenIsZero() public {
+    function test_onContractCall_RevertWhen_SignersLenIsZero() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](0);
         CrossContext memory ctx = CrossContext({txId: hex"22", txIndex: 1, signers: signers});
 
@@ -47,7 +47,7 @@ contract MockCrossContractTest is Test {
         mock.onContractCall(ctx, hex"01");
     }
 
-    function test_onContractCall_Reverts_WhenSignersLenIsTwo() public {
+    function test_onContractCall_RevertWhen_SignersLenIsTwo() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](2);
         signers[0] = _mkSigner(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
         signers[1] = _mkSigner(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
@@ -58,28 +58,28 @@ contract MockCrossContractTest is Test {
         mock.onContractCall(ctx, hex"01");
     }
 
-    function test_onContractCall_Reverts_WhenAuthModeIsNotChannel() public {
+    function test_onContractCall_RevertWhen_AuthModeIsNotChannel() public {
         CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         vm.expectRevert(bytes("auth mode must be CHANNEL"));
         mock.onContractCall(ctx, hex"01");
     }
 
-    function test_onContractCall_Reverts_WhenUnexpectedAccountId() public {
+    function test_onContractCall_RevertWhen_UnexpectedAccountId() public {
         CrossContext memory ctx = _mkContextSingle(bytes("hacker"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
 
         vm.expectRevert(bytes("unexpected account ID"));
         mock.onContractCall(ctx, hex"01");
     }
 
-    function test_onContractCall_Reverts_WhenCallInfoLenIsZero() public {
+    function test_onContractCall_RevertWhen_CallInfoLenIsZero() public {
         CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
 
         vm.expectRevert(bytes("the length of callInfo must be 1"));
         mock.onContractCall(ctx, bytes(""));
     }
 
-    function test_onContractCall_Reverts_WhenCallInfoLenIsTwo() public {
+    function test_onContractCall_RevertWhen_CallInfoLenIsTwo() public {
         CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
 
         bytes memory callInfo = new bytes(2);
@@ -90,7 +90,7 @@ contract MockCrossContractTest is Test {
         mock.onContractCall(ctx, callInfo);
     }
 
-    function test_onContractCall_Reverts_WhenCallInfoIsNot0x01() public {
+    function test_onContractCall_RevertWhen_CallInfoIsNot0x01() public {
         CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
 
         vm.expectRevert(bytes("callInfo must be 0x01"));

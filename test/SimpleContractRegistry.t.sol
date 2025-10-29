@@ -48,12 +48,12 @@ contract SimpleContractRegistryTest is Test {
         registry = new SimpleContractRegistryHarness();
     }
 
-    function test_Get_Reverts_WhenNotInitialized() public {
+    function test_get_RevertWhen_NotInitialized() public {
         vm.expectRevert(SimpleContractRegistry.ModuleNotInitialized.selector);
         registry.exposed_getModule(_emptyPacket);
     }
 
-    function test_Register_Then_Get_ReturnsSameAddress() public {
+    function test_register_ThenGetReturnsSameAddress() public {
         IContractModule m = IContractModule(address(dummy));
 
         registry.exposed_registerModule(m);
@@ -63,7 +63,7 @@ contract SimpleContractRegistryTest is Test {
         assertEq(registry.workaround_moduleAddr(), address(m));
     }
 
-    function test_Register_Reverts_OnSecondInitialization() public {
+    function test_register_RevertOn_SecondInitialization() public {
         IContractModule m = IContractModule(address(dummy));
 
         registry.exposed_registerModule(m);
@@ -72,7 +72,7 @@ contract SimpleContractRegistryTest is Test {
         registry.exposed_registerModule(m);
     }
 
-    function testFuzz_Register_Then_Get_ReturnsSameAddress(address anyAddr) public {
+    function testFuzz_register_ThenGetReturnsSameAddress(address anyAddr) public {
         vm.assume(anyAddr != address(0));
         IContractModule m = IContractModule(anyAddr);
 

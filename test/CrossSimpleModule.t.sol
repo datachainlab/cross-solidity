@@ -53,7 +53,7 @@ contract CrossSimpleModuleTest is Test {
         moduleImpl = new DummyModule();
     }
 
-    function test_Constructor_RegistersModule_And_GetReturnsSameAddress() public {
+    function test_constructor_RegistersModuleAndGetReturnsSameAddress() public {
         CrossSimpleModuleHarness harness =
             new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 
@@ -61,21 +61,21 @@ contract CrossSimpleModuleTest is Test {
         assertEq(address(got), address(moduleImpl), "must register");
     }
 
-    function test_Constructor_GrantsIbcRole_WhenDebugModeTrue() public {
+    function test_constructor_GrantsIbcRoleWhenDebugModeTrue() public {
         CrossSimpleModuleHarness harness =
             new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), true);
 
         assertTrue(harness.workaround_hasIbcRole(address(this)), "role on debug");
     }
 
-    function test_Constructor_DoesNotGrantIbcRole_WhenDebugModeFalse() public {
+    function test_constructor_DoesNotGrantIbcRoleWhenDebugModeFalse() public {
         CrossSimpleModuleHarness harness =
             new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 
         assertFalse(harness.workaround_hasIbcRole(address(this)), "no role on debug");
     }
 
-    function test_Register_Reverts_OnSecondInitialization() public {
+    function test_register_RevertOn_SecondInitialization() public {
         CrossSimpleModuleHarness harness =
             new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 
@@ -83,7 +83,7 @@ contract CrossSimpleModuleTest is Test {
         harness.exposed_registerModule(IContractModule(address(moduleImpl)));
     }
 
-    function test_GetPacketAcknowledgementCall_Smoke_DifferentStatusesProduceDifferentBytes() public {
+    function test_getPacketAcknowledgementCall_DifferentStatusesProduceDifferentBytes() public {
         CrossSimpleModuleHarness harness =
             new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 

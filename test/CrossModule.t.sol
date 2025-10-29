@@ -70,60 +70,53 @@ contract CrossModuleTest is Test {
         mod = new TestableCrossModule(IIBCHandler(address(handler)));
     }
 
-    function test_Constructor_GrantsIbcRoleToHandler() public {
+    function test_constructor_GrantsIbcRoleToHandler() public {
         assertTrue(mod.hasRole(mod.IBC_ROLE(), address(handler)));
     }
 
-    function test_SupportsInterface_IIBC_IAccessControl_And_Unsupported() public view {
+    function test_supportsInterface_ReturnsTrueForIIBCAndIAccessControlAndFalseForUnsupported() public view {
         assertTrue(mod.supportsInterface(type(IIBCModule).interfaceId));
         assertTrue(mod.supportsInterface(type(IIBCModuleInitializer).interfaceId));
         assertTrue(mod.supportsInterface(type(IAccessControl).interfaceId));
         assertFalse(mod.supportsInterface(0xDEADBEEF));
     }
 
-    function test_onRecvPacket_Reverts_WithoutIbcRole() public {
-        vm.expectRevert();
-        mod.onRecvPacket(_emptyPacket, address(0));
-    }
-
-    function test_onRecvPacket_CallsHandlerAndReturnsAck_WhenCallerHasRole() public {
+    function test_onRecvPacket_CallsHandlerAndReturnsAckWhenCallerHasRole() public {
         vm.prank(address(handler));
         bytes memory ack = mod.onRecvPacket(_emptyPacket, address(0));
         assertEq(ack, bytes("ack-ok"));
         assertEq(mod.recvCount(), 1);
     }
 
-    function test_onAcknowledgementPacket_Reverts_WithoutIbcRole() public {
+    function test_onRecvPacket_RevertWhen_CallerLacksIbcRole() public {
         vm.expectRevert();
-        mod.onAcknowledgementPacket(_emptyPacket, bytes("ack"), address(0));
+        mod.onRecvPacket(_emptyPacket, address(0));
     }
 
-    function test_onAcknowledgementPacket_CallsHandler_WhenCallerHasRole() public {
+    function test_onAcknowledgementPacket_CallsHandlerWhenCallerHasRole() public {
         vm.prank(address(handler));
         mod.onAcknowledgementPacket(_emptyPacket, bytes("ack123"), address(0));
         assertEq(mod.ackCount(), 1);
         assertEq(mod.lastAckArg(), bytes("ack123"));
     }
 
-    function test_onTimeoutPacket_Reverts_WithoutIbcRole() public {
+    function test_onAcknowledgementPacket_RevertWhen_CallerLacksIbcRole() public {
         vm.expectRevert();
-        mod.onTimeoutPacket(_emptyPacket, address(0));
+        mod.onAcknowledgementPacket(_emptyPacket, bytes("ack"), address(0));
     }
 
-    function test_onTimeoutPacket_CallsHandler_WhenCallerHasRole() public {
+    function test_onTimeoutPacket_CallsHandlerWhenCallerHasRole() public {
         vm.prank(address(handler));
         mod.onTimeoutPacket(_emptyPacket, address(0));
         assertEq(mod.timeoutCount(), 1);
     }
 
-    function test_onChanOpenInit_Reverts_WithoutIbcRole() public {
-        IIBCModuleInitializer.MsgOnChanOpenInit memory m;
-        m.version = "v1";
+    function test_onTimeoutPacket_RevertWhen_CallerLacksIbcRole() public {
         vm.expectRevert();
-        mod.onChanOpenInit(m);
+        mod.onTimeoutPacket(_emptyPacket, address(0));
     }
 
-    function test_onChanOpenInit_ReturnsSelfAndVersion_WhenCallerHasRole() public {
+    function test_onChanOpenInit_ReturnsSelfAndVersionWhenCallerHasRole() public {
         IIBCModuleInitializer.MsgOnChanOpenInit memory m;
         m.version = "v1";
         vm.prank(address(handler));
@@ -132,14 +125,14 @@ contract CrossModuleTest is Test {
         assertEq(version, "v1");
     }
 
-    function test_onChanOpenTry_Reverts_WithoutIbcRole() public {
-        IIBCModuleInitializer.MsgOnChanOpenTry memory m;
-        m.counterpartyVersion = "cp-v1";
+    function test_onChanOpenInit_RevertWhen_CallerLacksIbcRole() public {
+        IIBCModuleInitializer.MsgOnChanOpenInit memory m;
+        m.version = "v1";
         vm.expectRevert();
-        mod.onChanOpenTry(m);
+        mod.onChanOpenInit(m);
     }
 
-    function test_onChanOpenTry_ReturnsSelfAndCounterpartyVersion_WhenCallerHasRole() public {
+    function test_onChanOpenTry_ReturnsSelfAndCounterpartyVersionWhenCallerHasRole() public {
         IIBCModuleInitializer.MsgOnChanOpenTry memory m;
         m.counterpartyVersion = "cp-v1";
         vm.prank(address(handler));
@@ -148,51 +141,58 @@ contract CrossModuleTest is Test {
         assertEq(version, "cp-v1");
     }
 
-    function test_onChanOpenAck_Reverts_WithoutIbcRole() public {
-        IIBCModule.MsgOnChanOpenAck memory m;
+    function test_onChanOpenTry_RevertWhen_CallerLacksIbcRole() public {
+        IIBCModuleInitializer.MsgOnChanOpenTry memory m;
+        m.counterpartyVersion = "cp-v1";
         vm.expectRevert();
-        mod.onChanOpenAck(m);
+        mod.onChanOpenTry(m);
     }
 
-    function test_onChanOpenAck_Succeeds_WhenCallerHasRole() public {
+    function test_onChanOpenAck_SucceedsWhenCallerHasRole() public {
         IIBCModule.MsgOnChanOpenAck memory m;
         vm.prank(address(handler));
         mod.onChanOpenAck(m); // no revert
     }
 
-    function test_onChanOpenConfirm_Reverts_WithoutIbcRole() public {
-        IIBCModule.MsgOnChanOpenConfirm memory m;
+    function test_onChanOpenAck_RevertWhen_CallerLacksIbcRole() public {
+        IIBCModule.MsgOnChanOpenAck memory m;
         vm.expectRevert();
-        mod.onChanOpenConfirm(m);
+        mod.onChanOpenAck(m);
     }
 
-    function test_onChanOpenConfirm_Succeeds_WhenCallerHasRole() public {
+    function test_onChanOpenConfirm_SucceedsWhenCallerHasRole() public {
         IIBCModule.MsgOnChanOpenConfirm memory m;
         vm.prank(address(handler));
         mod.onChanOpenConfirm(m); // no revert
     }
 
-    function test_onChanCloseInit_Reverts_WithoutIbcRole() public {
-        IIBCModule.MsgOnChanCloseInit memory m;
+    function test_onChanOpenConfirm_RevertWhen_CallerLacksIbcRole() public {
+        IIBCModule.MsgOnChanOpenConfirm memory m;
         vm.expectRevert();
-        mod.onChanCloseInit(m);
+        mod.onChanOpenConfirm(m);
     }
 
-    function test_onChanCloseInit_Succeeds_WhenCallerHasRole() public {
+    function test_onChanCloseInit_SucceedsWhenCallerHasRole() public {
         IIBCModule.MsgOnChanCloseInit memory m;
         vm.prank(address(handler));
         mod.onChanCloseInit(m); // no revert
     }
 
-    function test_onChanCloseConfirm_Reverts_WithoutIbcRole() public {
-        IIBCModule.MsgOnChanCloseConfirm memory m;
+    function test_onChanCloseInit_RevertWhen_CallerLacksIbcRole() public {
+        IIBCModule.MsgOnChanCloseInit memory m;
         vm.expectRevert();
-        mod.onChanCloseConfirm(m);
+        mod.onChanCloseInit(m);
     }
 
-    function test_onChanCloseConfirm_Succeeds_WhenCallerHasRole() public {
+    function test_onChanCloseConfirm_SucceedsWhenCallerHasRole() public {
         IIBCModule.MsgOnChanCloseConfirm memory m;
         vm.prank(address(handler));
         mod.onChanCloseConfirm(m); // no revert
+    }
+
+    function test_onChanCloseConfirm_RevertWhen_CallerLacksIbcRole() public {
+        IIBCModule.MsgOnChanCloseConfirm memory m;
+        vm.expectRevert();
+        mod.onChanCloseConfirm(m);
     }
 }
