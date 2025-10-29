@@ -143,7 +143,6 @@ contract TxAtomicSimpleTest is Test {
         bytes memory callInfo = hex"c0ffee";
         Packet memory packet = _mkPacketWithCall(txId, callInfo);
 
-        // assert event emitted
         vm.expectEmit(true, true, true, true);
         emit OnContractCall(txId, 1, true, ret);
 
@@ -163,7 +162,6 @@ contract TxAtomicSimpleTest is Test {
         bytes memory callInfo = hex"00";
         Packet memory packet = _mkPacketWithCall(txId, callInfo);
 
-        // assert event emitted
         vm.expectEmit(true, true, true, true);
         emit OnContractCall(txId, 1, false, "");
 
