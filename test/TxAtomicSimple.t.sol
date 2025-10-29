@@ -143,7 +143,7 @@ contract TxAtomicSimpleTest is Test {
         bytes memory callInfo = hex"c0ffee";
         Packet memory packet = _mkPacketWithCall(txId, callInfo);
 
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit(address(harness));
         emit OnContractCall(txId, 1, true, ret);
 
         bytes memory ack = harness.exposed_handlePacket(packet);
@@ -162,7 +162,7 @@ contract TxAtomicSimpleTest is Test {
         bytes memory callInfo = hex"00";
         Packet memory packet = _mkPacketWithCall(txId, callInfo);
 
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit(address(harness));
         emit OnContractCall(txId, 1, false, "");
 
         bytes memory ack = harness.exposed_handlePacket(packet);
