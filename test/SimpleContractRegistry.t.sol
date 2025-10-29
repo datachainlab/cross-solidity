@@ -23,62 +23,62 @@ contract DummyModule is IContractModule {
     }
 }
 
-contract TestableSimpleContractRegistry is SimpleContractRegistry {
-    function register(IContractModule m) external {
+contract SimpleContractRegistryHarness is SimpleContractRegistry {
+    function exposed_registerModule(IContractModule m) external {
         registerModule(m);
     }
 
-    function get(Packet calldata p) external returns (IContractModule) {
+    function exposed_getModule(Packet calldata p) external returns (IContractModule) {
         return getModule(p);
     }
 
-    function moduleAddr() external view returns (address) {
+    function workaround_moduleAddr() external view returns (address) {
         return address(contractModule);
     }
 }
 
 contract SimpleContractRegistryTest is Test {
     DummyModule private dummy;
-    TestableSimpleContractRegistry private registry;
+    SimpleContractRegistryHarness private registry;
 
     Packet internal _emptyPacket;
 
     function setUp() public {
         dummy = new DummyModule();
-        registry = new TestableSimpleContractRegistry();
+        registry = new SimpleContractRegistryHarness();
     }
 
     function test_Get_Reverts_WhenNotInitialized() public {
         vm.expectRevert(SimpleContractRegistry.ModuleNotInitialized.selector);
-        registry.get(_emptyPacket);
+        registry.exposed_getModule(_emptyPacket);
     }
 
     function test_Register_Then_Get_ReturnsSameAddress() public {
         IContractModule m = IContractModule(address(dummy));
 
-        registry.register(m);
+        registry.exposed_registerModule(m);
 
-        IContractModule got = registry.get(_emptyPacket);
+        IContractModule got = registry.exposed_getModule(_emptyPacket);
         assertEq(address(got), address(m));
-        assertEq(registry.moduleAddr(), address(m));
+        assertEq(registry.workaround_moduleAddr(), address(m));
     }
 
     function test_Register_Reverts_OnSecondInitialization() public {
         IContractModule m = IContractModule(address(dummy));
 
-        registry.register(m);
+        registry.exposed_registerModule(m);
 
         vm.expectRevert(SimpleContractRegistry.ModuleAlreadyInitialized.selector);
-        registry.register(m);
+        registry.exposed_registerModule(m);
     }
 
     function testFuzz_Register_Then_Get_ReturnsSameAddress(address anyAddr) public {
         vm.assume(anyAddr != address(0));
         IContractModule m = IContractModule(anyAddr);
 
-        registry.register(m);
+        registry.exposed_registerModule(m);
 
-        IContractModule got = registry.get(_emptyPacket);
+        IContractModule got = registry.exposed_getModule(_emptyPacket);
         assertEq(address(got), anyAddr);
     }
 }

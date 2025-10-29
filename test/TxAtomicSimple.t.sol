@@ -50,7 +50,7 @@ contract RevertingModule is IContractModule {
     }
 }
 
-contract TestableTxAtomicSimple is TxAtomicSimple {
+contract TxAtomicSimpleHarness is TxAtomicSimple {
     IContractModule internal _module;
 
     constructor(IIBCHandler h) IBCKeeper(h) {}
@@ -69,37 +69,33 @@ contract TestableTxAtomicSimple is TxAtomicSimple {
         return _module;
     }
 
-    function extHandlePacket(Packet calldata p) external returns (bytes memory ack) {
+    function exposed_handlePacket(Packet calldata p) external returns (bytes memory ack) {
         return handlePacket(p);
     }
 
-    function extHandleAcknowledgement(Packet calldata p, bytes calldata ackBytes) external {
+    function exposed_handleAcknowledgement(Packet calldata p, bytes calldata ackBytes) external {
         handleAcknowledgement(p, ackBytes);
     }
 
-    function extHandleTimeout(Packet calldata p) external {
+    function exposed_handleTimeout(Packet calldata p) external {
         handleTimeout(p);
     }
 
-    function setModule(IContractModule m) external {
+    function workaround_setModule(IContractModule m) external {
         _module = m;
     }
 }
 
-/// -------- Tests --------
-
 contract TxAtomicSimpleTest is Test {
     DummyHandler private handler;
-    TestableTxAtomicSimple private harness;
+    TxAtomicSimpleHarness private harness;
 
     event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret);
 
     function setUp() public {
         handler = new DummyHandler();
-        harness = new TestableTxAtomicSimple(IIBCHandler(address(handler)));
+        harness = new TxAtomicSimpleHarness(IIBCHandler(address(handler)));
     }
-
-    /// ---- Helpers ----
 
     function _mkPacketWithCall(bytes memory txId, bytes memory callInfo) internal pure returns (Packet memory p) {
         Any.Data memory emptyAny = Any.Data({type_url: "", value: ""});
@@ -141,7 +137,7 @@ contract TxAtomicSimpleTest is Test {
 
     function test_handlePacket_Success_ReturnsOK_AndEmitsEvent() public {
         bytes memory ret = hex"010203";
-        harness.setModule(new SuccessModule(ret));
+        harness.workaround_setModule(new SuccessModule(ret));
 
         bytes memory txId = hex"deadbeef";
         bytes memory callInfo = hex"c0ffee";
@@ -151,7 +147,7 @@ contract TxAtomicSimpleTest is Test {
         vm.expectEmit(true, true, true, true);
         emit OnContractCall(txId, 1, true, ret);
 
-        bytes memory ack = harness.extHandlePacket(packet);
+        bytes memory ack = harness.exposed_handlePacket(packet);
 
         assertEq(
             uint256(_decodeAckStatus(ack)),
@@ -161,7 +157,7 @@ contract TxAtomicSimpleTest is Test {
     }
 
     function test_handlePacket_RevertInModule_ReturnsFAILED_AndEmitsEvent() public {
-        harness.setModule(new RevertingModule());
+        harness.workaround_setModule(new RevertingModule());
 
         bytes memory txId = hex"bead";
         bytes memory callInfo = hex"00";
@@ -171,7 +167,7 @@ contract TxAtomicSimpleTest is Test {
         vm.expectEmit(true, true, true, true);
         emit OnContractCall(txId, 1, false, "");
 
-        bytes memory ack = harness.extHandlePacket(packet);
+        bytes memory ack = harness.exposed_handlePacket(packet);
 
         assertEq(
             uint256(_decodeAckStatus(ack)),
@@ -188,7 +184,7 @@ contract TxAtomicSimpleTest is Test {
         p.data = packetDataBytes;
 
         vm.expectRevert(TxAtomicSimple.PayloadDecodeFailed.selector);
-        harness.extHandlePacket(p);
+        harness.exposed_handlePacket(p);
     }
 
     function test_handlePacket_Reverts_WhenTypeURLUnexpected() public {
@@ -200,18 +196,18 @@ contract TxAtomicSimpleTest is Test {
         p.data = packetDataBytes;
 
         vm.expectRevert(TxAtomicSimple.UnexpectedTypeURL.selector);
-        harness.extHandlePacket(p);
+        harness.exposed_handlePacket(p);
     }
 
     function test_handleAcknowledgement_Reverts_NotImplemented() public {
         Packet memory p;
         vm.expectRevert(TxAtomicSimple.NotImplemented.selector);
-        harness.extHandleAcknowledgement(p, hex"");
+        harness.exposed_handleAcknowledgement(p, hex"");
     }
 
     function test_handleTimeout_Reverts_NotImplemented() public {
         Packet memory p;
         vm.expectRevert(TxAtomicSimple.NotImplemented.selector);
-        harness.extHandleTimeout(p);
+        harness.exposed_handleTimeout(p);
     }
 }

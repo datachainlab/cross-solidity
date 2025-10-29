@@ -27,18 +27,18 @@ contract DummyModule is IContractModule {
     }
 }
 
-contract TestableCrossSimpleModule is CrossSimpleModule {
+contract CrossSimpleModuleHarness is CrossSimpleModule {
     constructor(IIBCHandler h, IContractModule m, bool debugMode) CrossSimpleModule(h, m, debugMode) {}
 
-    function extGetModule(Packet calldata p) external returns (IContractModule) {
+    function exposed_getModule(Packet calldata p) external returns (IContractModule) {
         return getModule(p);
     }
 
-    function extRegisterModule(IContractModule m) external {
+    function exposed_registerModule(IContractModule m) external {
         registerModule(m);
     }
 
-    function hasIbcRole(address a) external view returns (bool) {
+    function workaround_hasIbcRole(address a) external view returns (bool) {
         return hasRole(IBC_ROLE, a);
     }
 }
@@ -54,41 +54,42 @@ contract CrossSimpleModuleTest is Test {
     }
 
     function test_Constructor_RegistersModule_And_GetReturnsSameAddress() public {
-        TestableCrossSimpleModule mod =
-            new TestableCrossSimpleModule(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness =
+            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 
-        IContractModule got = mod.extGetModule(_emptyPacket);
+        IContractModule got = harness.exposed_getModule(_emptyPacket);
         assertEq(address(got), address(moduleImpl), "must register");
     }
 
     function test_Constructor_GrantsIbcRole_WhenDebugModeTrue() public {
-        TestableCrossSimpleModule mod =
-            new TestableCrossSimpleModule(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), true);
+        CrossSimpleModuleHarness harness =
+            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), true);
 
-        assertTrue(mod.hasIbcRole(address(this)), "role on debug");
+        assertTrue(harness.workaround_hasIbcRole(address(this)), "role on debug");
     }
 
     function test_Constructor_DoesNotGrantIbcRole_WhenDebugModeFalse() public {
-        TestableCrossSimpleModule mod =
-            new TestableCrossSimpleModule(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness =
+            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 
-        assertFalse(mod.hasIbcRole(address(this)), "no role on debug");
+        assertFalse(harness.workaround_hasIbcRole(address(this)), "no role on debug");
     }
 
     function test_Register_Reverts_OnSecondInitialization() public {
-        TestableCrossSimpleModule mod =
-            new TestableCrossSimpleModule(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness =
+            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 
         vm.expectRevert(SimpleContractRegistry.ModuleAlreadyInitialized.selector);
-        mod.extRegisterModule(IContractModule(address(moduleImpl)));
+        harness.exposed_registerModule(IContractModule(address(moduleImpl)));
     }
 
     function test_GetPacketAcknowledgementCall_Smoke_DifferentStatusesProduceDifferentBytes() public {
-        TestableCrossSimpleModule mod =
-            new TestableCrossSimpleModule(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness =
+            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
 
-        bytes memory a = mod.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
-        bytes memory b = mod.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
+        bytes memory a = harness.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
+        bytes memory b =
+            harness.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
 
         assertGt(a.length, 0, "ack nonempty");
         assertGt(b.length, 0, "ack nonempty");
