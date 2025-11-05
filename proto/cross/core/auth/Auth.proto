@@ -27,24 +27,6 @@ message MsgSignTxResponse {
   string log = 2;
 }
 
-message MsgIBCSignTx {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  google.protobuf.Any cross_chain_channel = 1 [(gogoproto.nullable) = true];
-  bytes txID = 2 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
-  repeated bytes signers = 3 [(gogoproto.casttype) = "AccountID"];
-  ibc.core.client.v1.Height timeout_height = 4
-    [(gogoproto.moretags) = "yaml:\"timeout_height\"", (gogoproto.nullable) = false];
-  uint64 timeout_timestamp = 5
-    [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
-}
-
-message MsgIBCSignTxResponse {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-}
-
 message MsgExtSignTx {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
@@ -56,30 +38,6 @@ message MsgExtSignTx {
 message MsgExtSignTxResponse {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
-}
-
-message PacketDataIBCSignTx {
-  option (gogoproto.equal) = false;
-
-  bytes txID = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
-  repeated bytes signers = 2 [(gogoproto.casttype) = "AccountID"];
-  ibc.core.client.v1.Height timeout_height = 3
-      [(gogoproto.moretags) = "yaml:\"timeout_height\"", (gogoproto.nullable) = false];
-  uint64 timeout_timestamp = 4
-    [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
-}
-
-message PacketAcknowledgementIBCSignTx {
-  option (gogoproto.equal) = false;
-
-  enum Status {
-    option (gogoproto.goproto_enum_prefix) = false;
-    STATUS_UNKNOWN = 0;
-    STATUS_OK      = 1;
-    STATUS_FAILED  = 2;
-  }
-
-  Status status = 1;
 }
 
 message QueryTxAuthStateRequest {
