@@ -4,8 +4,6 @@ pragma solidity ^0.8.20;
 import {
     MsgSignTx,
     MsgSignTxResponse,
-    MsgIBCSignTx,
-    MsgIBCSignTxResponse,
     MsgExtSignTx,
     MsgExtSignTxResponse,
     QueryTxAuthStateRequest,
