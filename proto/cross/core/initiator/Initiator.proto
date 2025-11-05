@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "gogoproto/gogo.proto";
+import "ibc/core/client/v1/client.proto";
+import "cross/core/tx/Tx.proto";
+import "cross/core/auth/Auth.proto";
+
+option go_package = "github.com/datachainlab/cross/x/core/initiator/types";
+option (gogoproto.goproto_getters_all) = false;
+
+message MsgInitiateTx {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string chain_id = 1;
+  uint64 nonce    = 2;
+
+  Tx.CommitProtocol commit_protocol = 3;
+
+  repeated ResolvedContractTransaction contract_transactions = 4 [(gogoproto.nullable) = false];
+
+  repeated Account signers = 5 [(gogoproto.nullable) = false];
+
+  ibc.core.client.v1.Height timeout_height = 6
+      [(gogoproto.moretags) = "yaml:\"timeout_height\"", (gogoproto.nullable) = false];
+
+  uint64 timeout_timestamp = 7
+      [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
+}
+
+message MsgInitiateTxResponse {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  bytes txID = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
+
+  enum InitiateTxStatus {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    INITIATE_TX_STATUS_UNKNOWN   = 0;
+    INITIATE_TX_STATUS_PENDING   = 1;
+    INITIATE_TX_STATUS_VERIFIED  = 2;
+  }
+
+  InitiateTxStatus status = 2;
+}
+
+message QuerySelfXCCRequest {}
+
+message QuerySelfXCCResponse {
+  google.protobuf.Any xcc = 1 [(gogoproto.nullable) = true];
+}
+
+message InitiateTxState {
+  option (gogoproto.equal) = false;
+
+  MsgInitiateTxResponse.InitiateTxStatus status = 1;
+
+  MsgInitiateTx msg = 2 [(gogoproto.nullable) = false];
+}
