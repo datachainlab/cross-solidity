@@ -7,10 +7,6 @@ import "ibc/core/client/v1/client.proto";
 option go_package = "github.com/datachainlab/cross/x/core/auth/types";
 option (gogoproto.goproto_getters_all) = false;
 
-// =======================
-// Tx signing messages (no service)
-// =======================
-
 message MsgSignTx {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
@@ -66,10 +62,6 @@ message MsgExtSignTxResponse {
   option (gogoproto.goproto_getters) = false;
 }
 
-// =======================
-// IBC packet types
-// =======================
-
 message PacketDataIBCSignTx {
   option (gogoproto.equal) = false;
 
@@ -94,10 +86,6 @@ message PacketAcknowledgementIBCSignTx {
   Status status = 1;
 }
 
-// =======================
-// Query messages (no service)
-// =======================
-
 message QueryTxAuthStateRequest {
   bytes txID = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
 }
@@ -105,10 +93,6 @@ message QueryTxAuthStateRequest {
 message QueryTxAuthStateResponse {
   TxAuthState tx_auth_state = 1;
 }
-
-// =======================
-// Types
-// =======================
 
 message Account {
   option (gogoproto.equal) = true;
