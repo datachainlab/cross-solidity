@@ -18,7 +18,7 @@ message MsgInitiateTx {
 
   Tx.CommitProtocol commit_protocol = 3;
 
-  repeated ResolvedContractTransaction contract_transactions = 4 [(gogoproto.nullable) = false];
+  repeated ContractTransaction contract_transactions = 4 [(gogoproto.nullable) = false];
 
   repeated Account signers = 5 [(gogoproto.nullable) = false];
 
@@ -51,6 +51,22 @@ message QuerySelfXCCRequest {}
 message QuerySelfXCCResponse {
   google.protobuf.Any xcc = 1 [(gogoproto.nullable) = true];
 }
+
+message ContractTransaction {
+  option (gogoproto.equal) = false;
+
+  google.protobuf.Any cross_chain_channel = 1 [(gogoproto.nullable) = true];
+  repeated Account signers = 2 [(gogoproto.nullable) = false];
+  bytes call_info = 3 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/tx/types.ContractCallInfo"];
+  ReturnValue return_value = 4;
+  repeated Link links = 5 [(gogoproto.nullable) = false];
+}
+
+message Link {
+  uint32 src_index = 1;
+}
+
+message GenesisState {}
 
 message InitiateTxState {
   option (gogoproto.equal) = false;

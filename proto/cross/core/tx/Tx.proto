@@ -37,7 +37,7 @@ message ResolvedContractTransaction {
 
   google.protobuf.Any cross_chain_channel = 1 [(gogoproto.nullable) = true];
   repeated Account signers = 2 [(gogoproto.nullable) = false];
-  bytes call_info = 3 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/tx/types.ContractCallInfo"];
+  bytes call_info = 3 [(gogoproto.casttype) = "ContractCallInfo"];
   ReturnValue return_value = 4;
   repeated google.protobuf.Any call_results = 5 [(gogoproto.nullable) = false];
 }
