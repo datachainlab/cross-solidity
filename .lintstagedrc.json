@@ -1,0 +1,3 @@
+{
+  "*.sol": ["npm run fmt:sol"]
+}

@@ -3,6 +3,4 @@
 
 set -e
 
-npm run fmt:sol
-
-git add -A
+npx lint-staged
