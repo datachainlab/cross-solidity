@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {
+    AuthType,
     MsgSignTx,
     MsgSignTxResponse,
     MsgExtSignTx,
@@ -10,14 +11,8 @@ import {
     QueryTxAuthStateResponse
 } from "../proto/cross/core/auth/Auth.sol";
 
-enum SignMethod {
-    LOCAL,
-    // IBC, // IBC signing is not supported
-    EXTENSION
-}
-
 interface IAuthenticator {
-    event TxSigned(address indexed signer, bytes32 indexed txId, SignMethod method);
+    event TxSigned(address indexed signer, bytes32 indexed txId, AuthType.AuthMode method);
 
     function signTx(MsgSignTx.Data calldata msg_) external returns (MsgSignTxResponse.Data memory);
 
