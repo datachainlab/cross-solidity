@@ -9,7 +9,7 @@ import {
 import {IInitiator} from "./IInitiator.sol";
 import {IAuthenticator} from "./IAuthenticator.sol";
 
-interface ICoordinator is IInitiator, IAuthenticator {
+interface ICoordinator {
     function coordinatorState(QueryCoordinatorStateRequest.Data calldata req)
         external
         view
