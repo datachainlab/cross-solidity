@@ -1,10 +1,52 @@
 syntax = "proto3";
 
-import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
+import "gogoproto/gogo.proto";
+import "ibc/core/client/v1/client.proto";
 
 option go_package = "github.com/datachainlab/cross/x/core/auth/types";
 option (gogoproto.goproto_getters_all) = false;
+
+message MsgSignTx {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  bytes txID = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
+  repeated bytes signers = 2 [(gogoproto.casttype) = "AccountID"];
+  ibc.core.client.v1.Height timeout_height = 3
+    [(gogoproto.moretags) = "yaml:\"timeout_height\"", (gogoproto.nullable) = false];
+  uint64 timeout_timestamp = 4
+    [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
+}
+  
+message MsgSignTxResponse {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  bool tx_auth_completed = 1;
+  string log = 2;
+}
+
+message MsgExtSignTx {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  bytes txID = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
+  repeated Account signers = 2 [(gogoproto.nullable) = false];
+}
+
+message MsgExtSignTxResponse {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+}
+
+message QueryTxAuthStateRequest {
+  bytes txID = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
+}
+
+message QueryTxAuthStateResponse {
+  TxAuthState tx_auth_state = 1;
+}
 
 message Account {
   option (gogoproto.equal) = true;
@@ -13,14 +55,21 @@ message Account {
 }
 
 message AuthType {
+  option (gogoproto.equal) = true;
+
   enum AuthMode {
     AUTH_MODE_UNSPECIFIED = 0;
     AUTH_MODE_LOCAL       = 1;
     AUTH_MODE_CHANNEL     = 2;
     AUTH_MODE_EXTENSION   = 3;
-  }  
+  }
 
-  option (gogoproto.equal) = true;
   AuthMode mode = 1;
   google.protobuf.Any option = 2 [(gogoproto.nullable) = true]; // xcc or extension_type_url
+}
+
+message TxAuthState {
+  option (gogoproto.equal) = false;
+
+  repeated Account remaining_signers = 1 [(gogoproto.nullable) = false];
 }
