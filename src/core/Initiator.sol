@@ -45,7 +45,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         createTx(txIdHash, msg_);
 
         // auth init & sign
-        Account.Data[] memory required = _collectRequiredAccounts(msg_);
+        Account.Data[] memory required = _getRequiredAccounts(msg_);
         initAuthState(txIdHash, required);
         bool completed = sign(txIdHash, msg_.signers);
 
@@ -66,33 +66,19 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         revert IInitiator.SelfXCCNotImplemented();
     }
 
-    // helpers
-    function _collectRequiredAccounts(MsgInitiateTx.Data calldata msg_)
-        internal
-        pure
-        returns (Account.Data[] memory out)
-    {
+    function _getRequiredAccounts(MsgInitiateTx.Data calldata msg_) internal pure returns (Account.Data[] memory out) {
         uint256 upper = 0;
         for (uint256 i = 0; i < msg_.contract_transactions.length; ++i) {
             upper += msg_.contract_transactions[i].signers.length;
         }
         out = new Account.Data[](upper);
-        bytes32[] memory keys = new bytes32[](upper);
         uint256 n = 0;
 
         for (uint256 i = 0; i < msg_.contract_transactions.length; ++i) {
             Account.Data[] memory rs = msg_.contract_transactions[i].signers;
             for (uint256 j = 0; j < rs.length; ++j) {
-                bytes32 key = keccak256(rs[j].id);
-                bool exists = false;
-                for (uint256 k = 0; k < n && !exists; ++k) {
-                    exists = (keys[k] == key);
-                }
-                if (!exists) {
-                    keys[n] = key;
-                    out[n] = rs[j];
-                    ++n;
-                }
+                out[n] = rs[j];
+                ++n;
             }
         }
         // solhint-disable-next-line no-inline-assembly
