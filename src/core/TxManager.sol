@@ -91,7 +91,6 @@ abstract contract TxManager is TxManagerBase, CoreStore {
         s.exists = true;
         s.data.commit_protocol = cp;
 
-        // channels を入れ替え
         while (s.data.channels.length > 0) s.data.channels.pop();
         for (uint256 i = 0; i < channels.length; i++) {
             s.data.channels.push(channels[i]);

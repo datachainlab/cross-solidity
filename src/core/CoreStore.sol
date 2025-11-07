@@ -5,9 +5,7 @@ import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiato
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {Tx as AtomicTx, ChannelInfo, CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
-/// @notice CROSS core storage (ERC-7201 style; fixed slots computed offline)
 abstract contract CoreStore {
-    // ========= fixed storage locations (computed with ERC-7201 formula) =========
     // keccak256(abi.encode(uint256(keccak256("cross.core.auth"))  - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant AUTH_STORAGE_LOCATION =
         hex"93e3b8eb4220ad7cd6d04c9032dc8d35824a37bf01220f3aeab27e9ece04f300";
@@ -20,22 +18,19 @@ abstract contract CoreStore {
     bytes32 internal constant COORD_STORAGE_LOCATION =
         hex"ef61b39f0bec0016a7c6e65e3ee8d2ea1b2327afbd737de3be2c6827c42f9600";
 
-    // ========= Auth =========
     struct AuthStorage {
-        mapping(bytes32 => mapping(bytes32 => bool)) remaining; // txId => signerKey => need?
+        mapping(bytes32 => mapping(bytes32 => bool)) remaining;
         mapping(bytes32 => uint256) remainingCount;
         mapping(bytes32 => bool) authInitialized;
         mapping(bytes32 => Account.Data[]) requiredAccounts;
     }
 
-    // ========= Tx =========
     struct TxStorage {
         mapping(bytes32 => bool) txExists;
         mapping(bytes32 => MsgInitiateTx.Data) txMsg;
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) txStatus;
     }
 
-    // ========= Coordinator =========
     struct CoordEntry {
         bool exists;
         CoordinatorState.Data data;
@@ -45,7 +40,6 @@ abstract contract CoreStore {
         mapping(bytes32 => CoordEntry) states;
     }
 
-    // ========= Getters =========
     function _getAuthStorage() internal pure returns (AuthStorage storage $) {
         assembly { $.slot := AUTH_STORAGE_LOCATION }
     }
