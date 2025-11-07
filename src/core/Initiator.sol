@@ -85,13 +85,14 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
             for (uint256 j = 0; j < rs.length; ++j) {
                 bytes32 key = keccak256(rs[j].id);
                 bool exists = false;
-                for (uint256 k = 0; k < n; ++k) {
-                    if (keys[k] == key) exists = true;
-                    break;
+                for (uint256 k = 0; k < n && !exists; ++k) {
+                    exists = (keys[k] == key);
                 }
-                if (!exists) keys[n] = key;
-                out[n] = rs[j];
-                ++n;
+                if (!exists) {
+                    keys[n] = key;
+                    out[n] = rs[j];
+                    ++n;
+                }
             }
         }
         // solhint-disable-next-line no-inline-assembly
