@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
-import {Tx as AtomicTx, ChannelInfo, CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
+import {CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 abstract contract CoreStore {
     // keccak256(abi.encode(uint256(keccak256("cross.core.auth"))  - 1)) & ~bytes32(uint256(0xff))
@@ -41,14 +41,17 @@ abstract contract CoreStore {
     }
 
     function _getAuthStorage() internal pure returns (AuthStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly { $.slot := AUTH_STORAGE_LOCATION }
     }
 
     function _getTxStorage() internal pure returns (TxStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly { $.slot := TX_STORAGE_LOCATION }
     }
 
     function _getCoordStorage() internal pure returns (CoordStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly { $.slot := COORD_STORAGE_LOCATION }
     }
 }
