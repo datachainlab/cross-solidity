@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IInitiator} from "./IInitiator.sol";
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
@@ -11,8 +12,8 @@ import {Account} from "../proto/cross/core/auth/Auth.sol";
 abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
     bytes32 public immutable chainIdHash;
 
-    constructor(string memory chainId_) {
-        chainIdHash = keccak256(bytes(chainId_));
+    constructor() {
+        chainIdHash = keccak256(bytes(Strings.toString(block.chainid)));
     }
 
     function initiateTx(MsgInitiateTx.Data calldata msg_)

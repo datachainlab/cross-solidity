@@ -28,7 +28,7 @@ abstract contract CrossModule is
 {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(string memory chainId_, IIBCHandler ibcHandler_) Initiator(chainId_) IBCKeeper(ibcHandler_) {
+    constructor(IIBCHandler ibcHandler_) Initiator() IBCKeeper(ibcHandler_) {
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 

@@ -8,9 +8,7 @@ import "./IContractModule.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 
 contract CrossSimpleModule is CrossModule, SimpleContractRegistry, TxAtomicSimple {
-    constructor(string memory chainId_, IIBCHandler ibcHandler_, IContractModule module, bool debugMode)
-        CrossModule(chainId_, ibcHandler_)
-    {
+    constructor(IIBCHandler ibcHandler_, IContractModule module, bool debugMode) CrossModule(ibcHandler_) {
         if (debugMode) {
             _grantRole(IBC_ROLE, _msgSender());
         }

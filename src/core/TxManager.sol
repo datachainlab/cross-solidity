@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {TxManagerBase} from "./TxManagerBase.sol";
+import {CoreStore} from "./CoreStore.sol";
 
 import {
     MsgInitiateTx,
@@ -18,45 +19,34 @@ import {
     CoordinatorState
 } from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
-abstract contract TxManager is TxManagerBase {
-    struct _CoordStorage {
-        bool exists;
-        AtomicTx.CommitProtocol commit_protocol;
-        ChannelInfo.Data[] channels;
-        CoordinatorState.CoordinatorPhase phase;
-        CoordinatorState.CoordinatorDecision decision;
-        uint32[] confirmed_txs;
-        uint32[] acks;
-    }
-    mapping(bytes32 => _CoordStorage) internal _coord;
-    mapping(bytes32 => bool) internal _txExists;
-    mapping(bytes32 => MsgInitiateTx.Data) internal _txMsg;
-    mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) internal _txStatus;
-
+abstract contract TxManager is TxManagerBase, CoreStore {
     function CreateTx(bytes32 txId, MsgInitiateTx.Data calldata src) internal virtual override {
-        if (_txExists[txId]) revert TxAlreadyExists(txId);
-        _deepStoreMsg(txId, src);
-        _txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
-        _txExists[txId] = true;
+        CoreStore.TxStorage storage T = _getTxStorage();
+        if (T.txExists[txId]) revert TxAlreadyExists(txId);
+        _deepStoreMsg(T, txId, src);
+        T.txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
+        T.txExists[txId] = true;
     }
 
     function RunTxIfCompleted(bytes32 txId) internal virtual override {
-        if (!_txExists[txId]) return;
-        if (_txStatus[txId] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
-        _runTx(txId, _txMsg[txId]);
-        _txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
+        CoreStore.TxStorage storage T = _getTxStorage();
+        if (!T.txExists[txId]) return;
+        if (T.txStatus[txId] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
+        _runTx(txId, T.txMsg[txId]);
+        T.txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
     }
 
     function _hasTx(bytes32 txId) internal view virtual override returns (bool) {
-        return _txExists[txId];
+        CoreStore.TxStorage storage T = _getTxStorage();
+        return T.txExists[txId];
     }
 
     function _runTx(bytes32, MsgInitiateTx.Data storage) internal virtual override {
         // no-op
     }
 
-    function _deepStoreMsg(bytes32 txId, MsgInitiateTx.Data calldata src) private {
-        MsgInitiateTx.Data storage dst = _txMsg[txId];
+    function _deepStoreMsg(CoreStore.TxStorage storage T, bytes32 txId, MsgInitiateTx.Data calldata src) private {
+        MsgInitiateTx.Data storage dst = T.txMsg[txId];
         dst.chain_id = src.chain_id;
         dst.nonce = src.nonce;
         dst.commit_protocol = src.commit_protocol;
@@ -95,26 +85,29 @@ abstract contract TxManager is TxManagerBase {
         virtual
         override
     {
-        _CoordStorage storage s = _coord[txId];
-        s.exists = true;
-        s.commit_protocol = cp;
+        CoreStore.CoordStorage storage C = _getCoordStorage();
+        CoreStore.CoordEntry storage s = C.states[txId];
 
-        while (s.channels.length > 0) s.channels.pop();
+        s.exists = true;
+        s.data.commit_protocol = cp;
+
+        // channels を入れ替え
+        while (s.data.channels.length > 0) s.data.channels.pop();
         for (uint256 i = 0; i < channels.length; i++) {
-            s.channels.push(channels[i]);
+            s.data.channels.push(channels[i]);
         }
 
-        s.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
-        s.decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
+        s.data.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+        s.data.decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
 
-        while (s.confirmed_txs.length > 0) s.confirmed_txs.pop();
-        while (s.acks.length > 0) s.acks.pop();
+        while (s.data.confirmed_txs.length > 0) s.data.confirmed_txs.pop();
+        while (s.data.acks.length > 0) s.data.acks.pop();
     }
 
     function SetCoordinatorPhase(bytes32 txId, CoordinatorState.CoordinatorPhase phase) internal virtual override {
-        _CoordStorage storage s = _coord[txId];
+        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
         s.exists = true;
-        s.phase = phase;
+        s.data.phase = phase;
     }
 
     function SetCoordinatorDecision(bytes32 txId, CoordinatorState.CoordinatorDecision decision)
@@ -122,21 +115,21 @@ abstract contract TxManager is TxManagerBase {
         virtual
         override
     {
-        _CoordStorage storage s = _coord[txId];
+        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
         s.exists = true;
-        s.decision = decision;
+        s.data.decision = decision;
     }
 
     function PushCoordinatorConfirmed(bytes32 txId, uint32 idx) internal virtual override {
-        _CoordStorage storage s = _coord[txId];
+        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
         s.exists = true;
-        s.confirmed_txs.push(idx);
+        s.data.confirmed_txs.push(idx);
     }
 
     function PushCoordinatorAck(bytes32 txId, uint32 idx) internal virtual override {
-        _CoordStorage storage s = _coord[txId];
+        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
         s.exists = true;
-        s.acks.push(idx);
+        s.data.acks.push(idx);
     }
 
     function _getCoordinatorState(bytes32 txId)
@@ -146,24 +139,30 @@ abstract contract TxManager is TxManagerBase {
         override
         returns (QueryCoordinatorStateResponse.Data memory out, bool exists)
     {
-        _CoordStorage storage s = _coord[txId];
+        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
         if (!s.exists) return (out, false);
+
         CoordinatorState.Data memory cs;
-        cs.commit_protocol = s.commit_protocol;
-        cs.channels = new ChannelInfo.Data[](s.channels.length);
-        for (uint256 i = 0; i < s.channels.length; i++) {
-            cs.channels[i] = s.channels[i];
+        cs.commit_protocol = s.data.commit_protocol;
+
+        cs.channels = new ChannelInfo.Data[](s.data.channels.length);
+        for (uint256 i = 0; i < s.data.channels.length; i++) {
+            cs.channels[i] = s.data.channels[i];
         }
-        cs.phase = s.phase;
-        cs.decision = s.decision;
-        cs.confirmed_txs = new uint32[](s.confirmed_txs.length);
-        for (uint256 i = 0; i < s.confirmed_txs.length; i++) {
-            cs.confirmed_txs[i] = s.confirmed_txs[i];
+
+        cs.phase = s.data.phase;
+        cs.decision = s.data.decision;
+
+        cs.confirmed_txs = new uint32[](s.data.confirmed_txs.length);
+        for (uint256 i = 0; i < s.data.confirmed_txs.length; i++) {
+            cs.confirmed_txs[i] = s.data.confirmed_txs[i];
         }
-        cs.acks = new uint32[](s.acks.length);
-        for (uint256 i = 0; i < s.acks.length; i++) {
-            cs.acks[i] = s.acks[i];
+
+        cs.acks = new uint32[](s.data.acks.length);
+        for (uint256 i = 0; i < s.data.acks.length; i++) {
+            cs.acks[i] = s.data.acks[i];
         }
+
         out.coodinator_state = cs;
         exists = true;
     }

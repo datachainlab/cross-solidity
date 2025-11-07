@@ -61,7 +61,7 @@ contract DeployAll is Script, Config {
         return handler;
     }
 
-    function _deployApp(string memory chainId, IBCHandler handler, bool debugMode)
+    function _deployApp(IBCHandler handler, bool debugMode)
         internal
         returns (MockCrossContract, CrossSimpleModule, MockClient)
     {
@@ -69,7 +69,7 @@ contract DeployAll is Script, Config {
         MockCrossContract app = new MockCrossContract();
         console2.log("  MockCrossContract:", address(app));
 
-        CrossSimpleModule module = new CrossSimpleModule(chainId, handler, IContractModule(address(app)), debugMode);
+        CrossSimpleModule module = new CrossSimpleModule(handler, IContractModule(address(app)), debugMode);
         console2.log("  CrossSimpleModule:", address(module));
 
         MockClient mclient = new MockClient(address(handler));
@@ -137,7 +137,6 @@ contract DeployAll is Script, Config {
     }
 
     function _broadcastDeployAndInit(
-        string memory chainId,
         uint256 deployerPk,
         bool debugMode,
         string memory portCross,
@@ -145,7 +144,7 @@ contract DeployAll is Script, Config {
     ) internal {
         vm.startBroadcast(deployerPk);
         ibcHandler = _deployCore();
-        (mockApp, crossSimpleModule, mockClient) = _deployApp(chainId, ibcHandler, debugMode);
+        (mockApp, crossSimpleModule, mockClient) = _deployApp(ibcHandler, debugMode);
         _initialize(ibcHandler, crossSimpleModule, portCross, mockClientType, mockClient);
         vm.stopBroadcast();
     }
@@ -180,8 +179,7 @@ contract DeployAll is Script, Config {
 
         (uint256 deployerPk, address deployer) = _deriveDeployer(mnemonic, mnemonicIndex);
 
-        string memory chainIdStr = vm.toString(chainId);
-        _broadcastDeployAndInit(chainIdStr, deployerPk, debugMode, portCross, mockClientType);
+        _broadcastDeployAndInit(deployerPk, debugMode, portCross, mockClientType);
 
         _writeBack(deployer);
     }
