@@ -13,10 +13,22 @@ import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-chann
 import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
-abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHandler {
+import {Initiator} from "./Initiator.sol";
+import {TxAuthManager} from "./TxAuthManager.sol";
+import {TxManager} from "./TxManager.sol";
+
+abstract contract CrossModule is
+    AccessControl,
+    IIBCModule,
+    IBCKeeper,
+    PacketHandler,
+    Initiator,
+    TxAuthManager,
+    TxManager
+{
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IIBCHandler ibcHandler_) IBCKeeper(ibcHandler_) {
+    constructor(string memory chainId_, IIBCHandler ibcHandler_) Initiator(chainId_) IBCKeeper(ibcHandler_) {
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 

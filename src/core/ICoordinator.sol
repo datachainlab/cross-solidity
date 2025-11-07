@@ -7,6 +7,8 @@ import {
 } from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 interface ICoordinator {
+    error CoordinatorStateNotFound(bytes32 txId);
+
     function coordinatorState(QueryCoordinatorStateRequest.Data calldata req)
         external
         view

@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
+
+import {IInitiator} from "./IInitiator.sol";
+import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
+import {TxManagerBase} from "./TxManagerBase.sol";
+
+import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
+import {Account} from "../proto/cross/core/auth/Auth.sol";
+
+abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
+    bytes32 public immutable chainIdHash;
+
+    constructor(string memory chainId_) {
+        chainIdHash = keccak256(bytes(chainId_));
+    }
+
+    function initiateTx(MsgInitiateTx.Data calldata msg_)
+        external
+        override
+        returns (MsgInitiateTxResponse.Data memory resp)
+    {
+        // chain_id check
+        bytes32 got = keccak256(bytes(msg_.chain_id));
+        if (got != chainIdHash) revert IInitiator.UnexpectedChainId(chainIdHash, got);
+
+        // timeouts
+        uint64 vh = msg_.timeout_height.version_height;
+        uint64 vn = msg_.timeout_height.version_number;
+        if (!((vh == 0 && vn == 0)) && block.number >= uint256(vh)) {
+            revert IInitiator.MessageTimeoutHeight(block.number, vh);
+        }
+        if (msg_.timeout_timestamp > 0 && block.timestamp >= msg_.timeout_timestamp) {
+            revert IInitiator.MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
+        }
+
+        // txId
+        bytes32 txIdHash = sha256(MsgInitiateTx.encode(msg_));
+        bytes memory txId = abi.encodePacked(txIdHash);
+        if (_hasTx(txIdHash)) revert IInitiator.TxIDAlreadyExists(txIdHash);
+
+        // persist as PENDING
+        CreateTx(txIdHash, msg_);
+
+        // auth init & sign
+        Account.Data[] memory required = _collectRequiredAccounts(msg_);
+        InitAuthState(txIdHash, required);
+        bool completed = Sign(txIdHash, msg_.signers);
+
+        emit TxInitiated(txId, msg.sender);
+
+        if (completed) {
+            RunTxIfCompleted(txIdHash);
+            return MsgInitiateTxResponse.Data({
+                txID: txId, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED
+            });
+        }
+        return MsgInitiateTxResponse.Data({
+            txID: txId, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING
+        });
+    }
+
+    function selfXCC() external view virtual override returns (QuerySelfXCCResponse.Data memory) {
+        revert IInitiator.SelfXCCNotImplemented();
+    }
+
+    // helpers
+    function _collectRequiredAccounts(MsgInitiateTx.Data calldata msg_)
+        internal
+        pure
+        returns (Account.Data[] memory out)
+    {
+        uint256 upper = 0;
+        for (uint256 i = 0; i < msg_.contract_transactions.length; i++) {
+            upper += msg_.contract_transactions[i].signers.length;
+        }
+        out = new Account.Data[](upper);
+        bytes32[] memory keys = new bytes32[](upper);
+        uint256 n = 0;
+
+        for (uint256 i = 0; i < msg_.contract_transactions.length; i++) {
+            Account.Data[] memory rs = msg_.contract_transactions[i].signers;
+            for (uint256 j = 0; j < rs.length; j++) {
+                bytes32 key = keccak256(rs[j].id);
+                bool exists = false;
+                for (uint256 k = 0; k < n; k++) {
+                    if (keys[k] == key) exists = true;
+                    break;
+                }
+                if (!exists) keys[n] = key;
+                out[n] = rs[j];
+                n++;
+            }
+        }
+        assembly { mstore(out, n) } // trim
+        return out;
+    }
+}
