@@ -134,30 +134,27 @@ abstract contract TxManager is TxManagerBase, CoreStore {
     function _getCoordinatorState(bytes32 txId)
         internal
         view
-        virtual
         override
         returns (QueryCoordinatorStateResponse.Data memory out, bool exists)
     {
         CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
         if (!s.exists) return (out, false);
 
-        CoordinatorState.Data memory cs;
-        cs.commit_protocol = s.data.commit_protocol;
+        CoordinatorState.Data memory cs = CoordinatorState.Data({
+            commit_protocol: s.data.commit_protocol,
+            channels: new ChannelInfo.Data[](s.data.channels.length),
+            phase: s.data.phase,
+            decision: s.data.decision,
+            confirmed_txs: new uint32[](s.data.confirmed_txs.length),
+            acks: new uint32[](s.data.acks.length)
+        });
 
-        cs.channels = new ChannelInfo.Data[](s.data.channels.length);
         for (uint256 i = 0; i < s.data.channels.length; i++) {
             cs.channels[i] = s.data.channels[i];
         }
-
-        cs.phase = s.data.phase;
-        cs.decision = s.data.decision;
-
-        cs.confirmed_txs = new uint32[](s.data.confirmed_txs.length);
         for (uint256 i = 0; i < s.data.confirmed_txs.length; i++) {
             cs.confirmed_txs[i] = s.data.confirmed_txs[i];
         }
-
-        cs.acks = new uint32[](s.data.acks.length);
         for (uint256 i = 0; i < s.data.acks.length; i++) {
             cs.acks[i] = s.data.acks[i];
         }

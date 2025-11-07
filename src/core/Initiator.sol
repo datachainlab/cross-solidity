@@ -31,6 +31,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         if (!((vh == 0 && vn == 0)) && block.number >= uint256(vh)) {
             revert IInitiator.MessageTimeoutHeight(block.number, vh);
         }
+        // slither-disable-next-line timestamp
         if (msg_.timeout_timestamp > 0 && block.timestamp >= msg_.timeout_timestamp) {
             revert IInitiator.MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
