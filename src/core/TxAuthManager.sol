@@ -25,7 +25,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CoreStore {
         if (s.remainingCount[txId] == 0) revert AuthAlreadyCompleted(txId);
 
         for (uint256 i = 0; i < signers.length; ++i) {
-            bytes32 key = keccak256(signers[i].id);
+            bytes32 key = _accountKey(signers[i]);
             if (s.remaining[txId][key]) {
                 s.remaining[txId][key] = false;
                 --s.remainingCount[txId];
@@ -53,7 +53,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CoreStore {
         uint256 p = 0;
         for (uint256 i = 0; i < total; ++i) {
             Account.Data memory acc = s.requiredAccounts[txId][i];
-            if (s.remaining[txId][keccak256(acc.id)]) {
+            if (s.remaining[txId][_accountKey(acc)]) {
                 out[p] = acc;
                 ++p;
                 if (p == need) break;
@@ -65,7 +65,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CoreStore {
         internal
     {
         for (uint256 i = 0; i < list.length; ++i) {
-            bytes32 key = keccak256(list[i].id);
+            bytes32 key = _accountKey(list[i]);
             if (!s.remaining[txId][key]) {
                 s.remaining[txId][key] = true;
                 ++s.remainingCount[txId];
@@ -74,14 +74,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CoreStore {
         }
     }
 
-    function _clearState(CoreStore.AuthStorage storage s, bytes32 txId) internal {
-        uint256 total = s.requiredAccounts[txId].length;
-        for (uint256 i = 0; i < total; ++i) {
-            bytes32 key = keccak256(s.requiredAccounts[txId][i].id);
-            if (s.remaining[txId][key]) s.remaining[txId][key] = false;
-        }
-        delete s.remainingCount[txId];
-        delete s.requiredAccounts[txId];
-        delete s.authInitialized[txId];
+    function _accountKey(Account.Data memory a) internal pure returns (bytes32) {
+        return keccak256(abi.encode(a.id, a.auth_type));
     }
 }

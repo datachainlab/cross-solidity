@@ -7,13 +7,6 @@ import {CoreStore} from "./CoreStore.sol";
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
-import {
-    QueryCoordinatorStateResponse,
-    Tx as AtomicTx,
-    ChannelInfo,
-    CoordinatorState
-} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
-
 abstract contract TxManager is TxManagerBase, CoreStore {
     function createTx(bytes32 txId, MsgInitiateTx.Data calldata src) internal virtual override {
         CoreStore.TxStorage storage t = _getTxStorage();
@@ -73,88 +66,5 @@ abstract contract TxManager is TxManagerBase, CoreStore {
                 d.links.push(s.links[j]);
             }
         }
-    }
-
-    function initCoordinatorState(bytes32 txId, AtomicTx.CommitProtocol cp, ChannelInfo.Data[] memory channels)
-        internal
-        virtual
-        override
-    {
-        CoreStore.CoordStorage storage c = _getCoordStorage();
-        CoreStore.CoordEntry storage s = c.states[txId];
-
-        s.exists = true;
-        s.data.commit_protocol = cp;
-
-        while (s.data.channels.length > 0) s.data.channels.pop();
-        for (uint256 i = 0; i < channels.length; ++i) {
-            s.data.channels.push(channels[i]);
-        }
-
-        s.data.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
-        s.data.decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
-
-        while (s.data.confirmed_txs.length > 0) s.data.confirmed_txs.pop();
-        while (s.data.acks.length > 0) s.data.acks.pop();
-    }
-
-    function setCoordinatorPhase(bytes32 txId, CoordinatorState.CoordinatorPhase phase) internal virtual override {
-        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
-        s.exists = true;
-        s.data.phase = phase;
-    }
-
-    function setCoordinatorDecision(bytes32 txId, CoordinatorState.CoordinatorDecision decision)
-        internal
-        virtual
-        override
-    {
-        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
-        s.exists = true;
-        s.data.decision = decision;
-    }
-
-    function pushCoordinatorConfirmed(bytes32 txId, uint32 idx) internal virtual override {
-        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
-        s.exists = true;
-        s.data.confirmed_txs.push(idx);
-    }
-
-    function pushCoordinatorAck(bytes32 txId, uint32 idx) internal virtual override {
-        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
-        s.exists = true;
-        s.data.acks.push(idx);
-    }
-
-    function _getCoordinatorState(bytes32 txId)
-        internal
-        view
-        override
-        returns (QueryCoordinatorStateResponse.Data memory out, bool exists)
-    {
-        CoreStore.CoordEntry storage s = _getCoordStorage().states[txId];
-        if (!s.exists) return (out, false);
-
-        CoordinatorState.Data memory cs = CoordinatorState.Data({
-            commit_protocol: s.data.commit_protocol,
-            channels: new ChannelInfo.Data[](s.data.channels.length),
-            phase: s.data.phase,
-            decision: s.data.decision,
-            confirmed_txs: new uint32[](s.data.confirmed_txs.length),
-            acks: new uint32[](s.data.acks.length)
-        });
-
-        for (uint256 i = 0; i < s.data.channels.length; ++i) {
-            cs.channels[i] = s.data.channels[i];
-        }
-        for (uint256 i = 0; i < s.data.confirmed_txs.length; ++i) {
-            cs.confirmed_txs[i] = s.data.confirmed_txs[i];
-        }
-        for (uint256 i = 0; i < s.data.acks.length; ++i) {
-            cs.acks[i] = s.data.acks[i];
-        }
-
-        out.coodinator_state = cs;
-        exists = true;
     }
 }
