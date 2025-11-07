@@ -81,8 +81,6 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
                 ++n;
             }
         }
-        // solhint-disable-next-line no-inline-assembly
-        assembly { mstore(out, n) } // trim
         return out;
     }
 }
