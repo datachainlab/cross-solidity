@@ -31,7 +31,7 @@ abstract contract TxManager is TxManagerBase, CoreStore {
         t.txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
     }
 
-    function hasTx(bytes32 txId) internal view virtual override returns (bool) {
+    function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {
         CoreStore.TxStorage storage t = _getTxStorage();
         return t.txExists[txId];
     }

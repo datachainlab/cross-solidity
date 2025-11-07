@@ -16,7 +16,7 @@ abstract contract TxManagerBase {
 
     function createTx(bytes32 txId, MsgInitiateTx.Data calldata src) internal virtual;
     function runTxIfCompleted(bytes32 txId) internal virtual;
-    function hasTx(bytes32 txId) internal view virtual returns (bool);
+    function isTxRecorded(bytes32 txId) internal view virtual returns (bool);
     function _runTx(bytes32 txId, MsgInitiateTx.Data storage msg_) internal virtual;
     function initCoordinatorState(bytes32 txId, AtomicTx.CommitProtocol cp, ChannelInfo.Data[] memory channels)
         internal

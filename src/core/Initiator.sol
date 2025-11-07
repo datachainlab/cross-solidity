@@ -39,7 +39,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         // txId
         bytes32 txIdHash = sha256(MsgInitiateTx.encode(msg_));
         bytes memory txId = abi.encodePacked(txIdHash);
-        if (hasTx(txIdHash)) revert IInitiator.TxIDAlreadyExists(txIdHash);
+        if (isTxRecorded(txIdHash)) revert IInitiator.TxIDAlreadyExists(txIdHash);
 
         // persist as PENDING
         createTx(txIdHash, msg_);
