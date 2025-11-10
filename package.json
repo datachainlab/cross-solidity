@@ -9,7 +9,7 @@
     "test": "forge test -vvv",
     "lint:sol": "solhint -f table --max-warnings 0 'src/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
     "fmt:sol": "forge fmt",
-    "coverage:sol": "forge coverage --report lcov --ir-minimum"
+    "coverage:sol": "forge coverage --report lcov --use 0.8.26 --ir-minimum"
   },
   "dependencies": {
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#v0.3.40",
