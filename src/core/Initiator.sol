@@ -66,12 +66,12 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         revert IInitiator.SelfXCCNotImplemented();
     }
 
-    function _getRequiredAccounts(MsgInitiateTx.Data calldata msg_) internal pure returns (Account.Data[] memory) {
+    function _getRequiredAccounts(MsgInitiateTx.Data calldata msg_) internal pure returns (Account.Data[] memory out) {
         uint256 upper = 0;
         for (uint256 i = 0; i < msg_.contract_transactions.length; ++i) {
             upper += msg_.contract_transactions[i].signers.length;
         }
-        Account.Data[] memory out = new Account.Data[](upper);
+        out = new Account.Data[](upper);
         uint256 n = 0;
 
         for (uint256 i = 0; i < msg_.contract_transactions.length; ++i) {
