@@ -2,12 +2,13 @@
 pragma solidity ^0.8.20;
 
 import {TxManagerBase} from "./TxManagerBase.sol";
+import {TxRunnerBase} from "./TxRunnerBase.sol";
 import {CoreStore} from "./CoreStore.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
-abstract contract TxManager is TxManagerBase, CoreStore {
+abstract contract TxManager is TxManagerBase, TxRunnerBase, CoreStore {
     function createTx(bytes32 txId, MsgInitiateTx.Data calldata src) internal virtual override {
         CoreStore.TxStorage storage t = _getTxStorage();
         if (t.txExists[txId]) revert TxAlreadyExists(txId);
@@ -27,10 +28,6 @@ abstract contract TxManager is TxManagerBase, CoreStore {
     function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {
         CoreStore.TxStorage storage t = _getTxStorage();
         return t.txExists[txId];
-    }
-
-    function _runTx(bytes32, MsgInitiateTx.Data storage) internal virtual override {
-        // no-op
     }
 
     function _deepStoreMsg(CoreStore.TxStorage storage t, bytes32 txId, MsgInitiateTx.Data calldata src) private {

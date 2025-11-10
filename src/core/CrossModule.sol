@@ -16,6 +16,7 @@ import "./IBCKeeper.sol";
 import {Initiator} from "./Initiator.sol";
 import {TxAuthManager} from "./TxAuthManager.sol";
 import {TxManager} from "./TxManager.sol";
+import {TxRunner} from "./TxRunner.sol";
 
 abstract contract CrossModule is
     AccessControl,
@@ -24,7 +25,8 @@ abstract contract CrossModule is
     PacketHandler,
     Initiator,
     TxAuthManager,
-    TxManager
+    TxManager,
+    TxRunner
 {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
