@@ -81,7 +81,10 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
                 ++n;
             }
         }
-        // forge-ignore
+        // LCOV_EXCL_START
+        // This 'return' is an optimization artifact (inlining) and falsely
+        // reported as uncovered by LCOV when via_ir=true.
         return out;
+        // LCOV_EXCL_END
     }
 }
