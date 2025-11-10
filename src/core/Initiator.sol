@@ -81,6 +81,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
                 ++n;
             }
         }
+        // forge-ignore
         return out;
     }
 }
