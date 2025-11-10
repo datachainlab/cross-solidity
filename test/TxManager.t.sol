@@ -10,7 +10,8 @@ import {
     MsgInitiateTx,
     MsgInitiateTxResponse,
     ContractTransaction,
-    Link
+    Link,
+    ReturnValue
 } from "../src/proto/cross/core/initiator/Initiator.sol";
 import {Account as AuthAccount, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
@@ -82,36 +83,45 @@ contract TxManagerTest is Test {
         assertFalse(harness.exposed_isTxRecorded(txId), "Should return false for unrecorded tx");
     }
 
-    function test_createTx_SucceedsWithFullData() public {
+    function test_createTx_SucceedsWithNonEmptyData() public {
         bytes32 deepCopyTxId = keccak256("deep_copy_tx");
 
+        // --- 1. Setup mock data ---
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
         AuthType.Data memory localAuthType = AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: emptyAny});
         AuthAccount.Data memory signerA = AuthAccount.Data({id: bytes("signerA"), auth_type: localAuthType});
 
+        // --- 2. Build a complex calldata message with nested arrays ---
+        // 2a. Top-level signers
         AuthAccount.Data[] memory signers_mem = new AuthAccount.Data[](1);
         signers_mem[0] = signerA;
 
+        // 2b. Nested contract transactions
         ContractTransaction.Data[] memory txs_mem = new ContractTransaction.Data[](1);
         Link.Data[] memory links_mem = new Link.Data[](1);
         links_mem[0] = Link.Data({src_index: 123});
 
-        txs_mem[0].signers = signers_mem;
-        txs_mem[0].links = links_mem;
+        txs_mem[0].signers = signers_mem; // Nested signers
+        txs_mem[0].links = links_mem; // Nested links
         txs_mem[0].call_info = hex"C0FFEE";
+        txs_mem[0].cross_chain_channel = GoogleProtobufAny.Data({type_url: "xcc_type", value: hex"01"});
+        txs_mem[0].return_value = ReturnValue.Data({value: bytes("RETURNVAL")});
 
+        // 2c. Main message
         MsgInitiateTx.Data memory nonEmptyTxMsg = MsgInitiateTx.Data({
             chain_id: "test-chain-deep",
-            nonce: 2,
-            commit_protocol: Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE,
-            timeout_height: IbcCoreClientV1Height.Data(0, 0),
-            timeout_timestamp: 0,
+            nonce: 99,
+            commit_protocol: Tx.CommitProtocol.COMMIT_PROTOCOL_TPC,
+            timeout_height: IbcCoreClientV1Height.Data(1, 101),
+            timeout_timestamp: 202,
             signers: signers_mem,
             contract_transactions: txs_mem
         });
 
+        // --- 3. Execute the function under test ---
         harness.exposed_createTx(deepCopyTxId, nonEmptyTxMsg);
 
+        // --- 4. Assert status (ensures coverage for non-empty paths) ---
         assertTrue(harness.exposed_isTxRecorded(deepCopyTxId), "Tx should be recorded");
         assertEq(
             uint256(harness.getTxStatus(deepCopyTxId)),
@@ -119,14 +129,46 @@ contract TxManagerTest is Test {
             "Status should be PENDING"
         );
 
+        // --- 5. Verify deep copy by reading back from storage ---
         MsgInitiateTx.Data memory storedMsg = harness.exposed_getTxMsg(deepCopyTxId);
+
+        // 5a. Verify top-level simple fields
+        assertEq(storedMsg.chain_id, "test-chain-deep", "chain_id mismatch");
+        assertEq(storedMsg.nonce, 99, "nonce mismatch");
+        assertEq(
+            uint256(storedMsg.commit_protocol),
+            uint256(Tx.CommitProtocol.COMMIT_PROTOCOL_TPC),
+            "commit_protocol mismatch"
+        );
+        assertEq(storedMsg.timeout_height.version_number, 1, "timeout_height.version_number mismatch");
+        assertEq(storedMsg.timeout_height.version_height, 101, "timeout_height.version_height mismatch");
+        assertEq(storedMsg.timeout_timestamp, 202, "timeout_timestamp mismatch");
+
+        // 5b. Verify top-level signers array
         assertEq(storedMsg.signers.length, 1, "Top signers length mismatch");
         assertEq(storedMsg.signers[0].id, signerA.id, "Top signer id mismatch");
+        assertEq(
+            uint256(storedMsg.signers[0].auth_type.mode), uint256(localAuthType.mode), "Top signer auth_type mismatch"
+        );
+
+        // 5c. Verify contract_transactions array (level 1 nesting)
         assertEq(storedMsg.contract_transactions.length, 1, "Txs length mismatch");
-        assertEq(storedMsg.contract_transactions[0].call_info, hex"C0FFEE", "Tx call_info mismatch");
-        assertEq(storedMsg.contract_transactions[0].signers.length, 1, "Nested signers length mismatch");
-        assertEq(storedMsg.contract_transactions[0].links.length, 1, "Links length mismatch");
-        assertEq(storedMsg.contract_transactions[0].links[0].src_index, 123, "Link src_index mismatch");
+        ContractTransaction.Data memory storedTx = storedMsg.contract_transactions[0];
+        assertEq(storedTx.cross_chain_channel.type_url, "xcc_type", "Tx xcc.type_url mismatch");
+        assertEq(storedTx.cross_chain_channel.value, hex"01", "Tx xcc.value mismatch");
+        assertEq(storedTx.call_info, hex"C0FFEE", "Tx call_info mismatch");
+        assertEq(storedTx.return_value.value, bytes("RETURNVAL"), "Tx return_value mismatch");
+
+        // 5d. Verify nested signers array (level 2 nesting)
+        assertEq(storedTx.signers.length, 1, "Nested signers length mismatch");
+        assertEq(storedTx.signers[0].id, signerA.id, "Nested signer id mismatch");
+        assertEq(
+            uint256(storedTx.signers[0].auth_type.mode), uint256(localAuthType.mode), "Nested signer auth_type mismatch"
+        );
+
+        // 5e. Verify nested links array (level 2 nesting)
+        assertEq(storedTx.links.length, 1, "Links length mismatch");
+        assertEq(storedTx.links[0].src_index, 123, "Link src_index mismatch");
     }
 
     function test_createTx_RevertWhen_TxAlreadyExists() public {
