@@ -4,9 +4,8 @@ pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
 import "../src/core/Initiator.sol";
-import "../src/core/TxAuthManager.sol";
-import "../src/core/TxManager.sol";
-import "../src/core/TxRunner.sol";
+import {TxManagerBase} from "../src/core/TxManagerBase.sol";
+import {TxAuthManagerBase} from "../src/core/TxAuthManagerBase.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {
@@ -14,36 +13,75 @@ import {
     MsgInitiateTxResponse,
     ContractTransaction
 } from "../src/proto/cross/core/initiator/Initiator.sol";
-import {Account as AuthAccount, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
+import {Account as AuthAccount, AuthType, TxAuthState} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 
-contract MockTxRunner is TxRunner {
-    uint256 public runCount;
+contract MockTxManager is TxManagerBase {
+    mapping(bytes32 => bool) public txExists;
+    bytes32 public lastCreatedTxId;
     bytes32 public lastRunTxId;
+    uint256 public createTxCount;
+    uint256 public runTxCount;
 
-    function _runTx(bytes32 txId, MsgInitiateTx.Data storage) internal virtual override {
-        runCount++;
+    function createTx(bytes32 txId, MsgInitiateTx.Data calldata) internal virtual override {
+        txExists[txId] = true;
+        lastCreatedTxId = txId;
+        createTxCount++;
+    }
+
+    function runTxIfCompleted(bytes32 txId) internal virtual override {
         lastRunTxId = txId;
+        runTxCount++;
+    }
+
+    function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {
+        return txExists[txId];
+    }
+
+    function setTxExists(bytes32 txId, bool exists) public {
+        txExists[txId] = exists;
     }
 }
 
-contract InitiatorHarness is Initiator, TxAuthManager, TxManager, MockTxRunner {
+contract MockTxAuthManager is TxAuthManagerBase {
+    mapping(bytes32 => bool) public completed;
+    bytes32 public lastInitTxId;
+    bool private _signReturns = false;
+
+    function initAuthState(bytes32 txId, Account.Data[] memory) internal virtual override {
+        lastInitTxId = txId;
+        completed[txId] = false;
+    }
+
+    function isCompletedAuth(bytes32 txId) internal view virtual override returns (bool) {
+        return completed[txId];
+    }
+
+    function sign(bytes32 txId, Account.Data[] memory) internal virtual override returns (bool) {
+        if (_signReturns) {
+            completed[txId] = true;
+        }
+        return _signReturns;
+    }
+
+    function getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {
+        revert("MockTxAuthManager.getAuthState not implemented");
+    }
+
+    function setSignReturns(bool returnsValue) public {
+        _signReturns = returnsValue;
+    }
+}
+
+contract InitiatorHarness is Initiator, MockTxAuthManager, MockTxManager {
     function exposed_getRequiredAccounts(MsgInitiateTx.Data calldata msg_)
         public
         pure
         returns (AuthAccount.Data[] memory out)
     {
         return _getRequiredAccounts(msg_);
-    }
-
-    function exposed_isCompletedAuth(bytes32 txId) public view returns (bool) {
-        return isCompletedAuth(txId);
-    }
-
-    function exposed_isTxRecorded(bytes32 txId) public view returns (bool) {
-        return isTxRecorded(txId);
     }
 }
 
@@ -98,6 +136,8 @@ contract InitiatorTest is Test {
     function test_initiateTx_SucceedsAsPendingWhenSignersNotMet() public {
         bytes32 txIdHash = sha256(MsgInitiateTx.encode(baseMsg));
 
+        harness.setSignReturns(false);
+
         vm.expectEmit(true, false, false, true, address(harness));
         emit TxInitiated(abi.encodePacked(txIdHash), address(this));
 
@@ -108,22 +148,17 @@ contract InitiatorTest is Test {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING),
             "Status should be PENDING"
         );
-        assertTrue(harness.exposed_isTxRecorded(txIdHash), "Tx should be recorded");
-        assertFalse(harness.exposed_isCompletedAuth(txIdHash), "Auth should not be completed");
-        assertEq(harness.runCount(), 0, "MockTxRunner should not be called");
+        assertTrue(harness.txExists(txIdHash), "Mock: tx should be recorded");
+        assertFalse(harness.completed(txIdHash), "Mock: auth should not be completed");
+        assertEq(harness.createTxCount(), 1, "Mock: createTx should be called once");
+        assertEq(harness.lastInitTxId(), txIdHash, "Mock: initAuthState should be called with txId");
+        assertEq(harness.runTxCount(), 0, "Mock: runTxIfCompleted should not be called");
     }
 
     function test_initiateTx_SucceedsAsVerifiedWhenSignersMet() public {
-        baseMsg.contract_transactions = new ContractTransaction.Data[](1);
-        baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](2);
-        baseMsg.contract_transactions[0].signers[0] = signerA;
-        baseMsg.contract_transactions[0].signers[1] = signerB;
-
-        baseMsg.signers = new AuthAccount.Data[](2);
-        baseMsg.signers[0] = signerA;
-        baseMsg.signers[1] = signerB;
-
         bytes32 txIdHash = sha256(MsgInitiateTx.encode(baseMsg));
+
+        harness.setSignReturns(true);
 
         vm.expectEmit(true, false, false, true, address(harness));
         emit TxInitiated(abi.encodePacked(txIdHash), address(this));
@@ -135,10 +170,12 @@ contract InitiatorTest is Test {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
-        assertTrue(harness.exposed_isTxRecorded(txIdHash), "Tx should be recorded");
-        assertTrue(harness.exposed_isCompletedAuth(txIdHash), "Auth should be completed");
-        assertEq(harness.runCount(), 1, "MockTxRunner should be called");
-        assertEq(harness.lastRunTxId(), txIdHash, "MockTxRunner called with correct txId");
+        assertTrue(harness.txExists(txIdHash), "Mock: tx should be recorded");
+        assertTrue(harness.completed(txIdHash), "Mock: auth should be completed");
+        assertEq(harness.createTxCount(), 1, "Mock: createTx should be called once");
+        assertEq(harness.lastInitTxId(), txIdHash, "Mock: initAuthState should be called with txId");
+        assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
+        assertEq(harness.lastRunTxId(), txIdHash, "Mock: runTxIfCompleted should be called with txId");
     }
 
     function test_initiateTx_RevertWhen_ChainIdMismatch() public {
@@ -174,8 +211,9 @@ contract InitiatorTest is Test {
     }
 
     function test_initiateTx_RevertWhen_TxIdAlreadyExists() public {
-        harness.initiateTx(baseMsg);
         bytes32 txIdHash = sha256(MsgInitiateTx.encode(baseMsg));
+
+        harness.setTxExists(txIdHash, true);
 
         vm.expectRevert(abi.encodeWithSelector(IInitiator.TxIDAlreadyExists.selector, txIdHash));
         harness.initiateTx(baseMsg);
