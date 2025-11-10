@@ -198,4 +198,12 @@ contract InitiatorTest is Test {
         assertEq(required[1].id, signerB.id, "Signer B missing");
         assertEq(required[2].id, signerC.id, "Signer C missing");
     }
+
+    function test_getRequiredAccounts_ReturnsEmptyArrayWhenNoTxs() public {
+        baseMsg.contract_transactions = new ContractTransaction.Data[](0);
+
+        AuthAccount.Data[] memory required = harness.exposed_getRequiredAccounts(baseMsg);
+
+        assertEq(required.length, 0, "Should return empty array for zero transactions");
+    }
 }

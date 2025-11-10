@@ -34,6 +34,11 @@ jobs:
             'src/proto/**' \
             'src/core/PacketHandler.sol' \
             'src/core/ContractRegistry.sol' \
+            'src/core/TxAuthManagerBase.sol' \
+            'src/core/TxManagerBase.sol' \
+            'src/core/TxRunner.sol' \
+            'src/core/TxRunnerBase.sol' \
+            'src/core/CoreStore.sol' \
             -o lcov.filtered.info
 
       - name: Report code coverage
