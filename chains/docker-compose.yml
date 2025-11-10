@@ -10,7 +10,8 @@ services:
         "--chain-id","31337",
         "--accounts","10",
         "--mnemonic","math razor capable expose worth grape metal sunset metal sudden usage scheme",
-        "--gas-limit","1000000000"
+        "--gas-limit","1000000000",
+        "--disable-code-size-limit"
       ]
     ports:
       - "8545:8545"

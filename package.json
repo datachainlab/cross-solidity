@@ -2,7 +2,7 @@
   "name": "cross-solidity",
   "version": "0.0.1",
   "scripts": {
-    "deploy": "forge script script/DeployAll.s.sol --rpc-url anvil --broadcast",
+    "deploy": "forge script script/DeployAll.s.sol --rpc-url anvil --broadcast --disable-code-size-limit",
     "compile": "forge build",
     "postinstall": "husky && forge build",
     "clean": "rm -rf build",
