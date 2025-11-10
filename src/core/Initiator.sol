@@ -66,12 +66,12 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         revert IInitiator.SelfXCCNotImplemented();
     }
 
-    function _getRequiredAccounts(MsgInitiateTx.Data calldata msg_) internal pure returns (Account.Data[] memory out) {
+    function _getRequiredAccounts(MsgInitiateTx.Data calldata msg_) internal pure returns (Account.Data[] memory) {
         uint256 upper = 0;
         for (uint256 i = 0; i < msg_.contract_transactions.length; ++i) {
             upper += msg_.contract_transactions[i].signers.length;
         }
-        out = new Account.Data[](upper);
+        Account.Data[] memory out = new Account.Data[](upper);
         uint256 n = 0;
 
         for (uint256 i = 0; i < msg_.contract_transactions.length; ++i) {
@@ -81,10 +81,6 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
                 ++n;
             }
         }
-        // LCOV_EXCL_START
-        // This 'return' is an optimization artifact (inlining) and falsely
-        // reported as uncovered by LCOV when via_ir=true.
         return out;
-        // LCOV_EXCL_END
     }
 }
