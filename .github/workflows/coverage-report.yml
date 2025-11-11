@@ -36,7 +36,6 @@ jobs:
             'src/core/ContractRegistry.sol' \
             'src/core/TxAuthManagerBase.sol' \
             'src/core/TxManagerBase.sol' \
-            'src/core/TxRunner.sol' \ # Remove when it's implemented
             'src/core/TxRunnerBase.sol' \
             -o lcov.filtered.info
 
