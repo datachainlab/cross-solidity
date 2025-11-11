@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings, function-max-lines
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -23,7 +23,7 @@ contract MockTxRunner is TxRunner {
     bytes32 public lastRunTxId;
 
     function _runTx(bytes32 txId, MsgInitiateTx.Data storage) internal virtual override {
-        runCount++;
+        ++runCount;
         lastRunTxId = txId;
     }
 }
@@ -93,19 +93,19 @@ contract TxManagerTest is Test {
 
         // --- 2. Build a complex calldata message with nested arrays ---
         // 2a. Top-level signers
-        AuthAccount.Data[] memory signers_mem = new AuthAccount.Data[](1);
-        signers_mem[0] = signerA;
+        AuthAccount.Data[] memory signersMem = new AuthAccount.Data[](1);
+        signersMem[0] = signerA;
 
         // 2b. Nested contract transactions
-        ContractTransaction.Data[] memory txs_mem = new ContractTransaction.Data[](1);
-        Link.Data[] memory links_mem = new Link.Data[](1);
-        links_mem[0] = Link.Data({src_index: 123});
+        ContractTransaction.Data[] memory txsMem = new ContractTransaction.Data[](1);
+        Link.Data[] memory linksMem = new Link.Data[](1);
+        linksMem[0] = Link.Data({src_index: 123});
 
-        txs_mem[0].signers = signers_mem; // Nested signers
-        txs_mem[0].links = links_mem; // Nested links
-        txs_mem[0].call_info = hex"C0FFEE";
-        txs_mem[0].cross_chain_channel = GoogleProtobufAny.Data({type_url: "xcc_type", value: hex"01"});
-        txs_mem[0].return_value = ReturnValue.Data({value: bytes("RETURNVAL")});
+        txsMem[0].signers = signersMem; // Nested signers
+        txsMem[0].links = linksMem; // Nested links
+        txsMem[0].call_info = hex"C0FFEE";
+        txsMem[0].cross_chain_channel = GoogleProtobufAny.Data({type_url: "xcc_type", value: hex"01"});
+        txsMem[0].return_value = ReturnValue.Data({value: bytes("RETURNVAL")});
 
         // 2c. Main message
         MsgInitiateTx.Data memory nonEmptyTxMsg = MsgInitiateTx.Data({
@@ -114,8 +114,8 @@ contract TxManagerTest is Test {
             commit_protocol: Tx.CommitProtocol.COMMIT_PROTOCOL_TPC,
             timeout_height: IbcCoreClientV1Height.Data(1, 101),
             timeout_timestamp: 202,
-            signers: signers_mem,
-            contract_transactions: txs_mem
+            signers: signersMem,
+            contract_transactions: txsMem
         });
 
         // --- 3. Execute the function under test ---

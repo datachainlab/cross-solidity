@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings, function-max-lines
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
 import "../src/core/CoreStore.sol";
-import {MsgInitiateTx, MsgInitiateTxResponse} from "../src/proto/cross/core/initiator/Initiator.sol";
+import {MsgInitiateTxResponse} from "../src/proto/cross/core/initiator/Initiator.sol";
 import {Account, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";

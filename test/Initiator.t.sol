@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -28,12 +28,12 @@ contract MockTxManager is TxManagerBase {
     function createTx(bytes32 txId, MsgInitiateTx.Data calldata) internal virtual override {
         txExists[txId] = true;
         lastCreatedTxId = txId;
-        createTxCount++;
+        ++createTxCount;
     }
 
     function runTxIfCompleted(bytes32 txId) internal virtual override {
         lastRunTxId = txId;
-        runTxCount++;
+        ++runTxCount;
     }
 
     function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {

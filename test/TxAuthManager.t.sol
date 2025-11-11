@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -206,13 +206,13 @@ contract TxAuthManagerTest is Test {
         bytes32 keyB = harness.exposed_accountKey(signerB);
         assertNotEq(keyA, keyB, "Different IDs should produce different keys");
 
-        AuthAccount.Data memory signerA_altAuth = AuthAccount.Data({id: signerA.id, auth_type: channelAuthType});
-        bytes32 keyA_altAuth = harness.exposed_accountKey(signerA_altAuth);
-        assertNotEq(keyA, keyA_altAuth, "Different auth_types should produce different keys");
+        AuthAccount.Data memory signerAAltAuth = AuthAccount.Data({id: signerA.id, auth_type: channelAuthType});
+        bytes32 keyAAltAuth = harness.exposed_accountKey(signerAAltAuth);
+        assertNotEq(keyA, keyAAltAuth, "Different auth_types should produce different keys");
 
-        AuthAccount.Data memory signerA_copy = AuthAccount.Data({id: bytes("signerA"), auth_type: localAuthType});
-        bytes32 keyA_copy = harness.exposed_accountKey(signerA_copy);
-        assertEq(keyA, keyA_copy, "Identical accounts should produce the same key");
+        AuthAccount.Data memory signerACopy = AuthAccount.Data({id: bytes("signerA"), auth_type: localAuthType});
+        bytes32 keyACopy = harness.exposed_accountKey(signerACopy);
+        assertEq(keyA, keyACopy, "Identical accounts should produce the same key");
     }
 
     function test_setStateFromRemainingList_HandlesDuplicatesAndReturnsRemains() public {
