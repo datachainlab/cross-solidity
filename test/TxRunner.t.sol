@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
 import "../src/core/TxRunner.sol";
+import "../src/core/TxRunnerBase.sol";
 import {MsgInitiateTx} from "../src/proto/cross/core/initiator/Initiator.sol";
 
 contract TxRunnerHarness is TxRunner {
@@ -22,9 +23,8 @@ contract TxRunnerTest is Test {
         harness = new TxRunnerHarness();
     }
 
-    function test_runTx_DoesNotRevert() public {
+    function test_runTx_RevertsNotImplemented() public {
+        vm.expectRevert(TxRunnerBase.TxRunNotImplemented.selector);
         harness.exposed_runTx(txId);
-
-        assertTrue(true, "_runTx should not revert");
     }
 }
