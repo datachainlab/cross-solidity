@@ -65,10 +65,10 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
     }
 
     function selfXCC() external view virtual override returns (QuerySelfXCCResponse.Data memory) {
-        ChannelInfo.Data memory selfXCC = ChannelInfo.Data({port: "", channel: ""});
+        ChannelInfo.Data memory channelInfo = ChannelInfo.Data({port: "", channel: ""});
 
         string memory typeURL = "/cross.core.xcc.ChannelInfo";
-        bytes memory value = ChannelInfo.encode(selfXCC);
+        bytes memory value = ChannelInfo.encode(channelInfo);
 
         GoogleProtobufAny.Data memory anyXCC = GoogleProtobufAny.Data({type_url: typeURL, value: value});
 
