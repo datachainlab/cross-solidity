@@ -26,9 +26,9 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         if (got != CHAIN_ID_HASH) revert IInitiator.UnexpectedChainId(CHAIN_ID_HASH, got);
 
         // timeouts
-        uint64 vh = msg_.timeout_height.revision_height;
-        if (vh != 0 && (block.number + 1 > uint256(vh))) {
-            revert IInitiator.MessageTimeoutHeight(block.number, vh);
+        uint64 rh = msg_.timeout_height.revision_height;
+        if (rh != 0 && (block.number + 1 > uint256(rh))) {
+            revert IInitiator.MessageTimeoutHeight(block.number, rh);
         }
         // slither-disable-next-line timestamp
         if (msg_.timeout_timestamp > 0 && (block.timestamp + 1 > msg_.timeout_timestamp)) {
