@@ -8,7 +8,6 @@ interface IInitiator {
     error MessageTimeoutHeight(uint256 blockNumber, uint64 timeoutVersionHeight);
     error MessageTimeoutTimestamp(uint256 blockTimestamp, uint64 timeoutTimestamp);
     error TxIDAlreadyExists(bytes32 txIDHash);
-    error SelfXCCNotImplemented();
 
     event TxInitiated(bytes txID, address indexed proposer);
 

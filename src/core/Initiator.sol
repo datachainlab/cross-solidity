@@ -9,6 +9,9 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
+import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
+import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
+
 abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
     bytes32 public immutable CHAIN_ID_HASH;
 
@@ -62,7 +65,14 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
     }
 
     function selfXCC() external view virtual override returns (QuerySelfXCCResponse.Data memory) {
-        revert IInitiator.SelfXCCNotImplemented();
+        ChannelInfo.Data memory selfXCC = ChannelInfo.Data({port: "", channel: ""});
+
+        string memory typeURL = "/cross.core.xcc.ChannelInfo";
+        bytes memory value = ChannelInfo.encode(selfXCC);
+
+        GoogleProtobufAny.Data memory anyXCC = GoogleProtobufAny.Data({type_url: typeURL, value: value});
+
+        return QuerySelfXCCResponse.Data({xcc: anyXCC});
     }
 
     function _getRequiredAccounts(MsgInitiateTx.Data calldata msg_) internal pure returns (Account.Data[] memory out) {

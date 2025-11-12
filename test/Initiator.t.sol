@@ -11,12 +11,14 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {
     MsgInitiateTx,
     MsgInitiateTxResponse,
-    ContractTransaction
+    ContractTransaction,
+    QuerySelfXCCResponse
 } from "../src/proto/cross/core/initiator/Initiator.sol";
 import {Account as AuthAccount, AuthType, TxAuthState} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
+import {ChannelInfo} from "../src/proto/cross/core/xcc/XCC.sol";
 
 contract MockTxManager is TxManagerBase {
     mapping(bytes32 => bool) public txExists;
@@ -128,9 +130,14 @@ contract InitiatorTest is Test {
         assertEq(harness.CHAIN_ID_HASH(), expected, "CHAIN_ID_HASH mismatch");
     }
 
-    function test_selfXCC_RevertWhen_Always() public {
-        vm.expectRevert(IInitiator.SelfXCCNotImplemented.selector);
-        harness.selfXCC();
+    function test_selfXCC_ReturnsCorrectData() public view {
+        string memory expectedTypeURL = "/cross.core.xcc.ChannelInfo";
+        bytes memory expectedValue = ChannelInfo.encode(ChannelInfo.Data({port: "", channel: ""}));
+
+        QuerySelfXCCResponse.Data memory resp = harness.selfXCC();
+
+        assertEq(resp.xcc.type_url, expectedTypeURL, "type_url mismatch");
+        assertEq(resp.xcc.value, expectedValue, "value mismatch");
     }
 
     function test_initiateTx_SucceedsAsPendingWhenSignersNotMet() public {
