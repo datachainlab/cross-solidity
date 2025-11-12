@@ -13,7 +13,7 @@ import {
 
 interface IAuthenticator {
     error AuthStateAlreadyInitialized(bytes32 txId);
-    error IDNotFound(bytes32 txId);
+    error IdNotFound(bytes32 txId);
     error AuthAlreadyCompleted(bytes32 txId);
 
     event TxSigned(address indexed signer, bytes32 indexed txId, AuthType.AuthMode method);

@@ -5,7 +5,7 @@ import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 
 abstract contract TxAuthManagerBase {
     error AuthStateAlreadyInitialized(bytes32 txId);
-    error IDNotFound(bytes32 txId);
+    error IdNotFound(bytes32 txId);
     error AuthAlreadyCompleted(bytes32 txId);
 
     function initAuthState(bytes32 txId, Account.Data[] memory signers) internal virtual;

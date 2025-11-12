@@ -7,7 +7,7 @@ interface IInitiator {
     error UnexpectedChainId(bytes32 expectedHash, bytes32 gotHash);
     error MessageTimeoutHeight(uint256 blockNumber, uint64 timeoutVersionHeight);
     error MessageTimeoutTimestamp(uint256 blockTimestamp, uint64 timeoutTimestamp);
-    error TxIDAlreadyExists(bytes32 txIdHash);
+    error TxIdAlreadyExists(bytes32 txIdHash);
     error SelfXCCNotImplemented();
 
     event TxInitiated(bytes txId, address indexed proposer);
