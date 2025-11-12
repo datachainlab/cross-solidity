@@ -65,7 +65,7 @@ contract MockCrossContractTest is Test {
         mock.onContractCall(ctx, hex"01");
     }
 
-    function test_onContractCall_RevertWhen_UnexpectedAccountId() public {
+    function test_onContractCall_RevertWhen_UnexpectedAccountID() public {
         CrossContext memory ctx = _mkContextSingle(bytes("hacker"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
 
         vm.expectRevert(bytes("unexpected account ID"));

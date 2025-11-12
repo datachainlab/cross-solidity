@@ -90,14 +90,14 @@ contract TxAtomicSimpleTest is Test {
     DummyHandler private handler;
     TxAtomicSimpleHarness private harness;
 
-    event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret);
+    event OnContractCall(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
 
     function setUp() public {
         handler = new DummyHandler();
         harness = new TxAtomicSimpleHarness(IIBCHandler(address(handler)));
     }
 
-    function _mkPacketWithCall(bytes memory txId, bytes memory callInfo) internal pure returns (Packet memory p) {
+    function _mkPacketWithCall(bytes memory txID, bytes memory callInfo) internal pure returns (Packet memory p) {
         Any.Data memory emptyAny = Any.Data({type_url: "", value: ""});
         ReturnValue.Data memory emptyRet = ReturnValue.Data({value: ""});
 
@@ -113,7 +113,7 @@ contract TxAtomicSimpleTest is Test {
                 objects: objects
             });
 
-        PacketDataCall.Data memory callData = PacketDataCall.Data({tx_id: txId, tx: txResolved});
+        PacketDataCall.Data memory callData = PacketDataCall.Data({tx_id: txID, tx: txResolved});
 
         bytes memory anyPayload = Any.encode(
             // solhint-disable-next-line gas-small-strings
@@ -139,12 +139,12 @@ contract TxAtomicSimpleTest is Test {
         bytes memory ret = hex"010203";
         harness.workaround_setModule(new SuccessModule(ret));
 
-        bytes memory txId = hex"deadbeef";
+        bytes memory txID = hex"deadbeef";
         bytes memory callInfo = hex"c0ffee";
-        Packet memory packet = _mkPacketWithCall(txId, callInfo);
+        Packet memory packet = _mkPacketWithCall(txID, callInfo);
 
         vm.expectEmit(address(harness));
-        emit OnContractCall(txId, 1, true, ret);
+        emit OnContractCall(txID, 1, true, ret);
 
         bytes memory ack = harness.exposed_handlePacket(packet);
 
@@ -158,12 +158,12 @@ contract TxAtomicSimpleTest is Test {
     function test_handlePacket_ReturnsFailedAndEmitsEventWhenModuleReverts() public {
         harness.workaround_setModule(new RevertingModule());
 
-        bytes memory txId = hex"bead";
+        bytes memory txID = hex"bead";
         bytes memory callInfo = hex"00";
-        Packet memory packet = _mkPacketWithCall(txId, callInfo);
+        Packet memory packet = _mkPacketWithCall(txID, callInfo);
 
         vm.expectEmit(address(harness));
-        emit OnContractCall(txId, 1, false, "");
+        emit OnContractCall(txID, 1, false, "");
 
         bytes memory ack = harness.exposed_handlePacket(packet);
 

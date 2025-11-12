@@ -9,40 +9,40 @@ import {Account as AuthAccount, TxAuthState, AuthType} from "../src/proto/cross/
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
 contract TxAuthManagerHarness is TxAuthManager {
-    function exposed_initAuthState(bytes32 txId, AuthAccount.Data[] memory signers) public {
-        initAuthState(txId, signers);
+    function exposed_initAuthState(bytes32 txID, AuthAccount.Data[] memory signers) public {
+        initAuthState(txID, signers);
     }
 
-    function exposed_isCompletedAuth(bytes32 txId) public view returns (bool) {
-        return isCompletedAuth(txId);
+    function exposed_isCompletedAuth(bytes32 txID) public view returns (bool) {
+        return isCompletedAuth(txID);
     }
 
-    function exposed_sign(bytes32 txId, AuthAccount.Data[] memory signers) public returns (bool) {
-        return sign(txId, signers);
+    function exposed_sign(bytes32 txID, AuthAccount.Data[] memory signers) public returns (bool) {
+        return sign(txID, signers);
     }
 
-    function exposed_getAuthState(bytes32 txId) public view returns (TxAuthState.Data memory) {
-        return getAuthState(txId);
+    function exposed_getAuthState(bytes32 txID) public view returns (TxAuthState.Data memory) {
+        return getAuthState(txID);
     }
 
     function exposed_accountKey(AuthAccount.Data memory a) public pure returns (bytes32) {
         return _accountKey(a);
     }
 
-    function exposed_getRemainingSigners(bytes32 txId) public view returns (AuthAccount.Data[] memory out) {
-        CoreStore.AuthStorage storage s = _getAuthStorage();
-        return _getRemainingSigners(s, txId);
+    function exposed_getRemainingSigners(bytes32 txID) public view returns (AuthAccount.Data[] memory out) {
+        CrossStore.AuthStorage storage s = _getAuthStorage();
+        return _getRemainingSigners(s, txID);
     }
 
-    function exposed_setStateFromRemainingList(bytes32 txId, AuthAccount.Data[] memory signers) public {
-        CoreStore.AuthStorage storage s = _getAuthStorage();
-        _setStateFromRemainingList(s, txId, signers);
+    function exposed_setStateFromRemainingList(bytes32 txID, AuthAccount.Data[] memory signers) public {
+        CrossStore.AuthStorage storage s = _getAuthStorage();
+        _setStateFromRemainingList(s, txID, signers);
     }
 }
 
 contract TxAuthManagerTest is Test {
     TxAuthManagerHarness private harness;
-    bytes32 private txId = keccak256("test_tx_id");
+    bytes32 private txID = keccak256("test_tx_id");
     AuthAccount.Data private signerA;
     AuthAccount.Data private signerB;
     AuthAccount.Data private signerC;
@@ -67,17 +67,17 @@ contract TxAuthManagerTest is Test {
         signers[0] = signerA;
         signers[1] = signerB;
 
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
     }
 
     function test_initAuthState_RevertWhen_AlreadyInitialized() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
         signers[0] = signerA;
 
-        harness.exposed_initAuthState(txId, signers); // First time
+        harness.exposed_initAuthState(txID, signers); // First time
 
-        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.AuthStateAlreadyInitialized.selector, txId));
-        harness.exposed_initAuthState(txId, signers); // Second time
+        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.AuthStateAlreadyInitialized.selector, txID));
+        harness.exposed_initAuthState(txID, signers); // Second time
     }
 
     function test_initAuthState_HandlesDuplicateSigners() public {
@@ -86,95 +86,95 @@ contract TxAuthManagerTest is Test {
         signers[1] = signerB;
         signers[2] = signerA; // Duplicate
 
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
-        TxAuthState.Data memory state = harness.exposed_getAuthState(txId);
+        TxAuthState.Data memory state = harness.exposed_getAuthState(txID);
         assertEq(state.remaining_signers.length, 2, "Duplicate signers should be counted once");
     }
 
     function test_isCompletedAuth_ReturnsTrueWhenCompleted() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
         signers[0] = signerA;
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
-        harness.exposed_sign(txId, signers);
+        harness.exposed_sign(txID, signers);
 
-        assertTrue(harness.exposed_isCompletedAuth(txId), "Should return true when auth is completed");
+        assertTrue(harness.exposed_isCompletedAuth(txID), "Should return true when auth is completed");
     }
 
     function test_isCompletedAuth_ReturnsFalseWhenNotCompleted() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](2);
         signers[0] = signerA;
         signers[1] = signerB;
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
         AuthAccount.Data[] memory partialSigners = new AuthAccount.Data[](1);
         partialSigners[0] = signerA;
-        harness.exposed_sign(txId, partialSigners);
+        harness.exposed_sign(txID, partialSigners);
 
-        assertFalse(harness.exposed_isCompletedAuth(txId), "Should return false when auth is not completed");
+        assertFalse(harness.exposed_isCompletedAuth(txID), "Should return false when auth is not completed");
     }
 
     function test_isCompletedAuth_RevertWhen_NotInitialized() public {
-        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.IDNotFound.selector, txId));
-        harness.exposed_isCompletedAuth(txId);
+        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.IDNotFound.selector, txID));
+        harness.exposed_isCompletedAuth(txID);
     }
 
     function test_sign_PartialSignReturnsFalse() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](2);
         signers[0] = signerA;
         signers[1] = signerB;
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
         AuthAccount.Data[] memory partialSigners = new AuthAccount.Data[](1);
         partialSigners[0] = signerA;
 
-        assertFalse(harness.exposed_sign(txId, partialSigners), "Should not be completed");
+        assertFalse(harness.exposed_sign(txID, partialSigners), "Should not be completed");
     }
 
     function test_sign_FinalSignReturnsTrue() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](2);
         signers[0] = signerA;
         signers[1] = signerB;
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
         AuthAccount.Data[] memory partialSigners = new AuthAccount.Data[](1);
         partialSigners[0] = signerA;
-        assertFalse(harness.exposed_sign(txId, partialSigners), "Should not be completed"); // Sign A
+        assertFalse(harness.exposed_sign(txID, partialSigners), "Should not be completed"); // Sign A
 
         partialSigners[0] = signerB;
 
-        assertTrue(harness.exposed_sign(txId, partialSigners), "Should be completed"); // Sign B
+        assertTrue(harness.exposed_sign(txID, partialSigners), "Should be completed"); // Sign B
     }
 
     function test_sign_IgnoresUnknownSigners() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
         signers[0] = signerA;
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
         AuthAccount.Data[] memory unknownSigners = new AuthAccount.Data[](1);
         unknownSigners[0] = signerB; // Not required, but has same auth_type
 
-        assertFalse(harness.exposed_sign(txId, unknownSigners), "Should not be completed");
+        assertFalse(harness.exposed_sign(txID, unknownSigners), "Should not be completed");
     }
 
     function test_sign_RevertWhen_NotInitialized() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
         signers[0] = signerA;
 
-        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.IDNotFound.selector, txId));
-        harness.exposed_sign(txId, signers);
+        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.IDNotFound.selector, txID));
+        harness.exposed_sign(txID, signers);
     }
 
     function test_sign_RevertWhen_AuthAlreadyCompleted() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
         signers[0] = signerA;
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
-        assertTrue(harness.exposed_sign(txId, signers), "Should be completed"); // First sign
+        assertTrue(harness.exposed_sign(txID, signers), "Should be completed"); // First sign
 
-        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.AuthAlreadyCompleted.selector, txId));
-        harness.exposed_sign(txId, signers); // Sign again
+        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.AuthAlreadyCompleted.selector, txID));
+        harness.exposed_sign(txID, signers); // Sign again
     }
 
     function test_getAuthState_ReturnsCorrectRemainingSigners() public {
@@ -182,14 +182,14 @@ contract TxAuthManagerTest is Test {
         signers[0] = signerA;
         signers[1] = signerB;
         signers[2] = signerC;
-        harness.exposed_initAuthState(txId, signers);
+        harness.exposed_initAuthState(txID, signers);
 
         // Sign with B
         AuthAccount.Data[] memory partialSigners = new AuthAccount.Data[](1);
         partialSigners[0] = signerB;
-        assertFalse(harness.exposed_sign(txId, partialSigners), "Should not be completed");
+        assertFalse(harness.exposed_sign(txID, partialSigners), "Should not be completed");
 
-        TxAuthState.Data memory state = harness.exposed_getAuthState(txId);
+        TxAuthState.Data memory state = harness.exposed_getAuthState(txID);
 
         assertEq(state.remaining_signers.length, 2, "Should have 2 remaining signers");
         assertEq(state.remaining_signers[0].id, signerA.id, "Signer A should remain");
@@ -197,8 +197,8 @@ contract TxAuthManagerTest is Test {
     }
 
     function test_getAuthState_RevertWhen_NotInitialized() public {
-        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.IDNotFound.selector, txId));
-        harness.exposed_getAuthState(txId);
+        vm.expectRevert(abi.encodeWithSelector(TxAuthManagerBase.IDNotFound.selector, txID));
+        harness.exposed_getAuthState(txID);
     }
 
     function test_accountKey_GeneratesUniqueKeys() public {
@@ -221,9 +221,9 @@ contract TxAuthManagerTest is Test {
         signers[1] = signerB;
         signers[2] = signerA; // Duplicate
 
-        harness.exposed_setStateFromRemainingList(txId, signers);
+        harness.exposed_setStateFromRemainingList(txID, signers);
 
-        AuthAccount.Data[] memory remaining = harness.exposed_getRemainingSigners(txId);
+        AuthAccount.Data[] memory remaining = harness.exposed_getRemainingSigners(txID);
 
         assertEq(remaining.length, 2, "getRemainingSigners should return 2 signers after deduplication");
         assertEq(remaining[0].id, signerA.id, "Signer A should be in remaining list");
@@ -235,29 +235,29 @@ contract TxAuthManagerTest is Test {
         allSigners[0] = signerA;
         allSigners[1] = signerB;
         allSigners[2] = signerC;
-        harness.exposed_initAuthState(txId, allSigners);
+        harness.exposed_initAuthState(txID, allSigners);
 
         AuthAccount.Data[] memory partialSigners = new AuthAccount.Data[](1);
         partialSigners[0] = signerB;
-        assertFalse(harness.exposed_sign(txId, partialSigners), "Should not be completed"); // Sign B
+        assertFalse(harness.exposed_sign(txID, partialSigners), "Should not be completed"); // Sign B
 
-        AuthAccount.Data[] memory remaining = harness.exposed_getRemainingSigners(txId);
+        AuthAccount.Data[] memory remaining = harness.exposed_getRemainingSigners(txID);
 
         assertEq(remaining.length, 2, "getRemainingSigners should return 2 signers");
         assertEq(remaining[0].id, signerA.id, "Signer A should remain");
         assertEq(remaining[1].id, signerC.id, "Signer C should remain");
 
         partialSigners[0] = signerA;
-        assertFalse(harness.exposed_sign(txId, partialSigners), "Should not be completed"); // Sign A
+        assertFalse(harness.exposed_sign(txID, partialSigners), "Should not be completed"); // Sign A
 
-        remaining = harness.exposed_getRemainingSigners(txId);
+        remaining = harness.exposed_getRemainingSigners(txID);
         assertEq(remaining.length, 1, "getRemainingSigners should return 1 signer");
         assertEq(remaining[0].id, signerC.id, "Signer C should remain");
 
         partialSigners[0] = signerC;
-        assertTrue(harness.exposed_sign(txId, partialSigners), "Should be completed"); // Sign C
+        assertTrue(harness.exposed_sign(txID, partialSigners), "Should be completed"); // Sign C
 
-        remaining = harness.exposed_getRemainingSigners(txId);
+        remaining = harness.exposed_getRemainingSigners(txID);
         assertEq(remaining.length, 0, "getRemainingSigners should return 0 signers");
     }
 }

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
-import "../src/core/CoreStore.sol";
+import "../src/core/CrossStore.sol";
 import {MsgInitiateTxResponse} from "../src/proto/cross/core/initiator/Initiator.sol";
 import {Account, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
@@ -11,137 +11,127 @@ import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimp
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {ChannelInfo} from "../src/proto/cross/core/xcc/XCC.sol";
 
-contract CoreStoreHarness is CoreStore {
-    function writeAuthRemaining(bytes32 txId, bytes32 key, bool val) public {
+contract CrossStoreHarness is CrossStore {
+    function writeAuthRemaining(bytes32 txID, bytes32 key, bool val) public {
         AuthStorage storage s = _getAuthStorage();
-        s.remaining[txId][key] = val;
+        s.remaining[txID][key] = val;
     }
 
-    function readAuthRemaining(bytes32 txId, bytes32 key) public view returns (bool) {
+    function readAuthRemaining(bytes32 txID, bytes32 key) public view returns (bool) {
         AuthStorage storage s = _getAuthStorage();
-        return s.remaining[txId][key];
+        return s.remaining[txID][key];
     }
 
-    function writeAuthRemainingCount(bytes32 txId, uint256 count) public {
+    function writeAuthRemainingCount(bytes32 txID, uint256 count) public {
         AuthStorage storage s = _getAuthStorage();
-        s.remainingCount[txId] = count;
+        s.remainingCount[txID] = count;
     }
 
-    function readAuthRemainingCount(bytes32 txId) public view returns (uint256) {
+    function readAuthRemainingCount(bytes32 txID) public view returns (uint256) {
         AuthStorage storage s = _getAuthStorage();
-        return s.remainingCount[txId];
+        return s.remainingCount[txID];
     }
 
-    function writeAuthInitialized(bytes32 txId, bool val) public {
+    function writeAuthInitialized(bytes32 txID, bool val) public {
         AuthStorage storage s = _getAuthStorage();
-        s.authInitialized[txId] = val;
+        s.authInitialized[txID] = val;
     }
 
-    function readAuthInitialized(bytes32 txId) public view returns (bool) {
+    function readAuthInitialized(bytes32 txID) public view returns (bool) {
         AuthStorage storage s = _getAuthStorage();
-        return s.authInitialized[txId];
+        return s.authInitialized[txID];
     }
 
-    function pushAuthRequiredAccount(bytes32 txId, bytes memory accountId) public {
+    function pushAuthRequiredAccount(bytes32 txID, bytes memory accountID) public {
         AuthStorage storage s = _getAuthStorage();
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
         AuthType.Data memory localAuthType = AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: emptyAny});
-        s.requiredAccounts[txId].push(Account.Data({id: accountId, auth_type: localAuthType}));
+        s.requiredAccounts[txID].push(Account.Data({id: accountID, auth_type: localAuthType}));
     }
 
-    function readAuthRequiredAccount(bytes32 txId, uint256 idx) public view returns (Account.Data memory) {
+    function readAuthRequiredAccount(bytes32 txID, uint256 idx) public view returns (Account.Data memory) {
         AuthStorage storage s = _getAuthStorage();
-        return s.requiredAccounts[txId][idx];
+        return s.requiredAccounts[txID][idx];
     }
 
-    function writeTxExists(bytes32 txId, bool val) public {
+    function writeTxMsgNonce(bytes32 txID, uint64 nonce) public {
         TxStorage storage s = _getTxStorage();
-        s.txExists[txId] = val;
+        s.txMsg[txID].nonce = nonce;
     }
 
-    function readTxExists(bytes32 txId) public view returns (bool) {
+    function readTxMsgNonce(bytes32 txID) public view returns (uint64) {
         TxStorage storage s = _getTxStorage();
-        return s.txExists[txId];
+        return s.txMsg[txID].nonce;
     }
 
-    function writeTxMsgNonce(bytes32 txId, uint64 nonce) public {
+    function writeTxStatus(bytes32 txID, MsgInitiateTxResponse.InitiateTxStatus status) public {
         TxStorage storage s = _getTxStorage();
-        s.txMsg[txId].nonce = nonce;
+        s.txStatus[txID] = status;
     }
 
-    function readTxMsgNonce(bytes32 txId) public view returns (uint64) {
+    function readTxStatus(bytes32 txID) public view returns (MsgInitiateTxResponse.InitiateTxStatus) {
         TxStorage storage s = _getTxStorage();
-        return s.txMsg[txId].nonce;
+        return s.txStatus[txID];
     }
 
-    function writeTxStatus(bytes32 txId, MsgInitiateTxResponse.InitiateTxStatus status) public {
-        TxStorage storage s = _getTxStorage();
-        s.txStatus[txId] = status;
-    }
-
-    function readTxStatus(bytes32 txId) public view returns (MsgInitiateTxResponse.InitiateTxStatus) {
-        TxStorage storage s = _getTxStorage();
-        return s.txStatus[txId];
-    }
-
-    function writeCoordExists(bytes32 txId, bool val) public {
+    function writeCoordExists(bytes32 txID, bool val) public {
         CoordStorage storage s = _getCoordStorage();
-        s.states[txId].exists = val;
+        s.states[txID].exists = val;
     }
 
-    function readCoordExists(bytes32 txId) public view returns (bool) {
+    function readCoordExists(bytes32 txID) public view returns (bool) {
         CoordStorage storage s = _getCoordStorage();
-        return s.states[txId].exists;
+        return s.states[txID].exists;
     }
 
     function writeCoordData(
-        bytes32 txId,
+        bytes32 txID,
         Tx.CommitProtocol protocol,
         CoordinatorState.CoordinatorPhase phase,
         CoordinatorState.CoordinatorDecision decision
     ) public {
         CoordStorage storage s = _getCoordStorage();
-        s.states[txId].data.commit_protocol = protocol;
-        s.states[txId].data.phase = phase;
-        s.states[txId].data.decision = decision;
+        s.states[txID].data.commit_protocol = protocol;
+        s.states[txID].data.phase = phase;
+        s.states[txID].data.decision = decision;
     }
 
-    function pushCoordChannel(bytes32 txId, string memory port, string memory channel) public {
+    function pushCoordChannel(bytes32 txID, string memory port, string memory channel) public {
         CoordStorage storage s = _getCoordStorage();
-        s.states[txId].data.channels.push(ChannelInfo.Data({port: port, channel: channel}));
+        s.states[txID].data.channels.push(ChannelInfo.Data({port: port, channel: channel}));
     }
 
-    function readCoordChannel(bytes32 txId, uint256 idx) public view returns (ChannelInfo.Data memory) {
+    function readCoordChannel(bytes32 txID, uint256 idx) public view returns (ChannelInfo.Data memory) {
         CoordStorage storage s = _getCoordStorage();
-        return s.states[txId].data.channels[idx];
+        return s.states[txID].data.channels[idx];
     }
 
-    function pushCoordConfirmedTx(bytes32 txId, uint32 val) public {
+    function pushCoordConfirmedTx(bytes32 txID, uint32 val) public {
         CoordStorage storage s = _getCoordStorage();
-        s.states[txId].data.confirmed_txs.push(val);
+        s.states[txID].data.confirmed_txs.push(val);
     }
 
-    function pushCoordAck(bytes32 txId, uint32 val) public {
+    function pushCoordAck(bytes32 txID, uint32 val) public {
         CoordStorage storage s = _getCoordStorage();
-        s.states[txId].data.acks.push(val);
+        s.states[txID].data.acks.push(val);
     }
 
-    function readCoordData(bytes32 txId) public view returns (CoordinatorState.Data memory) {
+    function readCoordData(bytes32 txID) public view returns (CoordinatorState.Data memory) {
         CoordStorage storage s = _getCoordStorage();
-        return s.states[txId].data;
+        return s.states[txID].data;
     }
 }
 
-contract CoreStoreTest is Test {
-    CoreStoreHarness private harness;
+contract CrossStoreTest is Test {
+    CrossStoreHarness private harness;
     bytes32 private keyA = keccak256("keyA");
     bytes32 private keyB = keccak256("keyB");
 
     function setUp() public {
-        harness = new CoreStoreHarness();
+        harness = new CrossStoreHarness();
     }
 
-    function test_CoreStore() public {
+    function test_CrossStore() public {
         bytes32 remKeyA = keccak256("remA");
         bytes32 remKeyB = keccak256("remB");
 
@@ -156,8 +146,6 @@ contract CoreStoreTest is Test {
         harness.pushAuthRequiredAccount(keyB, bytes("accB"));
 
         // write tx storage
-        harness.writeTxExists(keyA, true);
-        harness.writeTxExists(keyB, false);
         harness.writeTxMsgNonce(keyA, 333);
         harness.writeTxMsgNonce(keyB, 444);
         harness.writeTxStatus(keyA, MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED);
@@ -196,8 +184,6 @@ contract CoreStoreTest is Test {
         assertEq(harness.readAuthRequiredAccount(keyB, 0).id, bytes("accB"), "Auth.requiredAccounts[B] data failed");
 
         // assert tx storage
-        assertTrue(harness.readTxExists(keyA), "Tx.txExists[A] failed");
-        assertFalse(harness.readTxExists(keyB), "Tx.txExists[B] failed");
         assertEq(harness.readTxMsgNonce(keyA), 333, "Tx.txMsg.nonce[A] failed");
         assertEq(harness.readTxMsgNonce(keyB), 444, "Tx.txMsg.nonce[B] failed");
         assertEq(
@@ -260,7 +246,6 @@ contract CoreStoreTest is Test {
         assertEq(coordB.acks[0], 202, "Coord.acks[B] failed");
 
         assertEq(harness.readAuthRemainingCount(keyA), 111, "Auth[A] was overwritten");
-        assertTrue(harness.readTxExists(keyA), "Tx[A] was overwritten");
         assertTrue(harness.readCoordExists(keyA), "Coord[A] was overwritten");
     }
 }

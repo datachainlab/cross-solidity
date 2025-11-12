@@ -10,14 +10,14 @@ import {MsgInitiateTx} from "../src/proto/cross/core/initiator/Initiator.sol";
 contract TxRunnerHarness is TxRunner {
     MsgInitiateTx.Data public storedTxMsg;
 
-    function exposed_runTx(bytes32 txId) public {
-        _runTx(txId, storedTxMsg);
+    function exposed_runTx(bytes32 txID) public {
+        _runTx(txID, storedTxMsg);
     }
 }
 
 contract TxRunnerTest is Test {
     TxRunnerHarness private harness;
-    bytes32 private txId = keccak256("test_tx_id");
+    bytes32 private txID = keccak256("test_tx_id");
 
     function setUp() public {
         harness = new TxRunnerHarness();
@@ -25,6 +25,6 @@ contract TxRunnerTest is Test {
 
     function test_runTx_RevertsNotImplemented() public {
         vm.expectRevert(TxRunnerBase.TxRunNotImplemented.selector);
-        harness.exposed_runTx(txId);
+        harness.exposed_runTx(txID);
     }
 }

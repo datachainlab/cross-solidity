@@ -20,41 +20,41 @@ import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/pr
 
 contract MockTxRunner is TxRunner {
     uint256 public runCount;
-    bytes32 public lastRunTxId;
+    bytes32 public lastRunTxID;
 
-    function _runTx(bytes32 txId, MsgInitiateTx.Data storage) internal virtual override {
+    function _runTx(bytes32 txID, MsgInitiateTx.Data storage) internal virtual override {
         ++runCount;
-        lastRunTxId = txId;
+        lastRunTxID = txID;
     }
 }
 
 contract TxManagerHarness is TxManager, MockTxRunner {
-    function exposed_createTx(bytes32 txId, MsgInitiateTx.Data calldata src) public {
-        createTx(txId, src);
+    function exposed_createTx(bytes32 txID, MsgInitiateTx.Data calldata src) public {
+        createTx(txID, src);
     }
 
-    function exposed_runTxIfCompleted(bytes32 txId) public {
-        runTxIfCompleted(txId);
+    function exposed_runTxIfCompleted(bytes32 txID) public {
+        runTxIfCompleted(txID);
     }
 
-    function exposed_isTxRecorded(bytes32 txId) public view returns (bool) {
-        return isTxRecorded(txId);
+    function exposed_isTxRecorded(bytes32 txID) public view returns (bool) {
+        return isTxRecorded(txID);
     }
 
-    function getTxStatus(bytes32 txId) public view returns (MsgInitiateTxResponse.InitiateTxStatus) {
-        CoreStore.TxStorage storage t = _getTxStorage();
-        return t.txStatus[txId];
+    function getTxStatus(bytes32 txID) public view returns (MsgInitiateTxResponse.InitiateTxStatus) {
+        CrossStore.TxStorage storage t = _getTxStorage();
+        return t.txStatus[txID];
     }
 
-    function exposed_getTxMsg(bytes32 txId) public view returns (MsgInitiateTx.Data memory) {
-        CoreStore.TxStorage storage t = _getTxStorage();
-        return t.txMsg[txId];
+    function exposed_getTxMsg(bytes32 txID) public view returns (MsgInitiateTx.Data memory) {
+        CrossStore.TxStorage storage t = _getTxStorage();
+        return t.txMsg[txID];
     }
 }
 
 contract TxManagerTest is Test {
     TxManagerHarness private harness;
-    bytes32 private txId = keccak256("test_tx_id");
+    bytes32 private txID = keccak256("test_tx_id");
     MsgInitiateTx.Data private txMsg;
 
     function setUp() public {
@@ -75,16 +75,16 @@ contract TxManagerTest is Test {
     }
 
     function test_isTxRecorded_ReturnsTrueForKnownTx() public {
-        harness.exposed_createTx(txId, txMsg);
-        assertTrue(harness.exposed_isTxRecorded(txId), "Should return true for recorded tx");
+        harness.exposed_createTx(txID, txMsg);
+        assertTrue(harness.exposed_isTxRecorded(txID), "Should return true for recorded tx");
     }
 
     function test_isTxRecorded_ReturnsFalseForUnknownTx() public view {
-        assertFalse(harness.exposed_isTxRecorded(txId), "Should return false for unrecorded tx");
+        assertFalse(harness.exposed_isTxRecorded(txID), "Should return false for unrecorded tx");
     }
 
     function test_createTx_SucceedsWithNonEmptyData() public {
-        bytes32 deepCopyTxId = keccak256("deep_copy_tx");
+        bytes32 deepCopytxID = keccak256("deep_copy_tx");
 
         // --- 1. Setup mock data ---
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
@@ -119,18 +119,18 @@ contract TxManagerTest is Test {
         });
 
         // --- 3. Execute the function under test ---
-        harness.exposed_createTx(deepCopyTxId, nonEmptyTxMsg);
+        harness.exposed_createTx(deepCopytxID, nonEmptyTxMsg);
 
         // --- 4. Assert status (ensures coverage for non-empty paths) ---
-        assertTrue(harness.exposed_isTxRecorded(deepCopyTxId), "Tx should be recorded");
+        assertTrue(harness.exposed_isTxRecorded(deepCopytxID), "Tx should be recorded");
         assertEq(
-            uint256(harness.getTxStatus(deepCopyTxId)),
+            uint256(harness.getTxStatus(deepCopytxID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING),
             "Status should be PENDING"
         );
 
         // --- 5. Verify deep copy by reading back from storage ---
-        MsgInitiateTx.Data memory storedMsg = harness.exposed_getTxMsg(deepCopyTxId);
+        MsgInitiateTx.Data memory storedMsg = harness.exposed_getTxMsg(deepCopytxID);
 
         // 5a. Verify top-level simple fields
         assertEq(storedMsg.chain_id, "test-chain-deep", "chain_id mismatch");
@@ -140,8 +140,8 @@ contract TxManagerTest is Test {
             uint256(Tx.CommitProtocol.COMMIT_PROTOCOL_TPC),
             "commit_protocol mismatch"
         );
-        assertEq(storedMsg.timeout_height.version_number, 1, "timeout_height.version_number mismatch");
-        assertEq(storedMsg.timeout_height.version_height, 101, "timeout_height.version_height mismatch");
+        assertEq(storedMsg.timeout_height.revision_number, 1, "timeout_height.revision_number mismatch");
+        assertEq(storedMsg.timeout_height.revision_height, 101, "timeout_height.revision_height mismatch");
         assertEq(storedMsg.timeout_timestamp, 202, "timeout_timestamp mismatch");
 
         // 5b. Verify top-level signers array
@@ -172,46 +172,46 @@ contract TxManagerTest is Test {
     }
 
     function test_createTx_RevertWhen_TxAlreadyExists() public {
-        harness.exposed_createTx(txId, txMsg); // First time
-        vm.expectRevert(abi.encodeWithSelector(TxManagerBase.TxAlreadyExists.selector, txId));
-        harness.exposed_createTx(txId, txMsg); // Second time
+        harness.exposed_createTx(txID, txMsg); // First time
+        vm.expectRevert(abi.encodeWithSelector(TxManagerBase.TxAlreadyExists.selector, txID));
+        harness.exposed_createTx(txID, txMsg); // Second time
     }
 
     function test_runTxIfCompleted_RunsTxAndSetsVerifiedStatus() public {
-        harness.exposed_createTx(txId, txMsg);
+        harness.exposed_createTx(txID, txMsg);
         assertEq(
-            uint256(harness.getTxStatus(txId)),
+            uint256(harness.getTxStatus(txID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING),
             "Status should be PENDING"
         );
-        harness.exposed_runTxIfCompleted(txId);
+        harness.exposed_runTxIfCompleted(txID);
         assertEq(harness.runCount(), 1, "MockTxRunner should be called once");
-        assertEq(harness.lastRunTxId(), txId, "MockTxRunner should be called with correct txId");
+        assertEq(harness.lastRunTxID(), txID, "MockTxRunner should be called with correct txID");
         assertEq(
-            uint256(harness.getTxStatus(txId)),
+            uint256(harness.getTxStatus(txID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
     }
 
     function test_runTxIfCompleted_DoesNothingForUnknownTx() public {
-        harness.exposed_runTxIfCompleted(txId);
+        harness.exposed_runTxIfCompleted(txID);
         assertEq(harness.runCount(), 0, "MockTxRunner should not be called");
     }
 
     function test_runTxIfCompleted_DoesNothingIfAlreadyVerified() public {
-        harness.exposed_createTx(txId, txMsg);
-        harness.exposed_runTxIfCompleted(txId); // First run
+        harness.exposed_createTx(txID, txMsg);
+        harness.exposed_runTxIfCompleted(txID); // First run
         assertEq(harness.runCount(), 1, "MockTxRunner should be called once");
         assertEq(
-            uint256(harness.getTxStatus(txId)),
+            uint256(harness.getTxStatus(txID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
-        harness.exposed_runTxIfCompleted(txId); // Second run
+        harness.exposed_runTxIfCompleted(txID); // Second run
         assertEq(harness.runCount(), 1, "MockTxRunner should not be called again");
         assertEq(
-            uint256(harness.getTxStatus(txId)),
+            uint256(harness.getTxStatus(txID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );

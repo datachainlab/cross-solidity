@@ -20,48 +20,48 @@ import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol"
 
 contract MockTxManager is TxManagerBase {
     mapping(bytes32 => bool) public txExists;
-    bytes32 public lastCreatedTxId;
-    bytes32 public lastRunTxId;
+    bytes32 public lastCreatedtxID;
+    bytes32 public lastRuntxID;
     uint256 public createTxCount;
     uint256 public runTxCount;
 
-    function createTx(bytes32 txId, MsgInitiateTx.Data calldata) internal virtual override {
-        txExists[txId] = true;
-        lastCreatedTxId = txId;
+    function createTx(bytes32 txID, MsgInitiateTx.Data calldata) internal virtual override {
+        txExists[txID] = true;
+        lastCreatedtxID = txID;
         ++createTxCount;
     }
 
-    function runTxIfCompleted(bytes32 txId) internal virtual override {
-        lastRunTxId = txId;
+    function runTxIfCompleted(bytes32 txID) internal virtual override {
+        lastRuntxID = txID;
         ++runTxCount;
     }
 
-    function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {
-        return txExists[txId];
+    function isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
+        return txExists[txID];
     }
 
-    function setTxExists(bytes32 txId, bool exists) public {
-        txExists[txId] = exists;
+    function setTxExists(bytes32 txID, bool exists) public {
+        txExists[txID] = exists;
     }
 }
 
 contract MockTxAuthManager is TxAuthManagerBase {
     mapping(bytes32 => bool) public completed;
-    bytes32 public lastInitTxId;
+    bytes32 public lastInittxID;
     bool private _signReturns = false;
 
-    function initAuthState(bytes32 txId, Account.Data[] memory) internal virtual override {
-        lastInitTxId = txId;
-        completed[txId] = false;
+    function initAuthState(bytes32 txID, Account.Data[] memory) internal virtual override {
+        lastInittxID = txID;
+        completed[txID] = false;
     }
 
-    function isCompletedAuth(bytes32 txId) internal view virtual override returns (bool) {
-        return completed[txId];
+    function isCompletedAuth(bytes32 txID) internal view virtual override returns (bool) {
+        return completed[txID];
     }
 
-    function sign(bytes32 txId, Account.Data[] memory) internal virtual override returns (bool) {
+    function sign(bytes32 txID, Account.Data[] memory) internal virtual override returns (bool) {
         if (_signReturns) {
-            completed[txId] = true;
+            completed[txID] = true;
         }
         return _signReturns;
     }
@@ -91,9 +91,9 @@ contract InitiatorTest is Test {
     AuthAccount.Data private signerA;
     AuthAccount.Data private signerB;
     AuthType.Data private localAuthType;
-    string private chainIdStr;
+    string private chainIDStr;
 
-    event TxInitiated(bytes txId, address indexed proposer);
+    event TxInitiated(bytes txID, address indexed proposer);
 
     function setUp() public {
         harness = new InitiatorHarness();
@@ -104,7 +104,7 @@ contract InitiatorTest is Test {
         signerA = AuthAccount.Data({id: bytes("signerA"), auth_type: localAuthType});
         signerB = AuthAccount.Data({id: bytes("signerB"), auth_type: localAuthType});
 
-        chainIdStr = Strings.toString(block.chainid);
+        chainIDStr = Strings.toString(block.chainid);
 
         AuthAccount.Data[] memory signers;
 
@@ -113,7 +113,7 @@ contract InitiatorTest is Test {
         txs[0].signers[0] = signerA;
 
         baseMsg = MsgInitiateTx.Data({
-            chain_id: chainIdStr,
+            chain_id: chainIDStr,
             nonce: 1,
             commit_protocol: Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE,
             timeout_height: IbcCoreClientV1Height.Data(0, uint64(block.number + 100)),
@@ -123,8 +123,8 @@ contract InitiatorTest is Test {
         });
     }
 
-    function test_constructor_SetsChainIdHash() public view {
-        bytes32 expected = keccak256(bytes(chainIdStr));
+    function test_constructor_SetsChainIDHash() public view {
+        bytes32 expected = keccak256(bytes(chainIDStr));
         assertEq(harness.CHAIN_ID_HASH(), expected, "CHAIN_ID_HASH mismatch");
     }
 
@@ -134,12 +134,12 @@ contract InitiatorTest is Test {
     }
 
     function test_initiateTx_SucceedsAsPendingWhenSignersNotMet() public {
-        bytes32 txIdHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
 
         harness.setSignReturns(false);
 
         vm.expectEmit(true, false, false, true, address(harness));
-        emit TxInitiated(abi.encodePacked(txIdHash), address(this));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this));
 
         MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
 
@@ -148,20 +148,20 @@ contract InitiatorTest is Test {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING),
             "Status should be PENDING"
         );
-        assertTrue(harness.txExists(txIdHash), "Mock: tx should be recorded");
-        assertFalse(harness.completed(txIdHash), "Mock: auth should not be completed");
+        assertTrue(harness.txExists(txIDHash), "Mock: tx should be recorded");
+        assertFalse(harness.completed(txIDHash), "Mock: auth should not be completed");
         assertEq(harness.createTxCount(), 1, "Mock: createTx should be called once");
-        assertEq(harness.lastInitTxId(), txIdHash, "Mock: initAuthState should be called with txId");
+        assertEq(harness.lastInittxID(), txIDHash, "Mock: initAuthState should be called with txID");
         assertEq(harness.runTxCount(), 0, "Mock: runTxIfCompleted should not be called");
     }
 
     function test_initiateTx_SucceedsAsVerifiedWhenSignersMet() public {
-        bytes32 txIdHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
 
         harness.setSignReturns(true);
 
         vm.expectEmit(true, false, false, true, address(harness));
-        emit TxInitiated(abi.encodePacked(txIdHash), address(this));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this));
 
         MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
 
@@ -170,30 +170,30 @@ contract InitiatorTest is Test {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
-        assertTrue(harness.txExists(txIdHash), "Mock: tx should be recorded");
-        assertTrue(harness.completed(txIdHash), "Mock: auth should be completed");
+        assertTrue(harness.txExists(txIDHash), "Mock: tx should be recorded");
+        assertTrue(harness.completed(txIDHash), "Mock: auth should be completed");
         assertEq(harness.createTxCount(), 1, "Mock: createTx should be called once");
-        assertEq(harness.lastInitTxId(), txIdHash, "Mock: initAuthState should be called with txId");
+        assertEq(harness.lastInittxID(), txIDHash, "Mock: initAuthState should be called with txID");
         assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxId(), txIdHash, "Mock: runTxIfCompleted should be called with txId");
+        assertEq(harness.lastRuntxID(), txIDHash, "Mock: runTxIfCompleted should be called with txID");
     }
 
-    function test_initiateTx_RevertWhen_ChainIdMismatch() public {
+    function test_initiateTx_RevertWhen_ChainIDMismatch() public {
         baseMsg.chain_id = "wrong-chain";
 
-        bytes32 expectedHash = keccak256(bytes(chainIdStr));
+        bytes32 expectedHash = keccak256(bytes(chainIDStr));
         bytes32 gotHash = keccak256(bytes("wrong-chain"));
 
-        vm.expectRevert(abi.encodeWithSelector(IInitiator.UnexpectedChainId.selector, expectedHash, gotHash));
+        vm.expectRevert(abi.encodeWithSelector(IInitiator.UnexpectedChainID.selector, expectedHash, gotHash));
         harness.initiateTx(baseMsg);
     }
 
     function test_initiateTx_RevertWhen_TimeoutHeightExpired() public {
-        baseMsg.timeout_height.version_height = uint64(block.number);
+        baseMsg.timeout_height.revision_height = uint64(block.number);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IInitiator.MessageTimeoutHeight.selector, block.number, baseMsg.timeout_height.version_height
+                IInitiator.MessageTimeoutHeight.selector, block.number, baseMsg.timeout_height.revision_height
             )
         );
         harness.initiateTx(baseMsg);
@@ -210,12 +210,12 @@ contract InitiatorTest is Test {
         harness.initiateTx(baseMsg);
     }
 
-    function test_initiateTx_RevertWhen_TxIdAlreadyExists() public {
-        bytes32 txIdHash = sha256(MsgInitiateTx.encode(baseMsg));
+    function test_initiateTx_RevertWhen_txIDAlreadyExists() public {
+        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
 
-        harness.setTxExists(txIdHash, true);
+        harness.setTxExists(txIDHash, true);
 
-        vm.expectRevert(abi.encodeWithSelector(IInitiator.TxIDAlreadyExists.selector, txIdHash));
+        vm.expectRevert(abi.encodeWithSelector(IInitiator.TxIDAlreadyExists.selector, txIDHash));
         harness.initiateTx(baseMsg);
     }
 
