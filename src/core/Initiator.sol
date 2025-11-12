@@ -26,8 +26,8 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         if (got != CHAIN_ID_HASH) revert IInitiator.UnexpectedChainId(CHAIN_ID_HASH, got);
 
         // timeouts
-        uint64 vh = msg_.timeout_height.version_height;
-        uint64 vn = msg_.timeout_height.version_number;
+        uint64 vh = msg_.timeout_height.revision_height;
+        uint64 vn = msg_.timeout_height.revision_number;
         if (((vh | vn) != 0) && (block.number + 1 > uint256(vh))) {
             revert IInitiator.MessageTimeoutHeight(block.number, vh);
         }

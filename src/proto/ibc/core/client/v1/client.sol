@@ -2193,8 +2193,8 @@ library IbcCoreClientV1MsgSubmitMisbehaviour {
 library IbcCoreClientV1Height {
     //struct definition
     struct Data {
-        uint64 version_number;
-        uint64 version_height;
+        uint64 revision_number;
+        uint64 revision_height;
     }
 
     // Decoder section
@@ -2240,9 +2240,9 @@ library IbcCoreClientV1Height {
             (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
             pointer += bytesRead;
             if (fieldId == 1) {
-                pointer += _read_version_number(pointer, bs, r);
+                pointer += _read_revision_number(pointer, bs, r);
             } else if (fieldId == 2) {
-                pointer += _read_version_height(pointer, bs, r);
+                pointer += _read_revision_height(pointer, bs, r);
             } else {
                 pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
             }
@@ -2259,9 +2259,9 @@ library IbcCoreClientV1Height {
      * @param r The in-memory struct
      * @return The number of bytes decoded
      */
-    function _read_version_number(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+    function _read_revision_number(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
         (uint64 x, uint256 sz) = ProtoBufRuntime._decode_uint64(p, bs);
-        r.version_number = x;
+        r.revision_number = x;
         return sz;
     }
 
@@ -2272,9 +2272,9 @@ library IbcCoreClientV1Height {
      * @param r The in-memory struct
      * @return The number of bytes decoded
      */
-    function _read_version_height(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+    function _read_revision_height(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
         (uint64 x, uint256 sz) = ProtoBufRuntime._decode_uint64(p, bs);
-        r.version_height = x;
+        r.revision_height = x;
         return sz;
     }
 
@@ -2307,13 +2307,13 @@ library IbcCoreClientV1Height {
         uint256 offset = p;
         uint256 pointer = p;
 
-        if (r.version_number != 0) {
+        if (r.revision_number != 0) {
             pointer += ProtoBufRuntime._encode_key(1, ProtoBufRuntime.WireType.Varint, pointer, bs);
-            pointer += ProtoBufRuntime._encode_uint64(r.version_number, pointer, bs);
+            pointer += ProtoBufRuntime._encode_uint64(r.revision_number, pointer, bs);
         }
-        if (r.version_height != 0) {
+        if (r.revision_height != 0) {
             pointer += ProtoBufRuntime._encode_key(2, ProtoBufRuntime.WireType.Varint, pointer, bs);
-            pointer += ProtoBufRuntime._encode_uint64(r.version_height, pointer, bs);
+            pointer += ProtoBufRuntime._encode_uint64(r.revision_height, pointer, bs);
         }
         return pointer - offset;
     }
@@ -2354,18 +2354,18 @@ library IbcCoreClientV1Height {
      */
     function _estimate(Data memory r) internal pure returns (uint256) {
         uint256 e;
-        e += 1 + ProtoBufRuntime._sz_uint64(r.version_number);
-        e += 1 + ProtoBufRuntime._sz_uint64(r.version_height);
+        e += 1 + ProtoBufRuntime._sz_uint64(r.revision_number);
+        e += 1 + ProtoBufRuntime._sz_uint64(r.revision_height);
         return e;
     }
     // empty checker
 
     function _empty(Data memory r) internal pure returns (bool) {
-        if (r.version_number != 0) {
+        if (r.revision_number != 0) {
             return false;
         }
 
-        if (r.version_height != 0) {
+        if (r.revision_height != 0) {
             return false;
         }
 
@@ -2379,8 +2379,8 @@ library IbcCoreClientV1Height {
      * @param output The in-storage struct
      */
     function store(Data memory input, Data storage output) internal {
-        output.version_number = input.version_number;
-        output.version_height = input.version_height;
+        output.revision_number = input.revision_number;
+        output.revision_height = input.revision_height;
     }
 
     //utility functions
