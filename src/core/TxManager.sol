@@ -9,29 +9,29 @@ import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../prot
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
 abstract contract TxManager is TxManagerBase, TxRunnerBase, CrossStore {
-    function createTx(bytes32 txId, MsgInitiateTx.Data calldata src) internal virtual override {
+    function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual override {
         CrossStore.TxStorage storage t = _getTxStorage();
-        if (t.txExists[txId]) revert TxAlreadyExists(txId);
-        _deepStoreMsg(t, txId, src);
-        t.txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
-        t.txExists[txId] = true;
+        if (t.txExists[txID]) revert TxAlreadyExists(txID);
+        _deepStoreMsg(t, txID, src);
+        t.txStatus[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
+        t.txExists[txID] = true;
     }
 
-    function runTxIfCompleted(bytes32 txId) internal virtual override {
+    function runTxIfCompleted(bytes32 txID) internal virtual override {
         CrossStore.TxStorage storage t = _getTxStorage();
-        if (!t.txExists[txId]) return;
-        if (t.txStatus[txId] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
-        t.txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
-        _runTx(txId, t.txMsg[txId]);
+        if (!t.txExists[txID]) return;
+        if (t.txStatus[txID] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
+        t.txStatus[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
+        _runTx(txID, t.txMsg[txID]);
     }
 
-    function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {
+    function isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         CrossStore.TxStorage storage t = _getTxStorage();
-        return t.txExists[txId];
+        return t.txExists[txID];
     }
 
-    function _deepStoreMsg(CrossStore.TxStorage storage t, bytes32 txId, MsgInitiateTx.Data calldata src) private {
-        MsgInitiateTx.Data storage dst = t.txMsg[txId];
+    function _deepStoreMsg(CrossStore.TxStorage storage t, bytes32 txID, MsgInitiateTx.Data calldata src) private {
+        MsgInitiateTx.Data storage dst = t.txMsg[txID];
         dst.chain_id = src.chain_id;
         dst.nonce = src.nonce;
         dst.commit_protocol = src.commit_protocol;

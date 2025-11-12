@@ -6,5 +6,5 @@ import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 abstract contract TxRunnerBase {
     error TxRunNotImplemented();
 
-    function _runTx(bytes32 txId, MsgInitiateTx.Data storage msg_) internal virtual;
+    function _runTx(bytes32 txID, MsgInitiateTx.Data storage msg_) internal virtual;
 }

@@ -34,9 +34,9 @@ abstract contract CrossModule is
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, IERC165) returns (bool) {
-        return interfaceId == type(IIBCModule).interfaceId || interfaceId == type(IIBCModuleInitializer).interfaceId
-            || super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceID) public view virtual override(AccessControl, IERC165) returns (bool) {
+        return interfaceID == type(IIBCModule).interfaceId || interfaceID == type(IIBCModuleInitializer).interfaceId
+            || super.supportsInterface(interfaceID);
     }
 
     // function initiateTx() external {}

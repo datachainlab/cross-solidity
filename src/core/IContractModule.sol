@@ -22,7 +22,7 @@ interface IContractModule {
 
 // CrossContext is a context in cross-chain transaction
 struct CrossContext {
-    bytes txId;
+    bytes txID;
     uint8 txIndex;
     Account.Data[] signers;
 }
