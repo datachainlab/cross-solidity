@@ -6,11 +6,11 @@ import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 abstract contract CrossStore {
-    // keccak256(abi.encode(uint256(keccak256("cross.core.auth"))  - 1)) & ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("cross.core.auth")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant AUTH_STORAGE_LOCATION =
         hex"93e3b8eb4220ad7cd6d04c9032dc8d35824a37bf01220f3aeab27e9ece04f300";
 
-    // keccak256(abi.encode(uint256(keccak256("cross.core.tx"))    - 1)) & ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("cross.core.tx")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant TX_STORAGE_LOCATION =
         hex"2af14e14eac421b9203c410963a611c3e22a3e7dd2f462f3872422d801fd5a00";
 
