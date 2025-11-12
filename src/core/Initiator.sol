@@ -23,42 +23,41 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
     {
         // chain_id check
         bytes32 got = keccak256(bytes(msg_.chain_id));
-        if (got != CHAIN_ID_HASH) revert IInitiator.UnexpectedChainId(CHAIN_ID_HASH, got);
+        if (got != CHAIN_ID_HASH) revert IInitiator.UnexpectedChainID(CHAIN_ID_HASH, got);
 
         // timeouts
-        uint64 vh = msg_.timeout_height.version_height;
-        uint64 vn = msg_.timeout_height.version_number;
-        if (((vh | vn) != 0) && (block.number + 1 > uint256(vh))) {
-            revert IInitiator.MessageTimeoutHeight(block.number, vh);
+        uint64 rh = msg_.timeout_height.revision_height;
+        if (rh != 0 && (block.number + 1 > uint256(rh))) {
+            revert IInitiator.MessageTimeoutHeight(block.number, rh);
         }
         // slither-disable-next-line timestamp
         if (msg_.timeout_timestamp > 0 && (block.timestamp + 1 > msg_.timeout_timestamp)) {
             revert IInitiator.MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
-        // txId
-        bytes32 txIdHash = sha256(MsgInitiateTx.encode(msg_));
-        bytes memory txId = abi.encodePacked(txIdHash);
-        if (isTxRecorded(txIdHash)) revert IInitiator.TxIDAlreadyExists(txIdHash);
+        // generate txID
+        bytes32 txIDHash = sha256(MsgInitiateTx.encode(msg_));
+        bytes memory txID = abi.encodePacked(txIDHash);
+        if (isTxRecorded(txIDHash)) revert IInitiator.TxIDAlreadyExists(txIDHash);
 
         // persist as PENDING
-        createTx(txIdHash, msg_);
+        createTx(txIDHash, msg_);
 
         // auth init & sign
         Account.Data[] memory required = _getRequiredAccounts(msg_);
-        initAuthState(txIdHash, required);
-        bool completed = sign(txIdHash, msg_.signers);
+        initAuthState(txIDHash, required);
+        bool completed = sign(txIDHash, msg_.signers);
 
-        emit TxInitiated(txId, msg.sender);
+        emit TxInitiated(txID, msg.sender);
 
         if (completed) {
-            runTxIfCompleted(txIdHash);
+            runTxIfCompleted(txIDHash);
             return MsgInitiateTxResponse.Data({
-                txID: txId, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED
+                txID: txID, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED
             });
         }
         return MsgInitiateTxResponse.Data({
-            txID: txId, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING
+            txID: txID, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING
         });
     }
 

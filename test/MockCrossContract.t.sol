@@ -27,7 +27,7 @@ contract MockCrossContractTest is Test {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
         signers[0] = _mkSigner(id, mode);
 
-        ctx = CrossContext({txId: hex"11", txIndex: 1, signers: signers});
+        ctx = CrossContext({txID: hex"11", txIndex: 1, signers: signers});
     }
 
     function test_onContractCall_ReturnsExpectedBytes() public {
@@ -41,7 +41,7 @@ contract MockCrossContractTest is Test {
 
     function test_onContractCall_RevertWhen_SignersLenIsZero() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](0);
-        CrossContext memory ctx = CrossContext({txId: hex"22", txIndex: 1, signers: signers});
+        CrossContext memory ctx = CrossContext({txID: hex"22", txIndex: 1, signers: signers});
 
         vm.expectRevert(bytes("signers length must be 1"));
         mock.onContractCall(ctx, hex"01");
@@ -52,7 +52,7 @@ contract MockCrossContractTest is Test {
         signers[0] = _mkSigner(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
         signers[1] = _mkSigner(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
 
-        CrossContext memory ctx = CrossContext({txId: hex"33", txIndex: 1, signers: signers});
+        CrossContext memory ctx = CrossContext({txID: hex"33", txIndex: 1, signers: signers});
 
         vm.expectRevert(bytes("signers length must be 1"));
         mock.onContractCall(ctx, hex"01");
