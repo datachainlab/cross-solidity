@@ -21,8 +21,8 @@ abstract contract TxManager is TxManagerBase, TxRunnerBase, CrossStore {
         CrossStore.TxStorage storage t = _getTxStorage();
         if (!t.txExists[txId]) return;
         if (t.txStatus[txId] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
-        _runTx(txId, t.txMsg[txId]);
         t.txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
+        _runTx(txId, t.txMsg[txId]);
     }
 
     function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {
