@@ -35,7 +35,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
             revert IInitiator.MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
-        // txId
+        // generate txId
         bytes32 txIdHash = sha256(MsgInitiateTx.encode(msg_));
         bytes memory txId = abi.encodePacked(txIdHash);
         if (isTxRecorded(txIdHash)) revert IInitiator.TxIdAlreadyExists(txIdHash);
