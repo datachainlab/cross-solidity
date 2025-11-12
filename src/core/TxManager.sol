@@ -3,14 +3,14 @@ pragma solidity ^0.8.20;
 
 import {TxManagerBase} from "./TxManagerBase.sol";
 import {TxRunnerBase} from "./TxRunnerBase.sol";
-import {CoreStore} from "./CoreStore.sol";
+import {CrossStore} from "./CrossStore.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
-abstract contract TxManager is TxManagerBase, TxRunnerBase, CoreStore {
+abstract contract TxManager is TxManagerBase, TxRunnerBase, CrossStore {
     function createTx(bytes32 txId, MsgInitiateTx.Data calldata src) internal virtual override {
-        CoreStore.TxStorage storage t = _getTxStorage();
+        CrossStore.TxStorage storage t = _getTxStorage();
         if (t.txExists[txId]) revert TxAlreadyExists(txId);
         _deepStoreMsg(t, txId, src);
         t.txStatus[txId] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
@@ -18,7 +18,7 @@ abstract contract TxManager is TxManagerBase, TxRunnerBase, CoreStore {
     }
 
     function runTxIfCompleted(bytes32 txId) internal virtual override {
-        CoreStore.TxStorage storage t = _getTxStorage();
+        CrossStore.TxStorage storage t = _getTxStorage();
         if (!t.txExists[txId]) return;
         if (t.txStatus[txId] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
         _runTx(txId, t.txMsg[txId]);
@@ -26,11 +26,11 @@ abstract contract TxManager is TxManagerBase, TxRunnerBase, CoreStore {
     }
 
     function isTxRecorded(bytes32 txId) internal view virtual override returns (bool) {
-        CoreStore.TxStorage storage t = _getTxStorage();
+        CrossStore.TxStorage storage t = _getTxStorage();
         return t.txExists[txId];
     }
 
-    function _deepStoreMsg(CoreStore.TxStorage storage t, bytes32 txId, MsgInitiateTx.Data calldata src) private {
+    function _deepStoreMsg(CrossStore.TxStorage storage t, bytes32 txId, MsgInitiateTx.Data calldata src) private {
         MsgInitiateTx.Data storage dst = t.txMsg[txId];
         dst.chain_id = src.chain_id;
         dst.nonce = src.nonce;

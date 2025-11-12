@@ -5,7 +5,7 @@ import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiato
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
-abstract contract CoreStore {
+abstract contract CrossStore {
     // keccak256(abi.encode(uint256(keccak256("cross.core.auth"))  - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant AUTH_STORAGE_LOCATION =
         hex"93e3b8eb4220ad7cd6d04c9032dc8d35824a37bf01220f3aeab27e9ece04f300";

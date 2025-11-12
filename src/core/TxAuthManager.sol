@@ -2,25 +2,25 @@
 pragma solidity ^0.8.20;
 
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
-import {CoreStore} from "./CoreStore.sol";
+import {CrossStore} from "./CrossStore.sol";
 import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 
-abstract contract TxAuthManager is TxAuthManagerBase, CoreStore {
+abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
     function initAuthState(bytes32 txId, Account.Data[] memory signers) internal virtual override {
-        CoreStore.AuthStorage storage s = _getAuthStorage();
+        CrossStore.AuthStorage storage s = _getAuthStorage();
         if (s.authInitialized[txId]) revert AuthStateAlreadyInitialized(txId);
         _setStateFromRemainingList(s, txId, signers);
         s.authInitialized[txId] = true;
     }
 
     function isCompletedAuth(bytes32 txId) internal view virtual override returns (bool) {
-        CoreStore.AuthStorage storage s = _getAuthStorage();
+        CrossStore.AuthStorage storage s = _getAuthStorage();
         if (!s.authInitialized[txId]) revert IDNotFound(txId);
         return s.remainingCount[txId] == 0;
     }
 
     function sign(bytes32 txId, Account.Data[] memory signers) internal virtual override returns (bool) {
-        CoreStore.AuthStorage storage s = _getAuthStorage();
+        CrossStore.AuthStorage storage s = _getAuthStorage();
         if (!s.authInitialized[txId]) revert IDNotFound(txId);
         if (s.remainingCount[txId] == 0) revert AuthAlreadyCompleted(txId);
 
@@ -36,13 +36,13 @@ abstract contract TxAuthManager is TxAuthManagerBase, CoreStore {
     }
 
     function getAuthState(bytes32 txId) internal view virtual override returns (TxAuthState.Data memory) {
-        CoreStore.AuthStorage storage s = _getAuthStorage();
+        CrossStore.AuthStorage storage s = _getAuthStorage();
         if (!s.authInitialized[txId]) revert IDNotFound(txId);
         Account.Data[] memory remains = _getRemainingSigners(s, txId);
         return TxAuthState.Data({remaining_signers: remains});
     }
 
-    function _getRemainingSigners(CoreStore.AuthStorage storage s, bytes32 txId)
+    function _getRemainingSigners(CrossStore.AuthStorage storage s, bytes32 txId)
         internal
         view
         returns (Account.Data[] memory out)
@@ -61,7 +61,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CoreStore {
         }
     }
 
-    function _setStateFromRemainingList(CoreStore.AuthStorage storage s, bytes32 txId, Account.Data[] memory list)
+    function _setStateFromRemainingList(CrossStore.AuthStorage storage s, bytes32 txId, Account.Data[] memory list)
         internal
     {
         for (uint256 i = 0; i < list.length; ++i) {
