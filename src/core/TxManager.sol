@@ -11,23 +11,23 @@ import {Account} from "../proto/cross/core/auth/Auth.sol";
 abstract contract TxManager is TxManagerBase, TxRunnerBase, CrossStore {
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual override {
         CrossStore.TxStorage storage t = _getTxStorage();
-        if (t.txExists[txID]) revert TxAlreadyExists(txID);
+        if (t.txStatus[txID] != MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_UNKNOWN) {
+            revert TxAlreadyExists(txID);
+        }
         _deepStoreMsg(t, txID, src);
         t.txStatus[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
-        t.txExists[txID] = true;
     }
 
     function runTxIfCompleted(bytes32 txID) internal virtual override {
         CrossStore.TxStorage storage t = _getTxStorage();
-        if (!t.txExists[txID]) return;
-        if (t.txStatus[txID] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
+        if (t.txStatus[txID] != MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
         t.txStatus[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
         _runTx(txID, t.txMsg[txID]);
     }
 
     function isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         CrossStore.TxStorage storage t = _getTxStorage();
-        return t.txExists[txID];
+        return t.txStatus[txID] != MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_UNKNOWN;
     }
 
     function _deepStoreMsg(CrossStore.TxStorage storage t, bytes32 txID, MsgInitiateTx.Data calldata src) private {

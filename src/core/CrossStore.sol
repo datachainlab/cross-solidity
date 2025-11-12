@@ -26,7 +26,6 @@ abstract contract CrossStore {
     }
 
     struct TxStorage {
-        mapping(bytes32 => bool) txExists;
         mapping(bytes32 => MsgInitiateTx.Data) txMsg;
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) txStatus;
     }
