@@ -12,7 +12,11 @@ import {
 } from "../proto/cross/core/auth/Auth.sol";
 
 interface IAuthenticator {
-    event TxSigned(address indexed signer, bytes32 indexed txId, AuthType.AuthMode method);
+    error AuthStateAlreadyInitialized(bytes32 txID);
+    error IDNotFound(bytes32 txID);
+    error AuthAlreadyCompleted(bytes32 txID);
+
+    event TxSigned(address indexed signer, bytes32 indexed txID, AuthType.AuthMode method);
 
     function signTx(MsgSignTx.Data calldata msg_) external returns (MsgSignTxResponse.Data memory);
 

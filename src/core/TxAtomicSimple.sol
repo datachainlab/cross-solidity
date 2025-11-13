@@ -20,7 +20,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
     error UnexpectedTypeURL();
     error NotImplemented();
 
-    event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret);
+    event OnContractCall(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
 
     function handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);

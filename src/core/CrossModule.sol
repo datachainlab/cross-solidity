@@ -13,16 +13,30 @@ import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-chann
 import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
-abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHandler {
+import {Initiator} from "./Initiator.sol";
+import {TxAuthManager} from "./TxAuthManager.sol";
+import {TxManager} from "./TxManager.sol";
+import {TxRunner} from "./TxRunner.sol";
+
+abstract contract CrossModule is
+    AccessControl,
+    IIBCModule,
+    IBCKeeper,
+    PacketHandler,
+    Initiator,
+    TxAuthManager,
+    TxManager,
+    TxRunner
+{
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IIBCHandler ibcHandler_) IBCKeeper(ibcHandler_) {
+    constructor(IIBCHandler ibcHandler_) Initiator() IBCKeeper(ibcHandler_) {
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, IERC165) returns (bool) {
-        return interfaceId == type(IIBCModule).interfaceId || interfaceId == type(IIBCModuleInitializer).interfaceId
-            || super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceID) public view virtual override(AccessControl, IERC165) returns (bool) {
+        return interfaceID == type(IIBCModule).interfaceId || interfaceID == type(IIBCModuleInitializer).interfaceId
+            || super.supportsInterface(interfaceID);
     }
 
     // function initiateTx() external {}
