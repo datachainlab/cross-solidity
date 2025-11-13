@@ -7,6 +7,8 @@ import {Account, TxAuthState, AuthType} from "../proto/cross/core/auth/Auth.sol"
 import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
 abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
+    uint256 private constant MAX_SIGNERS_PER_TX = 32;
+
     constructor(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers) {
         if (typeUrls.length != verifiers.length) revert ArrayLengthMismatch();
 
@@ -88,6 +90,10 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
         uint256 len = signers.length;
         if (len != signatures.length) {
             revert SignerCountMismatch(len, signatures.length);
+        }
+
+        if (n > MAX_SIGNERS_PER_TX) {
+            revert TooManySigners(n, MAX_SIGNERS_PER_TX);
         }
 
         CrossStore.AuthStorage storage s = _getAuthStorage();

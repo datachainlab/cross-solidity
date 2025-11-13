@@ -16,6 +16,7 @@ abstract contract TxAuthManagerBase {
     error ZeroAddressVerifier();
     error VerifierStaticCallFailed(string typeUrl);
     error VerifierReturnedFalse(bytes32 txIDHash, string typeUrl);
+    error TooManySigners(uint256 got, uint256 maxAllowed);
 
     event VerifierRegistered(string typeUrl, address indexed verifier);
 
