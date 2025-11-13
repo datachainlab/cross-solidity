@@ -24,7 +24,6 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
         bytes32 txIdHash = sha256(msg_.txID);
 
         bool completed = sign(txIdHash, accounts);
-
         if (completed) {
             runTxIfCompleted(txIdHash);
         }
