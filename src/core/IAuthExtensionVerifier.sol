@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
 interface IAuthExtensionVerifier {
-    function verify(bytes32 txIdHash, Account.Data calldata signer, bytes calldata signature)
+    function verify(bytes32 txIDHash, Account.Data calldata signer, bytes calldata signature)
         external
         view
         returns (bool isValid);
