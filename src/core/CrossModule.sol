@@ -14,9 +14,6 @@ import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
 import {Initiator} from "./Initiator.sol";
-import {TxAuthManager} from "./TxAuthManager.sol";
-import {TxManager} from "./TxManager.sol";
-import {TxRunner} from "./TxRunner.sol";
 import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
 import {CrossStore} from "./CrossStore.sol";
 

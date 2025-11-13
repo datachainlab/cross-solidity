@@ -7,7 +7,7 @@ import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 import {ITxAuthManager} from "./ITxAuthManager.sol";
 
 contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager {
-    function initAuthState(bytes32 txID, Account.Data[] memory signers) external override {
+    function initAuthState(bytes32 txID, Account.Data[] calldata signers) external override {
         _initAuthState(txID, signers);
     }
 
@@ -15,7 +15,7 @@ contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager {
         return _isCompletedAuth(txID);
     }
 
-    function sign(bytes32 txID, Account.Data[] memory signers) external override returns (bool) {
+    function sign(bytes32 txID, Account.Data[] calldata signers) external override returns (bool) {
         return _sign(txID, signers);
     }
 

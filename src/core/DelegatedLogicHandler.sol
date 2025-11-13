@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// solhint-disable avoid-low-level-calls
 pragma solidity ^0.8.20;
 
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
