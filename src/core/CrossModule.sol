@@ -14,6 +14,7 @@ import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
 import {Initiator} from "./Initiator.sol";
+import {Authenticator} from "./Authenticator.sol";
 import {TxAuthManager} from "./TxAuthManager.sol";
 import {TxManager} from "./TxManager.sol";
 import {TxRunner} from "./TxRunner.sol";
@@ -24,6 +25,7 @@ abstract contract CrossModule is
     IBCKeeper,
     PacketHandler,
     Initiator,
+    Authenticator,
     TxAuthManager,
     TxManager,
     TxRunner
