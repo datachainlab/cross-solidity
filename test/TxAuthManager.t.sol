@@ -151,6 +151,69 @@ contract TxAuthManagerTest is Test {
         extSignerNotFound = AuthAccount.Data({id: bytes("extSignerNotFound"), auth_type: extAuthTypeNotFound});
     }
 
+    function test_constructor_SucceedsWithEmptyArrays() public {
+        string[] memory typeUrls = new string[](0);
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](0);
+
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness(typeUrls, verifiers);
+        assertTrue(address(localHarness) != address(0), "Harness should deploy");
+    }
+
+    function test_constructor_SucceedsAndEmitsEvents() public {
+        string[] memory typeUrls = new string[](2);
+        typeUrls[0] = URL_VALID;
+        typeUrls[1] = URL_INVALID;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](2);
+        IAuthExtensionVerifier verifier1 = new MockValidVerifier();
+        IAuthExtensionVerifier verifier2 = new MockInvalidVerifier();
+        verifiers[0] = verifier1;
+        verifiers[1] = verifier2;
+
+        vm.expectEmit(true, true, true, true);
+        emit TxAuthManagerBase.VerifierRegistered(typeUrls[0], address(verifier1));
+
+        vm.expectEmit(true, true, true, true);
+        emit TxAuthManagerBase.VerifierRegistered(typeUrls[1], address(verifier2));
+
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness(typeUrls, verifiers);
+        assertTrue(address(localHarness) != address(0), "Harness should deploy");
+    }
+
+    function test_constructor_RevertWhen_ArrayLengthMismatch() public {
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = URL_VALID;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](2);
+        verifiers[0] = new MockValidVerifier();
+        verifiers[1] = new MockValidVerifier();
+
+        vm.expectRevert(TxAuthManagerBase.ArrayLengthMismatch.selector);
+        new TxAuthManagerHarness(typeUrls, verifiers);
+    }
+
+    function test_constructor_RevertWhen_EmptyTypeUrl() public {
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = "";
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = new MockValidVerifier();
+
+        vm.expectRevert(TxAuthManagerBase.EmptyTypeUrl.selector);
+        new TxAuthManagerHarness(typeUrls, verifiers);
+    }
+
+    function test_constructor_RevertWhen_ZeroAddressVerifier() public {
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = URL_VALID;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = IAuthExtensionVerifier(address(0)); // Zero address
+
+        vm.expectRevert(TxAuthManagerBase.ZeroAddressVerifier.selector);
+        new TxAuthManagerHarness(typeUrls, verifiers);
+    }
+
     function test_initAuthState_Succeeds() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](2);
         signers[0] = signerA;

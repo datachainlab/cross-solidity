@@ -13,9 +13,8 @@ contract SampleEcrecoverVerifier is IAuthExtensionVerifier {
         override
         returns (bool isValid)
     {
-        if (signer.id.length != 20) {
-            return false;
-        }
+        if (signer.id.length != 20) return false;
+        if (signature.length != 65) return false;
         address signerAddress = address(bytes20(signer.id));
         bytes32 messageHash = MessageHashUtils.toEthSignedMessageHash(txIdHash);
         address recoveredAddress = ECDSA.recover(messageHash, signature);
