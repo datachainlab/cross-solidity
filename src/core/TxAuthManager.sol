@@ -92,8 +92,8 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
             revert SignerCountMismatch(len, signatures.length);
         }
 
-        if (n > MAX_SIGNERS_PER_TX) {
-            revert TooManySigners(n, MAX_SIGNERS_PER_TX);
+        if (len > MAX_SIGNERS_PER_TX) {
+            revert TooManySigners(len, MAX_SIGNERS_PER_TX);
         }
 
         CrossStore.AuthStorage storage s = _getAuthStorage();
