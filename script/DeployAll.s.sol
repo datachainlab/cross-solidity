@@ -32,6 +32,8 @@ import {
 // === App ===
 import {IContractModule} from "src/core/IContractModule.sol";
 import {CrossSimpleModule} from "src/core/CrossSimpleModule.sol";
+import {TxAuthManager} from "src/core/TxAuthManager.sol";
+import {TxManager} from "src/core/TxManager.sol";
 import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/mock/MockClient.sol";
 import {MockCrossContract} from "src/example/MockCrossContract.sol";
 
@@ -69,7 +71,15 @@ contract DeployAll is Script, Config {
         MockCrossContract app = new MockCrossContract();
         console2.log("  MockCrossContract:", address(app));
 
-        CrossSimpleModule module = new CrossSimpleModule(handler, IContractModule(address(app)), debugMode);
+        TxAuthManager txAuthManager = new TxAuthManager();
+        console2.log("  TxAuthManager:", address(txAuthManager));
+
+        TxManager txManager = new TxManager();
+        console2.log("  TxManager:", address(txManager));
+
+        CrossSimpleModule module = new CrossSimpleModule(
+            handler, address(txAuthManager), address(txManager), IContractModule(address(app)), debugMode
+        );
         console2.log("  CrossSimpleModule:", address(module));
 
         MockClient mclient = new MockClient(address(handler));

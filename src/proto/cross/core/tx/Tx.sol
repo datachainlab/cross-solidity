@@ -613,11 +613,12 @@ library ResolvedContractTransaction {
      * @param counters The counters for repeated fields
      * @return The number of bytes decoded
      */
-    function _read_unpacked_repeated_call_results(uint256 p, bytes memory bs, Data memory r, uint256[6] memory counters)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _read_unpacked_repeated_call_results(
+        uint256 p,
+        bytes memory bs,
+        Data memory r,
+        uint256[6] memory counters
+    ) internal pure returns (uint256) {
         /**
          * if `r` is NULL, then only counting the number of fields.
          */

@@ -38,20 +38,20 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
         // generate txID
         bytes32 txIDHash = sha256(MsgInitiateTx.encode(msg_));
         bytes memory txID = abi.encodePacked(txIDHash);
-        if (isTxRecorded(txIDHash)) revert IInitiator.TxIDAlreadyExists(txIDHash);
+        if (_isTxRecorded(txIDHash)) revert IInitiator.TxIDAlreadyExists(txIDHash);
 
         // persist as PENDING
-        createTx(txIDHash, msg_);
+        _createTx(txIDHash, msg_);
 
         // auth init & sign
         Account.Data[] memory required = _getRequiredAccounts(msg_);
-        initAuthState(txIDHash, required);
-        bool completed = sign(txIDHash, msg_.signers);
+        _initAuthState(txIDHash, required);
+        bool completed = _sign(txIDHash, msg_.signers);
 
         emit TxInitiated(txID, msg.sender);
 
         if (completed) {
-            runTxIfCompleted(txIDHash);
+            _runTxIfCompleted(txIDHash);
             return MsgInitiateTxResponse.Data({
                 txID: txID, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED
             });
