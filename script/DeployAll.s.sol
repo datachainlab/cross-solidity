@@ -32,8 +32,10 @@ import {
 // === App ===
 import {IContractModule} from "src/core/IContractModule.sol";
 import {CrossSimpleModule} from "src/core/CrossSimpleModule.sol";
+import {IAuthExtensionVerifier} from "src/core/IAuthExtensionVerifier.sol";
 import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/mock/MockClient.sol";
 import {MockCrossContract} from "src/example/MockCrossContract.sol";
+import {SampleEcrecoverVerifier} from "src/example/SampleEcrecoverVerifier.sol";
 
 import {IIBCModuleInitializer} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/26-router/IIBCModule.sol";
 import {ILightClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/02-client/ILightClient.sol";
@@ -69,7 +71,17 @@ contract DeployAll is Script, Config {
         MockCrossContract app = new MockCrossContract();
         console2.log("  MockCrossContract:", address(app));
 
-        CrossSimpleModule module = new CrossSimpleModule(handler, IContractModule(address(app)), debugMode);
+        SampleEcrecoverVerifier verifier = new SampleEcrecoverVerifier();
+        console2.log("  SampleEcrecoverVerifier:", address(verifier));
+
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = "/verifier.ecrecover";
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = IAuthExtensionVerifier(verifier);
+
+        CrossSimpleModule module =
+            new CrossSimpleModule(handler, IContractModule(address(app)), typeUrls, verifiers, debugMode);
         console2.log("  CrossSimpleModule:", address(module));
 
         MockClient mclient = new MockClient(address(handler));

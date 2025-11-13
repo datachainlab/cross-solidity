@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
@@ -19,6 +20,7 @@ abstract contract CrossStore {
         hex"ef61b39f0bec0016a7c6e65e3ee8d2ea1b2327afbd737de3be2c6827c42f9600";
 
     struct AuthStorage {
+        mapping(string => IAuthExtensionVerifier) authVerifiers;
         mapping(bytes32 => mapping(bytes32 => bool)) remaining;
         mapping(bytes32 => uint256) remainingCount;
         mapping(bytes32 => bool) authInitialized;

@@ -563,6 +563,7 @@ library MsgExtSignTx {
     struct Data {
         bytes txID;
         Account.Data[] signers;
+        bytes[] signatures;
     }
 
     // Decoder section
@@ -599,7 +600,7 @@ library MsgExtSignTx {
      */
     function _decode(uint256 p, bytes memory bs, uint256 sz) internal pure returns (Data memory, uint256) {
         Data memory r;
-        uint256[3] memory counters;
+        uint256[4] memory counters;
         uint256 fieldId;
         ProtoBufRuntime.WireType wireType;
         uint256 bytesRead;
@@ -612,6 +613,8 @@ library MsgExtSignTx {
                 pointer += _read_txID(pointer, bs, r);
             } else if (fieldId == 2) {
                 pointer += _read_unpacked_repeated_signers(pointer, bs, nil(), counters);
+            } else if (fieldId == 3) {
+                pointer += _read_unpacked_repeated_signatures(pointer, bs, nil(), counters);
             } else {
                 pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
             }
@@ -621,12 +624,18 @@ library MsgExtSignTx {
             require(r.signers.length == 0);
             r.signers = new Account.Data[](counters[2]);
         }
+        if (counters[3] > 0) {
+            require(r.signatures.length == 0);
+            r.signatures = new bytes[](counters[3]);
+        }
 
         while (pointer < offset + sz) {
             (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
             pointer += bytesRead;
             if (fieldId == 2) {
                 pointer += _read_unpacked_repeated_signers(pointer, bs, r, counters);
+            } else if (fieldId == 3) {
+                pointer += _read_unpacked_repeated_signatures(pointer, bs, r, counters);
             } else {
                 pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
             }
@@ -657,7 +666,7 @@ library MsgExtSignTx {
      * @param counters The counters for repeated fields
      * @return The number of bytes decoded
      */
-    function _read_unpacked_repeated_signers(uint256 p, bytes memory bs, Data memory r, uint256[3] memory counters)
+    function _read_unpacked_repeated_signers(uint256 p, bytes memory bs, Data memory r, uint256[4] memory counters)
         internal
         pure
         returns (uint256)
@@ -671,6 +680,32 @@ library MsgExtSignTx {
         } else {
             r.signers[r.signers.length - counters[2]] = x;
             counters[2] -= 1;
+        }
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @param counters The counters for repeated fields
+     * @return The number of bytes decoded
+     */
+    function _read_unpacked_repeated_signatures(uint256 p, bytes memory bs, Data memory r, uint256[4] memory counters)
+        internal
+        pure
+        returns (uint256)
+    {
+        /**
+         * if `r` is NULL, then only counting the number of fields.
+         */
+        (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
+        if (isNil(r)) {
+            counters[3] += 1;
+        } else {
+            r.signatures[r.signatures.length - counters[3]] = x;
+            counters[3] -= 1;
         }
         return sz;
     }
@@ -730,6 +765,12 @@ library MsgExtSignTx {
                 pointer += Account._encode_nested(r.signers[i], pointer, bs);
             }
         }
+        if (r.signatures.length != 0) {
+            for (i = 0; i < r.signatures.length; i++) {
+                pointer += ProtoBufRuntime._encode_key(3, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
+                pointer += ProtoBufRuntime._encode_bytes(r.signatures[i], pointer, bs);
+            }
+        }
         return pointer - offset;
     }
 
@@ -774,6 +815,9 @@ library MsgExtSignTx {
         for (i = 0; i < r.signers.length; i++) {
             e += 1 + ProtoBufRuntime._sz_lendelim(Account._estimate(r.signers[i]));
         }
+        for (i = 0; i < r.signatures.length; i++) {
+            e += 1 + ProtoBufRuntime._sz_lendelim(r.signatures[i].length);
+        }
         return e;
     }
     // empty checker
@@ -784,6 +828,10 @@ library MsgExtSignTx {
         }
 
         if (r.signers.length != 0) {
+            return false;
+        }
+
+        if (r.signatures.length != 0) {
             return false;
         }
 
@@ -802,6 +850,8 @@ library MsgExtSignTx {
         for (uint256 i2 = 0; i2 < input.signers.length; i2++) {
             output.signers.push(input.signers[i2]);
         }
+
+        output.signatures = input.signatures;
     }
 
     //array helpers for Signers
@@ -820,6 +870,24 @@ library MsgExtSignTx {
         }
         tmp[self.signers.length] = value;
         self.signers = tmp;
+    }
+
+    //array helpers for Signatures
+    /**
+     * @dev Add value to an array
+     * @param self The in-memory struct
+     * @param value The value to add
+     */
+    function addSignatures(Data memory self, bytes memory value) internal pure {
+        /**
+         * First resize the array. Then add the new element to the end.
+         */
+        bytes[] memory tmp = new bytes[](self.signatures.length + 1);
+        for (uint256 i = 0; i < self.signatures.length; i++) {
+            tmp[i] = self.signatures[i];
+        }
+        tmp[self.signatures.length] = value;
+        self.signatures = tmp;
     }
 
     //utility functions

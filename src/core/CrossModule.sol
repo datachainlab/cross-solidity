@@ -18,6 +18,7 @@ import {Authenticator} from "./Authenticator.sol";
 import {TxAuthManager} from "./TxAuthManager.sol";
 import {TxManager} from "./TxManager.sol";
 import {TxRunner} from "./TxRunner.sol";
+import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
 abstract contract CrossModule is
     AccessControl,
@@ -32,7 +33,11 @@ abstract contract CrossModule is
 {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IIBCHandler ibcHandler_) Initiator() IBCKeeper(ibcHandler_) {
+    constructor(IIBCHandler ibcHandler_, string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers)
+        Initiator()
+        IBCKeeper(ibcHandler_)
+        TxAuthManager(typeUrls, verifiers)
+    {
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 

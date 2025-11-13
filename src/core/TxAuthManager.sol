@@ -3,9 +3,27 @@ pragma solidity ^0.8.20;
 
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {CrossStore} from "./CrossStore.sol";
-import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
+import {Account, TxAuthState, AuthType} from "../proto/cross/core/auth/Auth.sol";
+import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
 abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
+    constructor(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers) {
+        require(typeUrls.length == verifiers.length, "TxAuthManager: array mismatch");
+
+        CrossStore.AuthStorage storage s = _getAuthStorage();
+
+        for (uint256 i = 0; i < typeUrls.length; i++) {
+            string memory typeUrl = typeUrls[i];
+            IAuthExtensionVerifier verifier = verifiers[i];
+
+            require(bytes(typeUrl).length > 0, "TxAuthManager: empty typeUrl");
+            require(address(verifier) != address(0), "TxAuthManager: zero address verifier");
+
+            s.authVerifiers[typeUrl] = verifier;
+            emit VerifierRegistered(typeUrl, address(verifier));
+        }
+    }
+
     function initAuthState(bytes32 txID, Account.Data[] memory signers) internal virtual override {
         CrossStore.AuthStorage storage s = _getAuthStorage();
         if (s.authInitialized[txID]) revert AuthStateAlreadyInitialized(txID);
@@ -57,6 +75,38 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
                 out[p] = acc;
                 ++p;
                 if (p == need) break;
+            }
+        }
+    }
+
+    function _verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers, bytes[] calldata signatures)
+        internal
+        view
+        virtual
+        override
+    {
+        if (signers.length != signatures.length) {
+            revert SignerCountMismatch(signers.length, signatures.length);
+        }
+
+        CrossStore.AuthStorage storage s = _getAuthStorage();
+
+        for (uint256 i = 0; i < signers.length; i++) {
+            Account.Data calldata signer = signers[i];
+
+            if (signer.auth_type.mode != AuthType.AuthMode.AUTH_MODE_EXTENSION) {
+                revert AuthModeMismatch();
+            }
+
+            string calldata typeUrl = signer.auth_type.option.type_url;
+            IAuthExtensionVerifier verifier = s.authVerifiers[typeUrl];
+            if (address(verifier) == address(0)) {
+                revert VerifierNotFound(typeUrl);
+            }
+
+            bytes calldata signature = signatures[i];
+            if (!verifier.verify(txIDHash, signer, signature)) {
+                revert SignatureVerificationFailed(txIDHash);
             }
         }
     }

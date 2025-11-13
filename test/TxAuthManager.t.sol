@@ -5,10 +5,15 @@ pragma solidity ^0.8.20;
 import "forge-std/src/Test.sol";
 import "../src/core/TxAuthManager.sol";
 import "../src/core/TxAuthManagerBase.sol";
+import {IAuthExtensionVerifier} from "../src/core/IAuthExtensionVerifier.sol";
 import {Account as AuthAccount, TxAuthState, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
 contract TxAuthManagerHarness is TxAuthManager {
+    constructor(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers)
+        TxAuthManager(typeUrls, verifiers)
+    {}
+
     function exposed_initAuthState(bytes32 txID, AuthAccount.Data[] memory signers) public {
         initAuthState(txID, signers);
     }
@@ -50,7 +55,7 @@ contract TxAuthManagerTest is Test {
     AuthType.Data private channelAuthType;
 
     function setUp() public {
-        harness = new TxAuthManagerHarness();
+        harness = new TxAuthManagerHarness(new string[](0), new IAuthExtensionVerifier[](0));
 
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
         localAuthType = AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: emptyAny});

@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import "forge-std/src/Test.sol";
 
 import "../src/core/CrossModule.sol";
+import {IAuthExtensionVerifier} from "../src/core/IAuthExtensionVerifier.sol";
 import {
     IIBCModule,
     IIBCModuleInitializer
@@ -22,7 +23,7 @@ contract TestableCrossModule is CrossModule {
     uint256 public timeoutCount;
     bytes public lastAckArg;
 
-    constructor(IIBCHandler h) CrossModule(h) {}
+    constructor(IIBCHandler h, string[] memory t, IAuthExtensionVerifier[] memory v) CrossModule(h, t, v) {}
 
     function handlePacket(
         Packet memory /*packet*/
@@ -67,7 +68,7 @@ contract CrossModuleTest is Test {
 
     function setUp() public {
         handler = new DummyHandler();
-        mod = new TestableCrossModule(IIBCHandler(address(handler)));
+        mod = new TestableCrossModule(IIBCHandler(address(handler)), new string[](0), new IAuthExtensionVerifier[](0));
     }
 
     function test_constructor_GrantsIbcRoleToHandler() public {

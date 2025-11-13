@@ -72,6 +72,13 @@ contract MockTxAuthManager is TxAuthManagerBase {
         revert("MockTxAuthManager.getAuthState not implemented");
     }
 
+    function _verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers, bytes[] calldata signatures)
+        internal
+        view
+        virtual
+        override
+    {}
+
     function setSignReturns(bool returnsValue) public {
         _signReturns = returnsValue;
     }

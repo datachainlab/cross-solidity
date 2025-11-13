@@ -7,6 +7,7 @@ import "forge-std/src/Test.sol";
 import "../src/core/CrossSimpleModule.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/TxAtomicSimple.sol";
+import {IAuthExtensionVerifier} from "../src/core/IAuthExtensionVerifier.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
@@ -28,7 +29,9 @@ contract DummyModule is IContractModule {
 }
 
 contract CrossSimpleModuleHarness is CrossSimpleModule {
-    constructor(IIBCHandler h, IContractModule m, bool debugMode) CrossSimpleModule(h, m, debugMode) {}
+    constructor(IIBCHandler h, IContractModule m, string[] memory t, IAuthExtensionVerifier[] memory v, bool debugMode)
+        CrossSimpleModule(h, m, t, v, debugMode)
+    {}
 
     function exposed_getModule(Packet calldata p) external returns (IContractModule) {
         return getModule(p);
@@ -54,38 +57,63 @@ contract CrossSimpleModuleTest is Test {
     }
 
     function test_constructor_RegistersModuleAndGetReturnsSameAddress() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            IContractModule(address(moduleImpl)),
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            false
+        );
 
         IContractModule got = harness.exposed_getModule(_emptyPacket);
         assertEq(address(got), address(moduleImpl), "must register");
     }
 
     function test_constructor_GrantsIbcRoleWhenDebugModeTrue() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), true);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            IContractModule(address(moduleImpl)),
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            true
+        );
 
         assertTrue(harness.workaround_hasIbcRole(address(this)), "role on debug");
     }
 
     function test_constructor_DoesNotGrantIbcRoleWhenDebugModeFalse() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            IContractModule(address(moduleImpl)),
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            false
+        );
 
         assertFalse(harness.workaround_hasIbcRole(address(this)), "no role on debug");
     }
 
     function test_register_RevertOn_SecondInitialization() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            IContractModule(address(moduleImpl)),
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            false
+        );
 
         vm.expectRevert(SimpleContractRegistry.ModuleAlreadyInitialized.selector);
         harness.exposed_registerModule(IContractModule(address(moduleImpl)));
     }
 
     function test_getPacketAcknowledgementCall_DifferentStatusesProduceDifferentBytes() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            IContractModule(address(moduleImpl)),
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            false
+        );
 
         bytes memory a = harness.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
         bytes memory b =

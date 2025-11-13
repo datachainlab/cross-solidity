@@ -2,8 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {IAuthenticator} from "./IAuthenticator.sol";
-import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
+import {TxAuthManagerBase} from "./TxAuthManager.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
+import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
 import {
     AuthType,
@@ -13,7 +14,8 @@ import {
     MsgExtSignTxResponse,
     QueryTxAuthStateRequest,
     QueryTxAuthStateResponse,
-    Account
+    Account,
+    TxAuthState
 } from "../proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
@@ -33,14 +35,19 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
         return MsgSignTxResponse.Data({tx_auth_completed: completed, log: ""});
     }
 
-    function extSignTx(
-        MsgExtSignTx.Data calldata /*msg_*/
-    )
-        external
-        override
-        returns (MsgExtSignTxResponse.Data memory)
-    {
-        revert IAuthenticator.ExtSignTxNotImplemented();
+    function extSignTx(MsgExtSignTx.Data calldata msg_) external override returns (MsgExtSignTxResponse.Data memory) {
+        bytes32 txIDHash = sha256(msg_.txID);
+
+        _verifySignatures(txIDHash, msg_.signers, msg_.signatures);
+
+        bool completed = sign(txIDHash, msg_.signers);
+        if (completed) {
+            runTxIfCompleted(txIDHash);
+        }
+
+        emit TxSigned(msg.sender, txIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+
+        return MsgExtSignTxResponse.Data({x: true});
     }
 
     function txAuthState(

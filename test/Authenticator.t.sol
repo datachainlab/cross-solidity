@@ -9,6 +9,7 @@ import {TxAuthManagerBase} from "../src/core/TxAuthManagerBase.sol";
 
 import {MsgInitiateTx} from "../src/proto/cross/core/initiator/Initiator.sol";
 import {IAuthenticator} from "../src/core/IAuthenticator.sol";
+import {IAuthExtensionVerifier} from "../src/core/IAuthExtensionVerifier.sol";
 import {
     Account as AuthAccount,
     AuthType,
@@ -93,6 +94,13 @@ contract MockTxAuthManager is TxAuthManagerBase {
         return _signReturns;
     }
     function getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {}
+
+    function _verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers, bytes[] calldata signatures)
+        internal
+        view
+        virtual
+        override
+    {}
 
     function setSignReturns(bool returnsValue) public {
         _signReturns = returnsValue;
