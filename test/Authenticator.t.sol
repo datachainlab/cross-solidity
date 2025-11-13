@@ -21,12 +21,12 @@ import {
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 
 contract MockTxManager is TxManagerBase {
-    bytes32 public lastRunTxId;
+    bytes32 public lastRunTxID;
     uint256 public runTxCount;
 
     function createTx(
         bytes32,
-        /*txId*/
+        /*txID*/
         MsgInitiateTx.Data calldata /*src*/
     )
         internal
@@ -34,13 +34,13 @@ contract MockTxManager is TxManagerBase {
         override
     {}
 
-    function runTxIfCompleted(bytes32 txId) internal virtual override {
-        lastRunTxId = txId;
+    function runTxIfCompleted(bytes32 txID) internal virtual override {
+        lastRunTxID = txID;
         ++runTxCount;
     }
 
     function isTxRecorded(
-        bytes32 /*txId*/
+        bytes32 /*txID*/
     )
         internal
         view
@@ -58,7 +58,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
 
     function initAuthState(
         bytes32,
-        /*txId*/
+        /*txID*/
         Account.Data[] memory /*signers*/
     )
         internal
@@ -67,7 +67,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
     {}
 
     function isCompletedAuth(
-        bytes32 /*txId*/
+        bytes32 /*txID*/
     )
         internal
         view
@@ -79,7 +79,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
     }
 
     function sign(
-        bytes32 txId,
+        bytes32 txID,
         Account.Data[] memory /*signers*/
     )
         internal
@@ -88,7 +88,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
         returns (bool)
     {
         if (_signReturns) {
-            completed[txId] = true;
+            completed[txID] = true;
         }
         return _signReturns;
     }
@@ -108,7 +108,7 @@ contract AuthenticatorHarness is Authenticator, MockTxAuthManager, MockTxManager
 contract AuthenticatorTest is Test {
     AuthenticatorHarness private harness;
     MsgSignTx.Data private baseMsg;
-    bytes32 private txIdHash;
+    bytes32 private txIDHash;
     bytes private signerABytes = bytes("signerA");
     bytes private signerBBytes = bytes("signerB");
 
@@ -127,7 +127,7 @@ contract AuthenticatorTest is Test {
             timeout_timestamp: 0
         });
 
-        txIdHash = sha256(baseMsg.txID);
+        txIDHash = sha256(baseMsg.txID);
     }
 
     function test_signTx_SucceedsAsPending() public {
@@ -136,7 +136,7 @@ contract AuthenticatorTest is Test {
         MsgSignTxResponse.Data memory resp = harness.signTx(baseMsg);
         assertFalse(resp.tx_auth_completed, "response should indicate not completed");
         assertEq(resp.log, "", "log should be empty");
-        assertFalse(harness.completed(txIdHash), "Mock: auth should not be completed");
+        assertFalse(harness.completed(txIDHash), "Mock: auth should not be completed");
         assertEq(harness.runTxCount(), 0, "Mock: runTxIfCompleted should not be called");
     }
 
@@ -144,15 +144,15 @@ contract AuthenticatorTest is Test {
         harness.setSignReturns(true);
 
         vm.expectEmit(true, true, false, true, address(harness));
-        emit TxSigned(address(this), txIdHash, AuthType.AuthMode.AUTH_MODE_LOCAL);
+        emit TxSigned(address(this), txIDHash, AuthType.AuthMode.AUTH_MODE_LOCAL);
 
         MsgSignTxResponse.Data memory resp = harness.signTx(baseMsg);
 
         assertTrue(resp.tx_auth_completed, "response should indicate completed");
         assertEq(resp.log, "", "log should be empty");
-        assertTrue(harness.completed(txIdHash), "Mock: auth should be completed");
+        assertTrue(harness.completed(txIDHash), "Mock: auth should be completed");
         assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxId(), txIdHash, "Mock: runTxIfCompleted called with correct txId");
+        assertEq(harness.lastRunTxID(), txIDHash, "Mock: runTxIfCompleted called with correct txID");
     }
 
     function test_extSignTx_RevertsNotImplemented() public {

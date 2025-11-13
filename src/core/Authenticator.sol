@@ -21,14 +21,14 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
     function signTx(MsgSignTx.Data calldata msg_) external override returns (MsgSignTxResponse.Data memory) {
         Account.Data[] memory accounts = _buildLocalAccounts(msg_.signers);
 
-        bytes32 txIdHash = sha256(msg_.txID);
+        bytes32 txIDHash = sha256(msg_.txID);
 
-        bool completed = sign(txIdHash, accounts);
+        bool completed = sign(txIDHash, accounts);
         if (completed) {
-            runTxIfCompleted(txIdHash);
+            runTxIfCompleted(txIDHash);
         }
 
-        emit TxSigned(msg.sender, txIdHash, AuthType.AuthMode.AUTH_MODE_LOCAL);
+        emit TxSigned(msg.sender, txIDHash, AuthType.AuthMode.AUTH_MODE_LOCAL);
 
         return MsgSignTxResponse.Data({tx_auth_completed: completed, log: ""});
     }
