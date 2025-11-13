@@ -98,6 +98,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
 
         CrossStore.AuthStorage storage s = _getAuthStorage();
 
+        // slither-disable-start calls-loop
         for (uint256 i = 0; i < len; ++i) {
             Account.Data calldata signer = signers[i];
 
@@ -123,6 +124,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
                 revert VerifierReturnedFalse(txIDHash, typeUrl);
             }
         }
+        // slither-disable-end calls-loop
     }
 
     function _setStateFromRemainingList(CrossStore.AuthStorage storage s, bytes32 txID, Account.Data[] memory list)
