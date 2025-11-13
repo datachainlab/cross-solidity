@@ -85,13 +85,14 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
         virtual
         override
     {
-        if (signers.length != signatures.length) {
-            revert SignerCountMismatch(signers.length, signatures.length);
+        uint256 len = signers.length;
+        if (len != signatures.length) {
+            revert SignerCountMismatch(len, signatures.length);
         }
 
         CrossStore.AuthStorage storage s = _getAuthStorage();
 
-        for (uint256 i = 0; i < signers.length; ++i) {
+        for (uint256 i = 0; i < len; ++i) {
             Account.Data calldata signer = signers[i];
 
             if (signer.auth_type.mode != AuthType.AuthMode.AUTH_MODE_EXTENSION) {
@@ -104,9 +105,16 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
                 revert VerifierNotFound(typeUrl);
             }
 
-            bytes calldata signature = signatures[i];
-            if (!verifier.verify(txIDHash, signer, signature)) {
-                revert SignatureVerificationFailed(txIDHash);
+            bytes memory callData =
+                abi.encodeWithSelector(IAuthExtensionVerifier.verify.selector, txIDHash, signer, signatures[i]);
+
+            (bool ok, bytes memory ret) = address(verifier).staticcall(callData);
+            if (!ok) {
+                revert VerifierStaticCallFailed(typeUrl);
+            }
+            bool verified = abi.decode(ret, (bool));
+            if (!verified) {
+                revert VerifierReturnedFalse(txIDHash, typeUrl);
             }
         }
     }

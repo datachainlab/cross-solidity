@@ -14,6 +14,8 @@ abstract contract TxAuthManagerBase {
     error ArrayLengthMismatch();
     error EmptyTypeUrl();
     error ZeroAddressVerifier();
+    error VerifierStaticCallFailed(string typeUrl);
+    error VerifierReturnedFalse(bytes32 txIDHash, string typeUrl);
 
     event VerifierRegistered(string typeUrl, address indexed verifier);
 
