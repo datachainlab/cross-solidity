@@ -11,8 +11,11 @@ abstract contract TxAuthManagerBase {
     error AuthModeMismatch();
     error VerifierNotFound(string typeUrl);
     error SignatureVerificationFailed(bytes32 txID);
+    error ArrayLengthMismatch();
+    error EmptyTypeUrl();
+    error ZeroAddressVerifier();
 
-    event VerifierRegistered(string typeUrl, address verifier);
+    event VerifierRegistered(string typeUrl, address indexed verifier);
 
     function initAuthState(bytes32 txID, Account.Data[] memory signers) internal virtual;
     function isCompletedAuth(bytes32 txID) internal view virtual returns (bool);

@@ -8,16 +8,16 @@ import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
 abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
     constructor(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers) {
-        require(typeUrls.length == verifiers.length, "TxAuthManager: array mismatch");
+        if (typeUrls.length != verifiers.length) revert ArrayLengthMismatch();
 
         CrossStore.AuthStorage storage s = _getAuthStorage();
 
-        for (uint256 i = 0; i < typeUrls.length; i++) {
+        for (uint256 i = 0; i < typeUrls.length; ++i) {
             string memory typeUrl = typeUrls[i];
             IAuthExtensionVerifier verifier = verifiers[i];
 
-            require(bytes(typeUrl).length > 0, "TxAuthManager: empty typeUrl");
-            require(address(verifier) != address(0), "TxAuthManager: zero address verifier");
+            if (bytes(typeUrl).length == 0) revert EmptyTypeUrl();
+            if (address(verifier) == address(0)) revert ZeroAddressVerifier();
 
             s.authVerifiers[typeUrl] = verifier;
             emit VerifierRegistered(typeUrl, address(verifier));
@@ -91,7 +91,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
 
         CrossStore.AuthStorage storage s = _getAuthStorage();
 
-        for (uint256 i = 0; i < signers.length; i++) {
+        for (uint256 i = 0; i < signers.length; ++i) {
             Account.Data calldata signer = signers[i];
 
             if (signer.auth_type.mode != AuthType.AuthMode.AUTH_MODE_EXTENSION) {

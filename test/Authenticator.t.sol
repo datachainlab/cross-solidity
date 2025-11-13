@@ -9,7 +9,6 @@ import {TxAuthManagerBase} from "../src/core/TxAuthManagerBase.sol";
 
 import {MsgInitiateTx} from "../src/proto/cross/core/initiator/Initiator.sol";
 import {IAuthenticator} from "../src/core/IAuthenticator.sol";
-import {IAuthExtensionVerifier} from "../src/core/IAuthExtensionVerifier.sol";
 import {
     Account as AuthAccount,
     AuthType,

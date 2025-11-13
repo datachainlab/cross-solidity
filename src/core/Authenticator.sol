@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {IAuthenticator} from "./IAuthenticator.sol";
 import {TxAuthManagerBase} from "./TxAuthManager.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
-import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
 import {
     AuthType,
@@ -14,8 +13,7 @@ import {
     MsgExtSignTxResponse,
     QueryTxAuthStateRequest,
     QueryTxAuthStateResponse,
-    Account,
-    TxAuthState
+    Account
 } from "../proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
