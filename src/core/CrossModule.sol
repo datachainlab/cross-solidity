@@ -14,23 +14,25 @@ import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
 import {Initiator} from "./Initiator.sol";
-import {TxAuthManager} from "./TxAuthManager.sol";
-import {TxManager} from "./TxManager.sol";
-import {TxRunner} from "./TxRunner.sol";
+import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
+import {CrossStore} from "./CrossStore.sol";
 
 abstract contract CrossModule is
     AccessControl,
     IIBCModule,
     IBCKeeper,
     PacketHandler,
+    CrossStore,
     Initiator,
-    TxAuthManager,
-    TxManager,
-    TxRunner
+    DelegatedLogicHandler
 {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IIBCHandler ibcHandler_) Initiator() IBCKeeper(ibcHandler_) {
+    constructor(IIBCHandler ibcHandler_, address txAuthManager_, address txManager_)
+        Initiator()
+        IBCKeeper(ibcHandler_)
+        DelegatedLogicHandler(txAuthManager_, txManager_)
+    {
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 

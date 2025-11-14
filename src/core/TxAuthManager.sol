@@ -4,22 +4,40 @@ pragma solidity ^0.8.20;
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {CrossStore} from "./CrossStore.sol";
 import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
+import {ITxAuthManager} from "./ITxAuthManager.sol";
+import {ICrossError} from "./ICrossError.sol";
 
-abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
-    function initAuthState(bytes32 txID, Account.Data[] memory signers) internal virtual override {
+contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager, ICrossError {
+    function initAuthState(bytes32 txID, Account.Data[] calldata signers) external override {
+        _initAuthState(txID, signers);
+    }
+
+    function isCompletedAuth(bytes32 txID) external override returns (bool) {
+        return _isCompletedAuth(txID);
+    }
+
+    function sign(bytes32 txID, Account.Data[] calldata signers) external override returns (bool) {
+        return _sign(txID, signers);
+    }
+
+    function getAuthState(bytes32 txID) external override returns (TxAuthState.Data memory) {
+        return _getAuthState(txID);
+    }
+
+    function _initAuthState(bytes32 txID, Account.Data[] memory signers) internal virtual override {
         CrossStore.AuthStorage storage s = _getAuthStorage();
         if (s.authInitialized[txID]) revert AuthStateAlreadyInitialized(txID);
         _setStateFromRemainingList(s, txID, signers);
         s.authInitialized[txID] = true;
     }
 
-    function isCompletedAuth(bytes32 txID) internal view virtual override returns (bool) {
+    function _isCompletedAuth(bytes32 txID) internal virtual override returns (bool) {
         CrossStore.AuthStorage storage s = _getAuthStorage();
         if (!s.authInitialized[txID]) revert IDNotFound(txID);
         return s.remainingCount[txID] == 0;
     }
 
-    function sign(bytes32 txID, Account.Data[] memory signers) internal virtual override returns (bool) {
+    function _sign(bytes32 txID, Account.Data[] memory signers) internal virtual override returns (bool) {
         CrossStore.AuthStorage storage s = _getAuthStorage();
         if (!s.authInitialized[txID]) revert IDNotFound(txID);
         if (s.remainingCount[txID] == 0) revert AuthAlreadyCompleted(txID);
@@ -35,7 +53,7 @@ abstract contract TxAuthManager is TxAuthManagerBase, CrossStore {
         return s.remainingCount[txID] == 0;
     }
 
-    function getAuthState(bytes32 txID) internal view virtual override returns (TxAuthState.Data memory) {
+    function _getAuthState(bytes32 txID) internal virtual override returns (TxAuthState.Data memory) {
         CrossStore.AuthStorage storage s = _getAuthStorage();
         if (!s.authInitialized[txID]) revert IDNotFound(txID);
         Account.Data[] memory remains = _getRemainingSigners(s, txID);

@@ -1,5 +1,5 @@
 [profile.default]
-solc_version = "0.8.20"
+solc_version = "0.8.30"
 libs = ["lib", "node_modules"]
 optimizer = true
 optimizer_runs = 1000
@@ -7,6 +7,7 @@ evm_version = "london"
 fs_permissions = [
   { access = "read-write", path = "./deployments.toml" }
 ]
+via_ir = true
 
 [rpc_endpoints]
 anvil   = "http://127.0.0.1:8545"

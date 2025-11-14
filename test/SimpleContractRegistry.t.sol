@@ -6,6 +6,7 @@ import "forge-std/src/Test.sol";
 
 import "../src/core/SimpleContractRegistry.sol";
 import "../src/core/IContractModule.sol";
+import "../src/core/ICrossError.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 contract DummyModule is IContractModule {
@@ -37,7 +38,7 @@ contract SimpleContractRegistryHarness is SimpleContractRegistry {
     }
 }
 
-contract SimpleContractRegistryTest is Test {
+contract SimpleContractRegistryTest is Test, ICrossError {
     DummyModule private dummy;
     SimpleContractRegistryHarness private registry;
 
@@ -49,7 +50,7 @@ contract SimpleContractRegistryTest is Test {
     }
 
     function test_get_RevertWhen_NotInitialized() public {
-        vm.expectRevert(SimpleContractRegistry.ModuleNotInitialized.selector);
+        vm.expectRevert(ModuleNotInitialized.selector);
         registry.exposed_getModule(_emptyPacket);
     }
 
@@ -68,7 +69,7 @@ contract SimpleContractRegistryTest is Test {
 
         registry.exposed_registerModule(m);
 
-        vm.expectRevert(SimpleContractRegistry.ModuleAlreadyInitialized.selector);
+        vm.expectRevert(ModuleAlreadyInitialized.selector);
         registry.exposed_registerModule(m);
     }
 

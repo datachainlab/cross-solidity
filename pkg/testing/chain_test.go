@@ -113,7 +113,7 @@ func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*
 
 	for iter.Next() {
 		ev := iter.Event
-		if ev.TxId == idHash {
+		if ev.TxID == idHash {
 			return ev, nil
 		}
 	}

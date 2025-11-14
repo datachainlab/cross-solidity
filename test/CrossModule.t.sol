@@ -22,7 +22,7 @@ contract TestableCrossModule is CrossModule {
     uint256 public timeoutCount;
     bytes public lastAckArg;
 
-    constructor(IIBCHandler h) CrossModule(h) {}
+    constructor(IIBCHandler h, address txAuthManager_, address txManager_) CrossModule(h, txAuthManager_, txManager_) {}
 
     function handlePacket(
         Packet memory /*packet*/
@@ -67,7 +67,7 @@ contract CrossModuleTest is Test {
 
     function setUp() public {
         handler = new DummyHandler();
-        mod = new TestableCrossModule(IIBCHandler(address(handler)));
+        mod = new TestableCrossModule(IIBCHandler(address(handler)), address(0), address(0));
     }
 
     function test_constructor_GrantsIbcRoleToHandler() public {

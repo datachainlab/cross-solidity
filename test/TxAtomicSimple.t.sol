@@ -7,6 +7,7 @@ import "forge-std/src/Test.sol";
 import "../src/core/TxAtomicSimple.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/IBCKeeper.sol";
+import "../src/core/ICrossError.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
@@ -86,7 +87,7 @@ contract TxAtomicSimpleHarness is TxAtomicSimple {
     }
 }
 
-contract TxAtomicSimpleTest is Test {
+contract TxAtomicSimpleTest is Test, ICrossError {
     DummyHandler private handler;
     TxAtomicSimpleHarness private harness;
 
@@ -181,7 +182,7 @@ contract TxAtomicSimpleTest is Test {
         Packet memory p;
         p.data = packetDataBytes;
 
-        vm.expectRevert(TxAtomicSimple.PayloadDecodeFailed.selector);
+        vm.expectRevert(PayloadDecodeFailed.selector);
         harness.exposed_handlePacket(p);
     }
 
@@ -193,19 +194,19 @@ contract TxAtomicSimpleTest is Test {
         Packet memory p;
         p.data = packetDataBytes;
 
-        vm.expectRevert(TxAtomicSimple.UnexpectedTypeURL.selector);
+        vm.expectRevert(UnexpectedTypeURL.selector);
         harness.exposed_handlePacket(p);
     }
 
     function test_handleAcknowledgement_RevertOn_NotImplemented() public {
         Packet memory p;
-        vm.expectRevert(TxAtomicSimple.NotImplemented.selector);
+        vm.expectRevert(NotImplemented.selector);
         harness.exposed_handleAcknowledgement(p, hex"");
     }
 
     function test_handleTimeout_RevertOn_NotImplemented() public {
         Packet memory p;
-        vm.expectRevert(TxAtomicSimple.NotImplemented.selector);
+        vm.expectRevert(NotImplemented.selector);
         harness.exposed_handleTimeout(p);
     }
 }
