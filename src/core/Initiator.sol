@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IInitiator} from "./IInitiator.sol";
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
+import {ICrossError} from "./ICrossError.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
@@ -11,7 +12,7 @@ import {Account} from "../proto/cross/core/auth/Auth.sol";
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, ReentrancyGuard {
+abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, ReentrancyGuard, ICrossError {
     bytes32 public immutable CHAIN_ID_HASH;
 
     constructor() {
@@ -26,22 +27,22 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
     {
         // chain_id check
         bytes32 got = keccak256(bytes(msg_.chain_id));
-        if (got != CHAIN_ID_HASH) revert IInitiator.UnexpectedChainID(CHAIN_ID_HASH, got);
+        if (got != CHAIN_ID_HASH) revert UnexpectedChainID(CHAIN_ID_HASH, got);
 
         // timeouts
         uint64 rh = msg_.timeout_height.revision_height;
         if (rh != 0 && (block.number + 1 > uint256(rh))) {
-            revert IInitiator.MessageTimeoutHeight(block.number, rh);
+            revert MessageTimeoutHeight(block.number, rh);
         }
         // slither-disable-next-line timestamp
         if (msg_.timeout_timestamp > 0 && (block.timestamp + 1 > msg_.timeout_timestamp)) {
-            revert IInitiator.MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
+            revert MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
         // generate txID
         bytes32 txIDHash = sha256(MsgInitiateTx.encode(msg_));
         bytes memory txID = abi.encodePacked(txIDHash);
-        if (_isTxRecorded(txIDHash)) revert IInitiator.TxIDAlreadyExists(txIDHash);
+        if (_isTxRecorded(txIDHash)) revert TxIDAlreadyExists(txIDHash);
 
         // persist as PENDING
         _createTx(txIDHash, msg_);
@@ -65,7 +66,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
     }
 
     function selfXCC() external view virtual override returns (QuerySelfXCCResponse.Data memory) {
-        revert IInitiator.SelfXCCNotImplemented();
+        revert SelfXCCNotImplemented();
     }
 
     function _getRequiredAccounts(MsgInitiateTx.Data calldata msg_) internal pure returns (Account.Data[] memory out) {

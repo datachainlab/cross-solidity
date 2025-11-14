@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable avoid-low-level-calls no-inline-assembly
+// solhint-disable avoid-low-level-calls,no-inline-assembly
 pragma solidity ^0.8.20;
 
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
 import {ITxAuthManager} from "./ITxAuthManager.sol";
 import {ITxManager} from "./ITxManager.sol";
+import {ICrossError} from "./ICrossError.sol";
 
 import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 
-abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase {
+abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICrossError {
     address public immutable TX_AUTH_MANAGER;
     address public immutable TX_MANAGER;
-
-    error DelegateCallFailed(address target);
 
     constructor(address txAuthManager_, address txManager_) {
         TX_AUTH_MANAGER = txAuthManager_;

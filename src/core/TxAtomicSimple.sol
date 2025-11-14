@@ -8,17 +8,14 @@ import "./PacketHandler.sol";
 import "./ContractRegistry.sol";
 import "./IContractModule.sol";
 import "./IBCKeeper.sol";
+import {ICrossError} from "./ICrossError.sol";
 
 import "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 // TxAtomicSimple implements PacketHandler that supports simple-commit protocol
-abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry {
+abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, ContractRegistry, ICrossError {
     // it's defined at simple-commit protocol
     uint8 private constant TX_INDEX_PARTICIPANT = 1;
-
-    error PayloadDecodeFailed();
-    error UnexpectedTypeURL();
-    error NotImplemented();
 
     event OnContractCall(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
 

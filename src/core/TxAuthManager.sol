@@ -5,8 +5,9 @@ import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {CrossStore} from "./CrossStore.sol";
 import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 import {ITxAuthManager} from "./ITxAuthManager.sol";
+import {ICrossError} from "./ICrossError.sol";
 
-contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager {
+contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager, ICrossError {
     function initAuthState(bytes32 txID, Account.Data[] calldata signers) external override {
         _initAuthState(txID, signers);
     }

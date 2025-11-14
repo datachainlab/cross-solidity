@@ -7,6 +7,7 @@ import "forge-std/src/Test.sol";
 import "../src/core/CrossSimpleModule.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/TxAtomicSimple.sol";
+import "../src/core/ICrossError.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
@@ -45,7 +46,7 @@ contract CrossSimpleModuleHarness is CrossSimpleModule {
     }
 }
 
-contract CrossSimpleModuleTest is Test {
+contract CrossSimpleModuleTest is Test, ICrossError {
     DummyHandler private handler;
     DummyModule private moduleImpl;
     Packet internal _emptyPacket;
@@ -85,7 +86,7 @@ contract CrossSimpleModuleTest is Test {
             IIBCHandler(address(handler)), address(0), address(0), IContractModule(address(moduleImpl)), false
         );
 
-        vm.expectRevert(SimpleContractRegistry.ModuleAlreadyInitialized.selector);
+        vm.expectRevert(ModuleAlreadyInitialized.selector);
         harness.exposed_registerModule(IContractModule(address(moduleImpl)));
     }
 
