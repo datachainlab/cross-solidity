@@ -10,5 +10,5 @@ abstract contract TxManagerBase {
 
     function _createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual;
     function _runTxIfCompleted(bytes32 txID) internal virtual;
-    function _isTxRecorded(bytes32 txID) internal view virtual returns (bool);
+    function _isTxRecorded(bytes32 txID) internal virtual returns (bool);
 }

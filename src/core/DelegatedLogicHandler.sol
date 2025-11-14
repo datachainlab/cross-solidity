@@ -37,17 +37,17 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase {
         return abi.decode(ret, (bool));
     }
 
-    function _isCompletedAuth(bytes32 txID) internal view virtual override returns (bool) {
+    function _isCompletedAuth(bytes32 txID) internal virtual override returns (bool) {
         (bool success, bytes memory ret) =
-            TX_AUTH_MANAGER.staticcall(abi.encodeWithSelector(ITxAuthManager.isCompletedAuth.selector, txID));
-        if (!success) revert StaticCallAuthFailed();
+            TX_AUTH_MANAGER.delegatecall(abi.encodeWithSelector(ITxAuthManager.isCompletedAuth.selector, txID));
+        if (!success) revert DelegateCallAuthFailed();
         return abi.decode(ret, (bool));
     }
 
-    function _getAuthState(bytes32 txID) internal view virtual override returns (TxAuthState.Data memory) {
+    function _getAuthState(bytes32 txID) internal virtual override returns (TxAuthState.Data memory) {
         (bool success, bytes memory ret) =
-            TX_AUTH_MANAGER.staticcall(abi.encodeWithSelector(ITxAuthManager.getAuthState.selector, txID));
-        if (!success) revert StaticCallAuthFailed();
+            TX_AUTH_MANAGER.delegatecall(abi.encodeWithSelector(ITxAuthManager.getAuthState.selector, txID));
+        if (!success) revert DelegateCallAuthFailed();
         return abi.decode(ret, (TxAuthState.Data));
     }
 
@@ -61,10 +61,10 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase {
         if (!success) revert DelegateCallTxFailed();
     }
 
-    function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
+    function _isTxRecorded(bytes32 txID) internal virtual override returns (bool) {
         (bool success, bytes memory ret) =
-            TX_MANAGER.staticcall(abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
-        if (!success) revert StaticCallTxFailed();
+            TX_MANAGER.delegatecall(abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
+        if (!success) revert DelegateCallTxFailed();
         return abi.decode(ret, (bool));
     }
 }
