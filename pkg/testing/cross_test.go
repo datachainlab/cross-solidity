@@ -69,7 +69,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		suite.Require().NoError(err)
 		suite.Require().True(event.Success)
 		suite.Require().Equal(event.Ret, successMsg)
-		suite.Require().Equal(event.TxId, crypto.Keccak256Hash(txID))
+		suite.Require().Equal(event.TxID, crypto.Keccak256Hash(txID))
 		suite.Require().Equal(event.TxIndex, uint8(1))
 	}
 
@@ -97,7 +97,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		suite.Require().NoError(err)
 		suite.Require().False(event.Success)
 		suite.Require().Empty(event.Ret)
-		suite.Require().Equal(event.TxId, crypto.Keccak256Hash(txID))
+		suite.Require().Equal(event.TxID, crypto.Keccak256Hash(txID))
 		suite.Require().Equal(event.TxIndex, uint8(1))
 	}
 }
@@ -142,6 +142,54 @@ func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.
 	}
 	pdc := simpletypes.NewPacketDataCall(txID, types.NewResolvedContractTransaction(xcc, signers, callInfo, nil, nil))
 	return packets.NewPacketData(nil, pdc)
+}
+
+func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseTxRunNotImplemented() {
+	ctx := context.Background()
+	opts := suite.chain.LegacyTxOpts(ctx, 0)
+
+	xcc, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{})
+	suite.Require().NoError(err)
+
+	authTypeBinding := crosssimplemodule.AuthTypeData{
+		Mode: uint8(authtypes.AuthMode_AUTH_MODE_CHANNEL),
+		Option: crosssimplemodule.GoogleProtobufAnyData{
+			TypeUrl: xcc.TypeUrl,
+			Value:   xcc.Value,
+		},
+	}
+	signerBinding := crosssimplemodule.AccountData{
+		Id:       opts.From.Bytes(),
+		AuthType: authTypeBinding,
+	}
+
+	ctBinding := crosssimplemodule.ContractTransactionData{
+		CrossChainChannel: crosssimplemodule.GoogleProtobufAnyData{
+			TypeUrl: xcc.TypeUrl,
+			Value:   xcc.Value,
+		},
+		Signers:  []crosssimplemodule.AccountData{signerBinding},
+		CallInfo: []byte("dummy call info"),
+	}
+
+	msg := crosssimplemodule.MsgInitiateTxData{
+		ChainId:              fmt.Sprintf("%d", suite.chain.chainID),
+		Nonce:                0,
+		CommitProtocol:       0,
+		ContractTransactions: []crosssimplemodule.ContractTransactionData{ctBinding},
+		Signers:              []crosssimplemodule.AccountData{signerBinding},
+		TimeoutHeight:        crosssimplemodule.IbcCoreClientV1HeightData{},
+		TimeoutTimestamp:     uint64(time.Now().Add(5 * time.Minute).Unix()),
+	}
+
+	err = suite.chain.TxSyncIfNoError(ctx)(
+		suite.chain.CrossSimpleModule.InitiateTx(opts, msg),
+	)
+
+	suite.Require().Error(err, "transaction should have reverted, but it succeeded")
+	suite.T().Logf("Received expected error from TxSync: %s", err.Error())
+
+	suite.Require().Contains(err.Error(), "failed to call transaction", "Error message should indicate a failed receipt")
 }
 
 func TestChainTestSuite(t *testing.T) {
