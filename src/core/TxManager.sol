@@ -2,14 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {TxManagerBase} from "./TxManagerBase.sol";
-import {TxRunner} from "./TxRunner.sol";
+import {TxRunnerBase} from "./TxRunner.sol";
 import {CrossStore} from "./CrossStore.sol";
 import {ITxManager} from "./ITxManager.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
-contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
+contract TxManager is TxManagerBase, TxRunnerBase, CrossStore, ITxManager {
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external override {
         _createTx(txID, src);
     }
@@ -76,5 +76,9 @@ contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
                 d.links.push(s.links[j]);
             }
         }
+    }
+
+    function _runTx(bytes32 txID, MsgInitiateTx.Data storage msg_) internal virtual override {
+        // This code is never executed in the delegatecall context.
     }
 }
