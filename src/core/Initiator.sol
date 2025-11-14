@@ -9,7 +9,9 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
-abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, ReentrancyGuard {
     bytes32 public immutable CHAIN_ID_HASH;
 
     constructor() {
@@ -19,6 +21,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase {
     function initiateTx(MsgInitiateTx.Data calldata msg_)
         external
         override
+        nonReentrant
         returns (MsgInitiateTxResponse.Data memory resp)
     {
         // chain_id check
