@@ -14,7 +14,6 @@ import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
 import {Initiator} from "./Initiator.sol";
-import {TxRunner} from "./TxRunner.sol";
 import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
 import {CrossStore} from "./CrossStore.sol";
 
@@ -25,7 +24,6 @@ abstract contract CrossModule is
     PacketHandler,
     CrossStore,
     Initiator,
-    TxRunner,
     DelegatedLogicHandler
 {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
