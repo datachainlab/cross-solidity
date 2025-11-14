@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable avoid-low-level-calls
+// solhint-disable avoid-low-level-calls no-inline-assembly
 pragma solidity ^0.8.20;
 
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
@@ -14,10 +14,7 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase {
     address public immutable TX_AUTH_MANAGER;
     address public immutable TX_MANAGER;
 
-    error DelegateCallAuthFailed();
-    error DelegateCallTxFailed();
-    error StaticCallAuthFailed();
-    error StaticCallTxFailed();
+    error DelegateCallFailed(address target);
 
     constructor(address txAuthManager_, address txManager_) {
         TX_AUTH_MANAGER = txAuthManager_;
@@ -25,46 +22,54 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase {
     }
 
     function _initAuthState(bytes32 txID, Account.Data[] memory signers) internal virtual override {
-        (bool success,) =
-            TX_AUTH_MANAGER.delegatecall(abi.encodeWithSelector(ITxAuthManager.initAuthState.selector, txID, signers));
-        if (!success) revert DelegateCallAuthFailed();
+        _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.initAuthState.selector, txID, signers));
     }
 
     function _sign(bytes32 txID, Account.Data[] memory signers) internal virtual override returns (bool) {
-        (bool success, bytes memory ret) =
-            TX_AUTH_MANAGER.delegatecall(abi.encodeWithSelector(ITxAuthManager.sign.selector, txID, signers));
-        if (!success) revert DelegateCallAuthFailed();
+        bytes memory ret =
+            _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.sign.selector, txID, signers));
         return abi.decode(ret, (bool));
     }
 
     function _isCompletedAuth(bytes32 txID) internal virtual override returns (bool) {
-        (bool success, bytes memory ret) =
-            TX_AUTH_MANAGER.delegatecall(abi.encodeWithSelector(ITxAuthManager.isCompletedAuth.selector, txID));
-        if (!success) revert DelegateCallAuthFailed();
+        bytes memory ret =
+            _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.isCompletedAuth.selector, txID));
         return abi.decode(ret, (bool));
     }
 
     function _getAuthState(bytes32 txID) internal virtual override returns (TxAuthState.Data memory) {
-        (bool success, bytes memory ret) =
-            TX_AUTH_MANAGER.delegatecall(abi.encodeWithSelector(ITxAuthManager.getAuthState.selector, txID));
-        if (!success) revert DelegateCallAuthFailed();
+        bytes memory ret =
+            _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.getAuthState.selector, txID));
         return abi.decode(ret, (TxAuthState.Data));
     }
 
     function _createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual override {
-        (bool success,) = TX_MANAGER.delegatecall(abi.encodeWithSelector(ITxManager.createTx.selector, txID, src));
-        if (!success) revert DelegateCallTxFailed();
+        _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.createTx.selector, txID, src));
     }
 
     function _runTxIfCompleted(bytes32 txID) internal virtual override {
-        (bool success,) = TX_MANAGER.delegatecall(abi.encodeWithSelector(ITxManager.runTxIfCompleted.selector, txID));
-        if (!success) revert DelegateCallTxFailed();
+        _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.runTxIfCompleted.selector, txID));
     }
 
     function _isTxRecorded(bytes32 txID) internal virtual override returns (bool) {
-        (bool success, bytes memory ret) =
-            TX_MANAGER.delegatecall(abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
-        if (!success) revert DelegateCallTxFailed();
+        bytes memory ret = _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
         return abi.decode(ret, (bool));
+    }
+
+    function _delegateWithData(address impl, bytes memory data) internal returns (bytes memory) {
+        (bool success, bytes memory returndata) = impl.delegatecall(data);
+        if (!success) {
+            if (returndata.length > 0) {
+                // bubble up the revert reason from the callee
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
+            } else {
+                // no revert data from callee (e.g. out-of-gas in callee or explicit revert() without reason)
+                revert DelegateCallFailed(impl);
+            }
+        }
+        return returndata;
     }
 }
