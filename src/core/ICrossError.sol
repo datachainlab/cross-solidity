@@ -14,7 +14,6 @@ interface ICrossError {
     error TxAlreadyVerified(bytes32 txID);
     error CoordinatorStateNotFound(bytes32 txID);
     error TxRunNotImplemented();
-    error SelfXCCNotImplemented();
     error ModuleAlreadyInitialized();
     error ModuleNotInitialized();
     error PayloadDecodeFailed();
