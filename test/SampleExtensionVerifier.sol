@@ -19,7 +19,7 @@ contract SampleExtensionVerifierTest is Test {
     bytes32 private txIDHash = keccak256("test_tx_id_hash");
     bytes32 private signMsg = keccak256("message_to_be_signed");
     bytes32 private ethSignedMsgHash;
-    bytes validSignature;
+    bytes private validSignature;
 
     AuthAccount.Data private baseAuthAccount;
 
@@ -96,13 +96,13 @@ contract SampleExtensionVerifierTest is Test {
         AuthAccount.Data memory modifiedAccount = baseAuthAccount;
 
         bytes32 r = bytes32(validSignature);
-        bytes32 s_tampered = r;
+        bytes32 sTampered = r;
         uint8 v = 28;
 
-        bytes memory tamperedSignature = abi.encodePacked(r, s_tampered, v);
+        bytes memory tamperedSignature = abi.encodePacked(r, sTampered, v);
         modifiedAccount.auth_type.option.value = abi.encode(tamperedSignature, signMsg);
 
-        vm.expectRevert(abi.encodeWithSelector(ECDSA.ECDSAInvalidSignatureS.selector, s_tampered));
+        vm.expectRevert(abi.encodeWithSelector(ECDSA.ECDSAInvalidSignatureS.selector, sTampered));
         verifier.verify(txIDHash, modifiedAccount);
     }
 
