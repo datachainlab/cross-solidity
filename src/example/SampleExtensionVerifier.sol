@@ -11,12 +11,12 @@ contract SampleExtensionVerifier is IAuthExtensionVerifier {
     /**
      * Expected inputs:
      *
-     * @param txIDHash (1st argument, ignored in this implementation)
+     * param txIDHash (1st argument, ignored in this implementation)
      *  - Hash that uniquely identifies the transaction being verified.
      *  - Not used in this sample implementation, but expected to be passed so
      *    the caller can associate verification with a specific transaction.
      *
-     * @param signer (2nd argument: Account.Data)
+     * param signer (2nd argument: Account.Data)
      *  - signer.id:
      *      - 20-byte value representing the signer’s Ethereum address.
      *      - Must satisfy: signer.id.length == 20.
