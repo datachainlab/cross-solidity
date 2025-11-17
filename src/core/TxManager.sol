@@ -33,6 +33,7 @@ contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
 
     function _runTxIfCompleted(bytes32 txID) internal virtual override {
         CrossStore.TxStorage storage t = _getTxStorage();
+        if (!_isTxRecorded(txID)) return;
         if (t.txStatus[txID] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
         t.txStatus[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
         _runTx(txID, t.txMsg[txID]);
