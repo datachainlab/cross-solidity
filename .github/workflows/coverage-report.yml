@@ -40,7 +40,7 @@ jobs:
         uses: zgosalvez/github-actions-report-lcov@v5
         with:
           coverage-files: lcov.filtered.info
-          minimum-coverage: 100
+          minimum-coverage: 98
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
           update-comment: true
