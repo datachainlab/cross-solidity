@@ -13,8 +13,17 @@ interface ICrossError {
     error TxAlreadyExists(bytes32 txID);
     error TxAlreadyVerified(bytes32 txID);
     error CoordinatorStateNotFound(bytes32 txID);
+    error SignerCountMismatch(uint256 signerCount, uint256 signatureCount);
+    error AuthModeMismatch();
+    error VerifierNotFound(string typeUrl);
+    error SignatureVerificationFailed(bytes32 txID);
+    error ArrayLengthMismatch();
+    error EmptyTypeUrl();
+    error ZeroAddressVerifier();
+    error VerifierStaticCallFailed(string typeUrl);
+    error VerifierReturnedFalse(bytes32 txIDHash, string typeUrl);
+    error TooManySigners(uint256 got, uint256 maxAllowed);
     error TxRunNotImplemented();
-    error ExtSignTxNotImplemented();
     error TxAuthStateNotImplemented();
     error ModuleAlreadyInitialized();
     error ModuleNotInitialized();

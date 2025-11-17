@@ -58,6 +58,10 @@ contract MockTxAuthManager is ITxAuthManager, MockStore {
 
         return TxAuthState.Data({remaining_signers: remaining});
     }
+
+    function verifySignatures(bytes32 txIDHash, AuthAccount.Data[] calldata) external override {
+        ++authStorage.callCounts[txIDHash];
+    }
 }
 
 contract MockTxManager is ITxManager, MockStore {

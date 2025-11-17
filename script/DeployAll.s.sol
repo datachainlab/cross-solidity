@@ -36,6 +36,8 @@ import {TxAuthManager} from "src/core/TxAuthManager.sol";
 import {TxManager} from "src/core/TxManager.sol";
 import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/mock/MockClient.sol";
 import {MockCrossContract} from "src/example/MockCrossContract.sol";
+import {SampleExtensionVerifier} from "src/example/SampleExtensionVerifier.sol";
+import {IAuthExtensionVerifier} from "src/core/IAuthExtensionVerifier.sol";
 
 import {IIBCModuleInitializer} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/26-router/IIBCModule.sol";
 import {ILightClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/02-client/ILightClient.sol";
@@ -71,7 +73,16 @@ contract DeployAll is Script, Config {
         MockCrossContract app = new MockCrossContract();
         console2.log("  MockCrossContract:", address(app));
 
-        TxAuthManager txAuthManager = new TxAuthManager();
+        SampleExtensionVerifier verifier = new SampleExtensionVerifier();
+        console2.log("  SampleExtensionVerifier:", address(verifier));
+
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = "/verifier.sample.extension";
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = IAuthExtensionVerifier(verifier);
+
+        TxAuthManager txAuthManager = new TxAuthManager(typeUrls, verifiers);
         console2.log("  TxAuthManager:", address(txAuthManager));
 
         TxManager txManager = new TxManager();
