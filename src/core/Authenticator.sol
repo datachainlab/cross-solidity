@@ -14,7 +14,8 @@ import {
     MsgExtSignTxResponse,
     QueryTxAuthStateRequest,
     QueryTxAuthStateResponse,
-    Account
+    Account,
+    TxAuthState
 } from "../proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
@@ -49,15 +50,16 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
         return MsgExtSignTxResponse.Data({x: true});
     }
 
-    function txAuthState(
-        QueryTxAuthStateRequest.Data calldata /*req_*/
-    )
+    function txAuthState(QueryTxAuthStateRequest.Data calldata req_)
         external
-        view
         override
         returns (QueryTxAuthStateResponse.Data memory resp)
     {
-        revert TxAuthStateNotImplemented();
+        bytes32 txIDHash = sha256(req_.txID);
+
+        TxAuthState.Data memory state = _getAuthState(txIDHash);
+
+        return QueryTxAuthStateResponse.Data({tx_auth_state: state});
     }
 
     function _buildLocalAccounts(bytes[] calldata signerIDs) internal pure returns (Account.Data[] memory) {

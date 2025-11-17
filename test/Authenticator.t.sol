@@ -16,7 +16,9 @@ import {
     MsgSignTx,
     MsgSignTxResponse,
     MsgExtSignTx,
-    QueryTxAuthStateRequest
+    QueryTxAuthStateRequest,
+    QueryTxAuthStateResponse,
+    GoogleProtobufAny
 } from "../src/proto/cross/core/auth/Auth.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 
@@ -56,6 +58,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
     mapping(bytes32 => bool) public completed;
     bool private _signReturns = false;
     bool private _verifyShouldRevert = false;
+    TxAuthState.Data private _mockAuthState;
 
     error MockVerifyError();
 
@@ -95,7 +98,10 @@ contract MockTxAuthManager is TxAuthManagerBase {
         }
         return _signReturns;
     }
-    function _getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {}
+
+    function _getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {
+        return _mockAuthState;
+    }
 
     function _verifySignatures(
         bytes32,
@@ -118,6 +124,10 @@ contract MockTxAuthManager is TxAuthManagerBase {
 
     function setVerifyShouldRevert(bool shouldRevert) public {
         _verifyShouldRevert = shouldRevert;
+    }
+
+    function setMockAuthState(TxAuthState.Data memory state) public {
+        _mockAuthState = state;
     }
 }
 
@@ -225,12 +235,32 @@ contract AuthenticatorTest is Test {
         harness.extSignTx(extMsg);
     }
 
-    function test_txAuthState_RevertsNotImplemented() public {
-        QueryTxAuthStateRequest.Data memory req;
-        req.txID = bytes("query-tx");
+    function test_txAuthState_ReturnsState() public {
+        bytes memory queryTxID = bytes("query-tx");
 
-        vm.expectRevert(ICrossError.TxAuthStateNotImplemented.selector);
-        harness.txAuthState(req);
+        AuthAccount.Data[] memory remainingSigners = new AuthAccount.Data[](1);
+        remainingSigners[0] = AuthAccount.Data({
+            id: signerBBytes,
+            auth_type: AuthType.Data({
+                mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: GoogleProtobufAny.Data({type_url: "", value: ""})
+            })
+        });
+        TxAuthState.Data memory expectedState = TxAuthState.Data({remaining_signers: remainingSigners});
+
+        harness.setMockAuthState(expectedState);
+
+        QueryTxAuthStateRequest.Data memory req;
+        req.txID = queryTxID;
+
+        QueryTxAuthStateResponse.Data memory resp = harness.txAuthState(req);
+
+        assertEq(resp.tx_auth_state.remaining_signers.length, 1, "Remaining signers length mismatch");
+        assertEq(resp.tx_auth_state.remaining_signers[0].id, signerBBytes, "Remaining signer ID mismatch");
+        assertEq(
+            uint256(resp.tx_auth_state.remaining_signers[0].auth_type.mode),
+            uint256(AuthType.AuthMode.AUTH_MODE_LOCAL),
+            "Remaining signer auth mode mismatch"
+        );
     }
 
     function test_buildLocalAccounts_BuildsCorrectly() public {

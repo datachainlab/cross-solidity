@@ -24,7 +24,6 @@ interface ICrossError {
     error VerifierReturnedFalse(bytes32 txIDHash, string typeUrl);
     error TooManySigners(uint256 got, uint256 maxAllowed);
     error TxRunNotImplemented();
-    error TxAuthStateNotImplemented();
     error ModuleAlreadyInitialized();
     error ModuleNotInitialized();
     error PayloadDecodeFailed();
