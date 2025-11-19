@@ -222,7 +222,7 @@ contract AuthenticatorTest is Test {
     function test_extSignTx_SucceedsAsPending() public {
         harness.setSignReturns(false);
 
-        vm.expectEmit(true, true, false, true, address(harness));
+        vm.expectEmit(address(harness));
         emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
@@ -235,7 +235,7 @@ contract AuthenticatorTest is Test {
     function test_extSignTx_SucceedsAsCompletedAndEmitsEvent() public {
         harness.setSignReturns(true);
 
-        vm.expectEmit(true, true, false, true, address(harness));
+        vm.expectEmit(address(harness));
         emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
