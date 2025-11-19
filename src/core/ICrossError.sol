@@ -9,6 +9,8 @@ interface ICrossError {
     error TxIDAlreadyExists(bytes32 txIDHash);
     error AuthStateAlreadyInitialized(bytes32 txID);
     error IDNotFound(bytes32 txID);
+    error InvalidSignersLength();
+    error SignerMustEqualSender();
     error AuthAlreadyCompleted(bytes32 txID);
     error TxAlreadyExists(bytes32 txID);
     error TxAlreadyVerified(bytes32 txID);
@@ -20,7 +22,7 @@ interface ICrossError {
     error ArrayLengthMismatch();
     error EmptyTypeUrl();
     error ZeroAddressVerifier();
-    error VerifierStaticCallFailed(string typeUrl);
+    error VerifierCallFailed(string typeUrl);
     error VerifierReturnedFalse(bytes32 txIDHash, string typeUrl);
     error TooManySigners(uint256 got, uint256 maxAllowed);
     error TxRunNotImplemented();

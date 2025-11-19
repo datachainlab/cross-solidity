@@ -21,6 +21,15 @@ import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/pr
 
 abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerBase, ICrossError {
     function signTx(MsgSignTx.Data calldata msg_) external override returns (MsgSignTxResponse.Data memory) {
+        if (msg_.signers.length != 1) {
+            revert InvalidSignersLength();
+        }
+
+        bytes memory expectedSignerId = abi.encodePacked(msg.sender);
+        if (keccak256(msg_.signers[0]) != keccak256(expectedSignerId)) {
+            revert SignerMustEqualSender();
+        }
+
         Account.Data[] memory accounts = _buildLocalAccounts(msg_.signers);
 
         bytes32 txIDHash = sha256(msg_.txID);

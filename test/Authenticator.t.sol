@@ -149,8 +149,10 @@ contract AuthenticatorTest is Test {
     function setUp() public {
         harness = new AuthenticatorHarness();
 
+        bytes memory expectedSignerId = abi.encodePacked(address(this));
+
         bytes[] memory signers = new bytes[](1);
-        signers[0] = signerABytes;
+        signers[0] = expectedSignerId;
 
         baseMsg = MsgSignTx.Data({
             txID: bytes("test-tx-id"),
@@ -201,10 +203,36 @@ contract AuthenticatorTest is Test {
         assertEq(harness.lastRunTxID(), txIDHash, "Mock: runTxIfCompleted called with correct txID");
     }
 
+    function test_signTx_RevertsIf_SignersLengthZero() public {
+        baseMsg.signers = new bytes[](0);
+
+        vm.expectRevert(ICrossError.InvalidSignersLength.selector);
+        harness.signTx(baseMsg);
+    }
+
+    function test_signTx_RevertsIf_SignersLengthMultiple() public {
+        bytes[] memory signers = new bytes[](2);
+        signers[0] = signerABytes;
+        signers[1] = signerBBytes;
+        baseMsg.signers = signers;
+
+        vm.expectRevert(ICrossError.InvalidSignersLength.selector);
+        harness.signTx(baseMsg);
+    }
+
+    function test_signTx_RevertsIf_SignerNotEqualSender() public {
+        bytes[] memory signers = new bytes[](1);
+        signers[0] = abi.encodePacked(address(0x12345));
+        baseMsg.signers = signers;
+
+        vm.expectRevert(ICrossError.SignerMustEqualSender.selector);
+        harness.signTx(baseMsg);
+    }
+
     function test_extSignTx_SucceedsAsPending() public {
         harness.setSignReturns(false);
 
-        vm.expectEmit(true, true, false, true, address(harness));
+        vm.expectEmit(address(harness));
         emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
@@ -217,7 +245,7 @@ contract AuthenticatorTest is Test {
     function test_extSignTx_SucceedsAsCompletedAndEmitsEvent() public {
         harness.setSignReturns(true);
 
-        vm.expectEmit(true, true, false, true, address(harness));
+        vm.expectEmit(address(harness));
         emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
