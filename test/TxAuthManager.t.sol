@@ -462,7 +462,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
         signers[0] = extSignerReverting;
 
-        vm.expectRevert(abi.encodeWithSelector(VerifierCallFailed.selector, URL_REVERTING));
+        vm.expectRevert(bytes("MockRevertingVerifier: Staticcall failed"));
         harness.verifySignatures(txID, signers);
     }
 

@@ -22,7 +22,6 @@ interface ICrossError {
     error ArrayLengthMismatch();
     error EmptyTypeUrl();
     error ZeroAddressVerifier();
-    error VerifierCallFailed(string typeUrl);
     error VerifierReturnedFalse(bytes32 txIDHash, string typeUrl);
     error TooManySigners(uint256 got, uint256 maxAllowed);
     error TxRunNotImplemented();

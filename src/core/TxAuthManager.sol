@@ -106,12 +106,9 @@ contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager, ICrossE
                 revert VerifierNotFound(typeUrl);
             }
 
-            try verifier.verify(txIDHash, signer) returns (bool verified) {
-                if (!verified) {
-                    revert VerifierReturnedFalse(txIDHash, typeUrl);
-                }
-            } catch {
-                revert VerifierCallFailed(typeUrl);
+            bool verified = verifier.verify(txIDHash, signer);
+            if (!verified) {
+                revert VerifierReturnedFalse(txIDHash, typeUrl);
             }
         }
         // slither-disable-end calls-loop
