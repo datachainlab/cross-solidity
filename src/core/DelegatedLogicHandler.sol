@@ -7,11 +7,14 @@ import {TxManagerBase} from "./TxManagerBase.sol";
 import {ITxAuthManager} from "./ITxAuthManager.sol";
 import {ITxManager} from "./ITxManager.sol";
 import {ICrossError} from "./ICrossError.sol";
+import {PacketHandler} from "./PacketHandler.sol";
+
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 
-abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICrossError {
+abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, PacketHandler, ICrossError {
     address public immutable TX_AUTH_MANAGER;
     address public immutable TX_MANAGER;
 
@@ -59,6 +62,22 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
     function _isTxRecorded(bytes32 txID) internal virtual override returns (bool) {
         bytes memory ret = _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
         return abi.decode(ret, (bool));
+    }
+
+    function _handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
+        bytes memory ret =
+            _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.handlePacket.selector, packet));
+        return abi.decode(ret, (bytes));
+    }
+
+    function _handleAcknowledgement(Packet memory packet, bytes memory acknowledgement) internal virtual override {
+        _delegateWithData(
+            TX_MANAGER, abi.encodeWithSelector(ITxManager.handleAcknowledgement.selector, packet, acknowledgement)
+        );
+    }
+
+    function _handleTimeout(Packet calldata packet) internal virtual override {
+        _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.handleTimeout.selector, packet));
     }
 
     function _delegateWithData(address impl, bytes memory data) internal returns (bytes memory) {

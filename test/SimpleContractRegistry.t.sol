@@ -22,6 +22,16 @@ contract DummyModule is IContractModule {
     {
         return "";
     }
+    function onAbort(CrossContext calldata context) external override {}
+    function onCommit(CrossContext calldata context) external override {}
+
+    function onContractPrepare(CrossContext calldata context, bytes calldata callInfo)
+        external
+        override
+        returns (bytes memory)
+    {
+        return "";
+    }
 }
 
 contract SimpleContractRegistryHarness is SimpleContractRegistry {

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
-import {CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
+import {CoordinatorState, ContractTransactionState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 abstract contract CrossStore {
     // keccak256(abi.encode(uint256(keccak256("cross.core.auth")) - 1)) & ~bytes32(uint256(0xff))
@@ -30,6 +30,7 @@ abstract contract CrossStore {
     struct TxStorage {
         mapping(bytes32 => MsgInitiateTx.Data) txMsg;
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) txStatus;
+        mapping(bytes32 => mapping(uint256 => ContractTransactionState.Data)) states;
     }
 
     struct CoordEntry {

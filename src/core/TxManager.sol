@@ -5,11 +5,19 @@ import {TxManagerBase} from "./TxManagerBase.sol";
 import {TxRunner} from "./TxRunner.sol";
 import {CrossStore} from "./CrossStore.sol";
 import {ITxManager} from "./ITxManager.sol";
+import {IContractModule} from "./IContractModule.sol";
+import {SimpleContractRegistry} from "./SimpleContractRegistry.sol";
+import {TxAtomicSimple} from "./TxAtomicSimple.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 
-contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
+import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+
+contract TxManager is TxManagerBase, ITxManager, TxAtomicSimple, SimpleContractRegistry {
+    constructor(IIBCHandler handler_, IContractModule module) TxAtomicSimple(handler_, module) {}
+
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external override {
         _createTx(txID, src);
     }
@@ -20,6 +28,18 @@ contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
 
     function isTxRecorded(bytes32 txID) external override returns (bool) {
         return _isTxRecorded(txID);
+    }
+
+    function handlePacket(Packet memory packet) external returns (bytes memory acknowledgement) {
+        return _handlePacket(packet);
+    }
+
+    function handleAcknowledgement(Packet memory packet, bytes memory acknowledgement) external {
+        _handleAcknowledgement(packet, acknowledgement);
+    }
+
+    function handleTimeout(Packet calldata packet) external {
+        _handleTimeout(packet);
     }
 
     function _createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual override {

@@ -20,4 +20,15 @@ contract MockCrossContract is IContractModule {
             revert("callInfo must be 0x01");
         }
     }
+
+    function onCommit(CrossContext calldata context) external override {}
+    function onAbort(CrossContext calldata context) external override {}
+
+    function onContractPrepare(CrossContext calldata context, bytes calldata callInfo)
+        external
+        override
+        returns (bytes memory)
+    {
+        return bytes("mock prepare succeed");
+    }
 }

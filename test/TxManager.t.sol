@@ -23,6 +23,8 @@ contract TxManagerHarness is TxManager {
     uint256 public runCount;
     bytes32 public lastRunTxID;
 
+    constructor() TxManager(IIBCHandler(address(0)), IContractModule(address(0))) {}
+
     function getTxStatus(bytes32 txID) public view returns (MsgInitiateTxResponse.InitiateTxStatus) {
         CrossStore.TxStorage storage t = _getTxStorage();
         return t.txStatus[txID];
