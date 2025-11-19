@@ -74,6 +74,6 @@ contract SampleExtensionVerifier is IAuthExtensionVerifier {
 
         address recoveredAddress = ECDSA.recover(messageHash, signature);
 
-        return recoveredAddress != address(0) && recoveredAddress == expectedAddress;
+        return recoveredAddress == expectedAddress;
     }
 }
