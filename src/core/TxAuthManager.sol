@@ -106,15 +106,12 @@ contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager, ICrossE
                 revert VerifierNotFound(typeUrl);
             }
 
-            bytes memory callData = abi.encodeWithSelector(IAuthExtensionVerifier.verify.selector, txIDHash, signer);
-
-            (bool ok, bytes memory ret) = address(verifier).staticcall(callData);
-            if (!ok) {
-                revert VerifierStaticCallFailed(typeUrl);
-            }
-            bool verified = abi.decode(ret, (bool));
-            if (!verified) {
-                revert VerifierReturnedFalse(txIDHash, typeUrl);
+            try verifier.verify(txIDHash, signer) returns (bool verified) {
+                if (!verified) {
+                    revert VerifierReturnedFalse(txIDHash, typeUrl);
+                }
+            } catch {
+                revert VerifierCallFailed(typeUrl);
             }
         }
         // slither-disable-end calls-loop
