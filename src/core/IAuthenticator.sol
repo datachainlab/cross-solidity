@@ -25,5 +25,6 @@ interface IAuthenticator {
 
     function txAuthState(QueryTxAuthStateRequest.Data calldata req_)
         external
+        view
         returns (QueryTxAuthStateResponse.Data memory);
 }
