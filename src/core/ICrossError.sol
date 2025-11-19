@@ -9,6 +9,8 @@ interface ICrossError {
     error TxIDAlreadyExists(bytes32 txIDHash);
     error AuthStateAlreadyInitialized(bytes32 txID);
     error IDNotFound(bytes32 txID);
+    error InvalidSignersLength();
+    error SignerMustEqualSender();
     error AuthAlreadyCompleted(bytes32 txID);
     error TxAlreadyExists(bytes32 txID);
     error TxAlreadyVerified(bytes32 txID);
