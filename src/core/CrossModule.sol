@@ -15,6 +15,7 @@ import "./IBCKeeper.sol";
 
 import {Initiator} from "./Initiator.sol";
 import {Authenticator} from "./Authenticator.sol";
+import {Coordinator} from "./Coordinator.sol";
 import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
 import {CrossStore} from "./CrossStore.sol";
 
@@ -26,6 +27,7 @@ abstract contract CrossModule is
     CrossStore,
     Initiator,
     Authenticator,
+    Coordinator,
     DelegatedLogicHandler
 {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
