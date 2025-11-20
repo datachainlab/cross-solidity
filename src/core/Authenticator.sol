@@ -43,14 +43,19 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
         return MsgSignTxResponse.Data({tx_auth_completed: completed, log: ""});
     }
 
-    function extSignTx(
-        MsgExtSignTx.Data calldata /*msg_*/
-    )
-        external
-        override
-        returns (MsgExtSignTxResponse.Data memory)
-    {
-        revert ExtSignTxNotImplemented();
+    function extSignTx(MsgExtSignTx.Data calldata msg_) external override returns (MsgExtSignTxResponse.Data memory) {
+        bytes32 txIDHash = sha256(msg_.txID);
+
+        _verifySignatures(txIDHash, msg_.signers);
+
+        bool completed = _sign(txIDHash, msg_.signers);
+        if (completed) {
+            _runTxIfCompleted(txIDHash);
+        }
+
+        emit TxSigned(msg.sender, txIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+
+        return MsgExtSignTxResponse.Data({x: true});
     }
 
     function txAuthState(

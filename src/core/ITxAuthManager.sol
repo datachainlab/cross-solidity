@@ -8,4 +8,5 @@ interface ITxAuthManager {
     function isCompletedAuth(bytes32 txID) external returns (bool);
     function sign(bytes32 txID, Account.Data[] calldata signers) external returns (bool);
     function getAuthState(bytes32 txID) external returns (TxAuthState.Data memory);
+    function verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers) external;
 }

@@ -8,7 +8,29 @@ import "../src/core/TxAuthManager.sol";
 import {Account as AuthAccount, TxAuthState, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
+contract MockValidVerifier is IAuthExtensionVerifier {
+    function verify(bytes32, AuthAccount.Data calldata) external view override returns (bool) {
+        return true;
+    }
+}
+
+contract MockInvalidVerifier is IAuthExtensionVerifier {
+    function verify(bytes32, AuthAccount.Data calldata) external view override returns (bool) {
+        return false;
+    }
+}
+
+contract MockRevertingVerifier is IAuthExtensionVerifier {
+    function verify(bytes32, AuthAccount.Data calldata) external view override returns (bool) {
+        revert("MockRevertingVerifier: Staticcall failed");
+    }
+}
+
 contract TxAuthManagerHarness is TxAuthManager {
+    constructor(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers)
+        TxAuthManager(typeUrls, verifiers)
+    {}
+
     function exposed_accountKey(AuthAccount.Data memory a) public pure returns (bytes32) {
         return _accountKey(a);
     }
@@ -24,26 +46,141 @@ contract TxAuthManagerHarness is TxAuthManager {
     }
 }
 
-contract TxAuthManagerTest is Test {
+contract TxAuthManagerTest is Test, ICrossError {
     TxAuthManagerHarness private harness;
     bytes32 private txID = keccak256("test_tx_id");
+
+    // Auth Types
+    AuthType.Data private localAuthType;
+    AuthType.Data private extAuthTypeValid;
+    AuthType.Data private extAuthTypeInvalid;
+    AuthType.Data private extAuthTypeReverting;
+    AuthType.Data private extAuthTypeNotFound;
+
+    // Signer Accounts
     AuthAccount.Data private signerA;
     AuthAccount.Data private signerB;
     AuthAccount.Data private signerC;
-    AuthType.Data private localAuthType;
-    AuthType.Data private channelAuthType;
+    AuthAccount.Data private extSignerAValid;
+    AuthAccount.Data private extSignerBValid;
+    AuthAccount.Data private extSignerInvalid;
+    AuthAccount.Data private extSignerReverting;
+    AuthAccount.Data private extSignerNotFound;
+
+    // Verifier URLs
+    string private constant URL_VALID = "/verifier/valid";
+    string private constant URL_INVALID = "/verifier/invalid";
+    string private constant URL_REVERTING = "/verifier/reverting";
+    string private constant URL_NOT_FOUND = "/verifier/notfound";
 
     function setUp() public {
-        harness = new TxAuthManagerHarness();
+        // 1. Deploy Mock Verifiers
+        MockValidVerifier validVerifier = new MockValidVerifier();
+        MockInvalidVerifier invalidVerifier = new MockInvalidVerifier();
+        MockRevertingVerifier revertingVerifier = new MockRevertingVerifier();
 
+        // 2. Setup Verifier Arrays
+        string[] memory typeUrls = new string[](3);
+        typeUrls[0] = URL_VALID;
+        typeUrls[1] = URL_INVALID;
+        typeUrls[2] = URL_REVERTING;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](3);
+        verifiers[0] = IAuthExtensionVerifier(validVerifier);
+        verifiers[1] = IAuthExtensionVerifier(invalidVerifier);
+        verifiers[2] = IAuthExtensionVerifier(revertingVerifier);
+
+        // 3. Deploy Harness
+        harness = new TxAuthManagerHarness(typeUrls, verifiers);
+
+        // 4. Setup Auth Types
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
         localAuthType = AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: emptyAny});
 
-        channelAuthType = AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_EXTENSION, option: emptyAny});
+        extAuthTypeValid = AuthType.Data({
+            mode: AuthType.AuthMode.AUTH_MODE_EXTENSION,
+            option: GoogleProtobufAny.Data({type_url: URL_VALID, value: ""})
+        });
+        extAuthTypeInvalid = AuthType.Data({
+            mode: AuthType.AuthMode.AUTH_MODE_EXTENSION,
+            option: GoogleProtobufAny.Data({type_url: URL_INVALID, value: ""})
+        });
+        extAuthTypeReverting = AuthType.Data({
+            mode: AuthType.AuthMode.AUTH_MODE_EXTENSION,
+            option: GoogleProtobufAny.Data({type_url: URL_REVERTING, value: ""})
+        });
+        extAuthTypeNotFound = AuthType.Data({
+            mode: AuthType.AuthMode.AUTH_MODE_EXTENSION,
+            option: GoogleProtobufAny.Data({type_url: URL_NOT_FOUND, value: ""})
+        });
 
+        // 5. Setup Signer Accounts
         signerA = AuthAccount.Data({id: bytes("signerA"), auth_type: localAuthType});
         signerB = AuthAccount.Data({id: bytes("signerB"), auth_type: localAuthType});
         signerC = AuthAccount.Data({id: bytes("signerC"), auth_type: localAuthType});
+
+        extSignerAValid = AuthAccount.Data({id: bytes("extSignerA"), auth_type: extAuthTypeValid});
+        extSignerBValid = AuthAccount.Data({id: bytes("extSignerB"), auth_type: extAuthTypeValid});
+        extSignerInvalid = AuthAccount.Data({id: bytes("extSignerInvalid"), auth_type: extAuthTypeInvalid});
+        extSignerReverting = AuthAccount.Data({id: bytes("extSignerReverting"), auth_type: extAuthTypeReverting});
+        extSignerNotFound = AuthAccount.Data({id: bytes("extSignerNotFound"), auth_type: extAuthTypeNotFound});
+    }
+
+    function test_constructor_SucceedsWithEmptyArrays() public {
+        string[] memory typeUrls = new string[](0);
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](0);
+
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness(typeUrls, verifiers);
+        assertTrue(address(localHarness) != address(0), "Harness should deploy");
+    }
+
+    function test_constructor_SucceedsAndEmitsEvents() public {
+        string[] memory typeUrls = new string[](2);
+        typeUrls[0] = URL_VALID;
+        typeUrls[1] = URL_INVALID;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](2);
+        IAuthExtensionVerifier verifier1 = new MockValidVerifier();
+        IAuthExtensionVerifier verifier2 = new MockInvalidVerifier();
+        verifiers[0] = verifier1;
+        verifiers[1] = verifier2;
+
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness(typeUrls, verifiers);
+        assertTrue(address(localHarness) != address(0), "Harness should deploy");
+    }
+
+    function test_constructor_RevertWhen_ArrayLengthMismatch() public {
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = URL_VALID;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](2);
+        verifiers[0] = new MockValidVerifier();
+        verifiers[1] = new MockValidVerifier();
+
+        vm.expectRevert(ArrayLengthMismatch.selector);
+        new TxAuthManagerHarness(typeUrls, verifiers);
+    }
+
+    function test_constructor_RevertWhen_EmptyTypeUrl() public {
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = "";
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = new MockValidVerifier();
+
+        vm.expectRevert(EmptyTypeUrl.selector);
+        new TxAuthManagerHarness(typeUrls, verifiers);
+    }
+
+    function test_constructor_RevertWhen_ZeroAddressVerifier() public {
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = URL_VALID;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = IAuthExtensionVerifier(address(0)); // Zero address
+
+        vm.expectRevert(ZeroAddressVerifier.selector);
+        new TxAuthManagerHarness(typeUrls, verifiers);
     }
 
     function test_initAuthState_Succeeds() public {
@@ -223,7 +360,7 @@ contract TxAuthManagerTest is Test {
         bytes32 keyB = harness.exposed_accountKey(signerB);
         assertNotEq(keyA, keyB, "Different IDs should produce different keys");
 
-        AuthAccount.Data memory signerAAltAuth = AuthAccount.Data({id: signerA.id, auth_type: channelAuthType});
+        AuthAccount.Data memory signerAAltAuth = AuthAccount.Data({id: signerA.id, auth_type: extAuthTypeValid});
         bytes32 keyAAltAuth = harness.exposed_accountKey(signerAAltAuth);
         assertNotEq(keyA, keyAAltAuth, "Different auth_types should produce different keys");
 
@@ -275,5 +412,65 @@ contract TxAuthManagerTest is Test {
 
         remaining = harness.exposed_getRemainingSigners(txID);
         assertEq(remaining.length, 0, "getRemainingSigners should return 0 signers");
+    }
+
+    function test_verifySignatures_SucceedsSingleSigner() public {
+        AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
+        signers[0] = extSignerAValid;
+
+        harness.verifySignatures(txID, signers);
+    }
+
+    function test_verifySignatures_SucceedsMultipleSigners() public {
+        AuthAccount.Data[] memory signers = new AuthAccount.Data[](2);
+        signers[0] = extSignerAValid;
+        signers[1] = extSignerBValid;
+
+        harness.verifySignatures(txID, signers);
+    }
+
+    function test_verifySignatures_RevertWhen_TooManySigners() public {
+        uint256 count = 33;
+
+        AuthAccount.Data[] memory signers = new AuthAccount.Data[](count);
+
+        for (uint256 i = 0; i < count; ++i) {
+            signers[i] = extSignerAValid;
+        }
+
+        vm.expectRevert(abi.encodeWithSelector(TooManySigners.selector, count, 32));
+        harness.verifySignatures(txID, signers);
+    }
+
+    function test_verifySignatures_RevertWhen_AuthModeMismatch() public {
+        AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
+        signers[0] = signerA;
+
+        vm.expectRevert(AuthModeMismatch.selector);
+        harness.verifySignatures(txID, signers);
+    }
+
+    function test_verifySignatures_RevertWhen_VerifierNotFound() public {
+        AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
+        signers[0] = extSignerNotFound;
+
+        vm.expectRevert(abi.encodeWithSelector(VerifierNotFound.selector, URL_NOT_FOUND));
+        harness.verifySignatures(txID, signers);
+    }
+
+    function test_verifySignatures_RevertWhen_StaticCallFails() public {
+        AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
+        signers[0] = extSignerReverting;
+
+        vm.expectRevert(bytes("MockRevertingVerifier: Staticcall failed"));
+        harness.verifySignatures(txID, signers);
+    }
+
+    function test_verifySignatures_RevertWhen_VerifierReturnsFalse() public {
+        AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
+        signers[0] = extSignerInvalid;
+
+        vm.expectRevert(abi.encodeWithSelector(VerifierReturnedFalse.selector, txID, URL_INVALID));
+        harness.verifySignatures(txID, signers);
     }
 }

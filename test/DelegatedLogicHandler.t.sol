@@ -58,6 +58,10 @@ contract MockTxAuthManager is ITxAuthManager, MockStore {
 
         return TxAuthState.Data({remaining_signers: remaining});
     }
+
+    function verifySignatures(bytes32 txIDHash, AuthAccount.Data[] calldata) external override {
+        ++authStorage.callCounts[txIDHash];
+    }
 }
 
 contract MockTxManager is ITxManager, MockStore {
@@ -118,6 +122,10 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
 
     function exposed_getAuthState(bytes32 txID) public returns (TxAuthState.Data memory) {
         return _getAuthState(txID);
+    }
+
+    function exposed_verifySignatures(bytes32 txIDHash, AuthAccount.Data[] calldata signers) public {
+        _verifySignatures(txIDHash, signers);
     }
 
     function exposed_createTx(bytes32 txID, MsgInitiateTx.Data calldata src) public {
@@ -210,6 +218,12 @@ contract DelegatedLogicHandlerTest is Test {
         assertEq(harness.readAuth_callCount(txID), 1, "AuthManager.getAuthState should be called once");
         assertEq(result.remaining_signers.length, 1, "Return value (signers length) mismatch");
         assertEq(result.remaining_signers[0].id, signers[0].id, "Return value (signer id) mismatch");
+    }
+
+    function test_verifySignatures_DelegatesToAuthManager() public {
+        harness.exposed_verifySignatures(txID, signers);
+
+        assertEq(harness.readAuth_callCount(txID), 1, "AuthManager.verifySignatures should be called once");
     }
 
     function test_createTx_DelegatesToTxManager() public {

@@ -55,6 +55,9 @@ contract MockTxManager is TxManagerBase {
 contract MockTxAuthManager is TxAuthManagerBase {
     mapping(bytes32 => bool) public completed;
     bool private _signReturns = false;
+    bool private _verifyShouldRevert = false;
+
+    error MockVerifyError();
 
     function _initAuthState(
         bytes32,
@@ -94,8 +97,27 @@ contract MockTxAuthManager is TxAuthManagerBase {
     }
     function _getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {}
 
+    function _verifySignatures(
+        bytes32,
+        /*txIDHash*/
+        AuthAccount.Data[] calldata
+        /*signers*/
+    )
+        internal
+        virtual
+        override
+    {
+        if (_verifyShouldRevert) {
+            revert MockVerifyError();
+        }
+    }
+
     function setSignReturns(bool returnsValue) public {
         _signReturns = returnsValue;
+    }
+
+    function setVerifyShouldRevert(bool shouldRevert) public {
+        _verifyShouldRevert = shouldRevert;
     }
 }
 
@@ -109,6 +131,8 @@ contract AuthenticatorTest is Test {
     AuthenticatorHarness private harness;
     MsgSignTx.Data private baseMsg;
     bytes32 private txIDHash;
+    MsgExtSignTx.Data private extMsg;
+    bytes32 private extTxIDHash;
     bytes private signerABytes = bytes("signerA");
     bytes private signerBBytes = bytes("signerB");
 
@@ -128,6 +152,20 @@ contract AuthenticatorTest is Test {
         });
 
         txIDHash = sha256(baseMsg.txID);
+
+        bytes memory extTxID = bytes("ext-test-tx-id");
+        extTxIDHash = sha256(extTxID);
+
+        AuthAccount.Data[] memory extSigners = new AuthAccount.Data[](1);
+        extSigners[0] = AuthAccount.Data({
+            id: signerABytes,
+            auth_type: AuthType.Data({
+                mode: AuthType.AuthMode.AUTH_MODE_EXTENSION,
+                option: GoogleProtobufAny.Data({type_url: "/verifier/test", value: ""})
+            })
+        });
+
+        extMsg = MsgExtSignTx.Data({txID: extTxID, signers: extSigners});
     }
 
     function test_signTx_SucceedsAsPending() public {
@@ -181,13 +219,38 @@ contract AuthenticatorTest is Test {
         harness.signTx(baseMsg);
     }
 
-    function test_extSignTx_RevertsNotImplemented() public {
-        MsgExtSignTx.Data memory msg_;
-        msg_.txID = bytes("ext-tx");
-        msg_.signers = new AuthAccount.Data[](0);
+    function test_extSignTx_SucceedsAsPending() public {
+        harness.setSignReturns(false);
 
-        vm.expectRevert(ICrossError.ExtSignTxNotImplemented.selector);
-        harness.extSignTx(msg_);
+        vm.expectEmit(address(harness));
+        emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+
+        MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
+
+        assertTrue(resp.x, "response.x should be true");
+        assertFalse(harness.completed(extTxIDHash), "Mock: auth should not be completed");
+        assertEq(harness.runTxCount(), 0, "Mock: runTxIfCompleted should not be called");
+    }
+
+    function test_extSignTx_SucceedsAsCompletedAndEmitsEvent() public {
+        harness.setSignReturns(true);
+
+        vm.expectEmit(address(harness));
+        emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+
+        MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
+
+        assertTrue(resp.x, "response.x should be true");
+        assertTrue(harness.completed(extTxIDHash), "Mock: auth should be completed");
+        assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
+        assertEq(harness.lastRunTxID(), extTxIDHash, "Mock: runTxIfCompleted called with correct txID");
+    }
+
+    function test_extSignTx_RevertsIfVerificationFails() public {
+        harness.setVerifyShouldRevert(true);
+
+        vm.expectRevert(MockTxAuthManager.MockVerifyError.selector);
+        harness.extSignTx(extMsg);
     }
 
     function test_txAuthState_RevertsNotImplemented() public {

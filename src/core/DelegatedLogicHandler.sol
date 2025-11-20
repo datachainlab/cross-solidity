@@ -42,6 +42,12 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
         return abi.decode(ret, (TxAuthState.Data));
     }
 
+    function _verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers) internal virtual override {
+        _delegateWithData(
+            TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.verifySignatures.selector, txIDHash, signers)
+        );
+    }
+
     function _createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual override {
         _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.createTx.selector, txID, src));
     }
