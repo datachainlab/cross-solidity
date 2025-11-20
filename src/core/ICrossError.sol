@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 interface ICrossError {
     error DelegateCallFailed(address target);
+    error StaticCallFailed();
     error UnexpectedChainID(bytes32 expectedHash, bytes32 gotHash);
     error MessageTimeoutHeight(uint256 blockNumber, uint64 timeoutVersionHeight);
     error MessageTimeoutTimestamp(uint256 blockTimestamp, uint64 timeoutTimestamp);

@@ -18,7 +18,7 @@ contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
         _runTxIfCompleted(txID);
     }
 
-    function isTxRecorded(bytes32 txID) external override returns (bool) {
+    function isTxRecorded(bytes32 txID) external view override returns (bool) {
         return _isTxRecorded(txID);
     }
 
@@ -39,7 +39,7 @@ contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
         _runTx(txID, t.txMsg[txID]);
     }
 
-    function _isTxRecorded(bytes32 txID) internal virtual override returns (bool) {
+    function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         CrossStore.TxStorage storage t = _getTxStorage();
         return t.txStatus[txID] != MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_UNKNOWN;
     }
