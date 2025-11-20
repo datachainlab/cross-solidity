@@ -22,11 +22,7 @@ import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/pr
 
 abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerBase, CrossStore, ICrossError {
     function signTx(MsgSignTx.Data calldata msg_) external override returns (MsgSignTxResponse.Data memory) {
-        if (msg_.txID.length != 32) {
-            revert InvalidTxIDLength();
-        }
-
-        bytes32 txID = abi.decode(msg_.txID, (bytes32));
+        bytes32 txID = _decodeTxID(msg_.txID);
 
         if (msg_.signers.length != 1) {
             revert InvalidSignersLength();
@@ -50,11 +46,7 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
     }
 
     function extSignTx(MsgExtSignTx.Data calldata msg_) external override returns (MsgExtSignTxResponse.Data memory) {
-        if (msg_.txID.length != 32) {
-            revert InvalidTxIDLength();
-        }
-
-        bytes32 txID = abi.decode(msg_.txID, (bytes32));
+        bytes32 txID = _decodeTxID(msg_.txID);
 
         _verifySignatures(txID, msg_.signers);
 
@@ -74,11 +66,7 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
         override
         returns (QueryTxAuthStateResponse.Data memory resp)
     {
-        if (req_.txID.length != 32) {
-            revert InvalidTxIDLength();
-        }
-
-        bytes32 txID = abi.decode(req_.txID, (bytes32));
+        bytes32 txID = _decodeTxID(req_.txID);
 
         CrossStore.AuthStorage storage s = _getAuthStorage();
         if (!s.authInitialized[txID]) revert IDNotFound(txID);
@@ -86,6 +74,13 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
         Account.Data[] memory remains = _getRemainingSigners(s, txID);
 
         return QueryTxAuthStateResponse.Data({tx_auth_state: TxAuthState.Data({remaining_signers: remains})});
+    }
+
+    function _decodeTxID(bytes calldata rawID) internal pure returns (bytes32) {
+        if (rawID.length != 32) {
+            revert InvalidTxIDLength();
+        }
+        return abi.decode(rawID, (bytes32));
     }
 
     function _getRemainingSigners(CrossStore.AuthStorage storage s, bytes32 txID)

@@ -133,6 +133,10 @@ contract MockTxAuthManager is TxAuthManagerBase {
 }
 
 contract AuthenticatorHarness is Authenticator, MockTxAuthManager, MockTxManager {
+    function exposed_decodeTxID(bytes calldata rawID) public pure returns (bytes32) {
+        return _decodeTxID(rawID);
+    }
+
     function exposed_accountKey(AuthAccount.Data memory a) public pure returns (bytes32) {
         return _accountKey(a);
     }
@@ -303,11 +307,40 @@ contract AuthenticatorTest is Test, ICrossError {
         harness.extSignTx(extMsg);
     }
 
-    function test_extSignTx_RevertsIfVerificationFails() public {
+    function test_extSignTx_RevertsIf_VerificationFails() public {
         harness.setVerifyShouldRevert(true);
 
         vm.expectRevert(MockTxAuthManager.MockVerifyError.selector);
         harness.extSignTx(extMsg);
+    }
+
+    function test_decodeTxID_SucceedsWith32Bytes() public {
+        bytes32 expected = keccak256("valid-id");
+        bytes memory input = abi.encodePacked(expected);
+
+        bytes32 actual = harness.exposed_decodeTxID(input);
+        assertEq(actual, expected, "Should return correct bytes32 for 32-byte input");
+    }
+
+    function test_decodeTxID_RevertsIf_LengthIsZero() public {
+        bytes memory input = "";
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.exposed_decodeTxID(input);
+    }
+
+    function test_decodeTxID_RevertsIf_LengthIsShort() public {
+        bytes memory input = new bytes(31);
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.exposed_decodeTxID(input);
+    }
+
+    function test_decodeTxID_RevertsIf_LengthIsLong() public {
+        bytes memory input = new bytes(33);
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.exposed_decodeTxID(input);
     }
 
     function test_txAuthState_ReturnsState() public {
