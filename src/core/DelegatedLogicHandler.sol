@@ -36,6 +36,7 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
     }
 
     function __isCompletedAuth(bytes32 txID) external returns (bool) {
+        if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
         bytes memory ret =
             _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.isCompletedAuth.selector, txID));
         return abi.decode(ret, (bool));
@@ -47,6 +48,7 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
     }
 
     function __getAuthState(bytes32 txID) external returns (TxAuthState.Data memory) {
+        if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
         bytes memory ret =
             _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.getAuthState.selector, txID));
         return abi.decode(ret, (TxAuthState.Data));
@@ -72,6 +74,7 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
     }
 
     function __isTxRecorded(bytes32 txID) external returns (bool) {
+        if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
         bytes memory ret = _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
         return abi.decode(ret, (bool));
     }

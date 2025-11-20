@@ -362,4 +362,22 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
         vm.expectRevert(StaticCallFailed.selector);
         harness.exposed_staticCallSelf(callData);
     }
+
+    function test_isCompletedAuth_RevertIf_CalledExternally() public {
+        // Test: __isCompletedAuth
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
+        harness.__isCompletedAuth(txID);
+    }
+
+    function test_getAuthState_RevertIf_CalledExternally() public {
+        // Test: __getAuthState
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
+        harness.__getAuthState(txID);
+    }
+
+    function test_isTxRecorded_RevertIf_CalledExternally() public {
+        // Test: __isTxRecorded
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
+        harness.__isTxRecorded(txID);
+    }
 }
