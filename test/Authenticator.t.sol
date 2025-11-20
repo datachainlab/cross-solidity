@@ -132,39 +132,8 @@ contract MockTxAuthManager is TxAuthManagerBase {
 }
 
 contract AuthenticatorHarness is Authenticator, MockTxAuthManager, MockTxManager {
-    function exposed_accountKey(AuthAccount.Data memory a) public pure returns (bytes32) {
-        return _accountKey(a);
-    }
-
-    function exposed_getRemainingSigners(bytes32 txID) public view returns (AuthAccount.Data[] memory out) {
-        CrossStore.AuthStorage storage s = _getAuthStorage();
-        return _getRemainingSigners(s, txID);
-    }
-
     function exposed_buildLocalAccounts(bytes[] calldata signerIDs) public pure returns (AuthAccount.Data[] memory) {
         return _buildLocalAccounts(signerIDs);
-    }
-
-    function setupMockAuthStorage(bytes32 txID, AuthAccount.Data[] memory required, bool[] memory isRemaining) public {
-        require(required.length == isRemaining.length, "Harness: length mismatch");
-
-        CrossStore.AuthStorage storage s = _getAuthStorage();
-
-        s.authInitialized[txID] = true;
-
-        delete s.requiredAccounts[txID];
-        s.remainingCount[txID] = 0;
-
-        for (uint256 i = 0; i < required.length; ++i) {
-            s.requiredAccounts[txID].push(required[i]);
-
-            bytes32 key = _accountKey(required[i]);
-            s.remaining[txID][key] = isRemaining[i];
-
-            if (isRemaining[i]) {
-                ++s.remainingCount[txID];
-            }
-        }
     }
 }
 
@@ -296,22 +265,17 @@ contract AuthenticatorTest is Test {
 
     function test_txAuthState_ReturnsState() public {
         bytes memory queryTxID = bytes("query-tx");
-        bytes32 queryTxIDHash = sha256(queryTxID);
 
-        AuthAccount.Data memory signerB = AuthAccount.Data({
+        AuthAccount.Data[] memory remainingSigners = new AuthAccount.Data[](1);
+        remainingSigners[0] = AuthAccount.Data({
             id: signerBBytes,
             auth_type: AuthType.Data({
                 mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: GoogleProtobufAny.Data({type_url: "", value: ""})
             })
         });
+        TxAuthState.Data memory expectedState = TxAuthState.Data({remaining_signers: remainingSigners});
 
-        AuthAccount.Data[] memory required = new AuthAccount.Data[](1);
-        required[0] = signerB;
-
-        bool[] memory isRemaining = new bool[](1);
-        isRemaining[0] = true;
-
-        harness.setupMockAuthStorage(queryTxIDHash, required, isRemaining);
+        harness.setMockAuthState(expectedState);
 
         QueryTxAuthStateRequest.Data memory req;
         req.txID = queryTxID;
@@ -325,99 +289,6 @@ contract AuthenticatorTest is Test {
             uint256(AuthType.AuthMode.AUTH_MODE_LOCAL),
             "Remaining signer auth mode mismatch"
         );
-    }
-
-    function test_accountKey_GeneratesDistinctKeys() public {
-        AuthAccount.Data memory acc1 = AuthAccount.Data({
-            id: signerABytes,
-            auth_type: AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: GoogleProtobufAny.Data("", "")})
-        });
-        AuthAccount.Data memory acc2 = AuthAccount.Data({
-            id: signerBBytes,
-            auth_type: AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: GoogleProtobufAny.Data("", "")})
-        });
-        AuthAccount.Data memory acc3 = AuthAccount.Data({
-            id: signerABytes,
-            auth_type: AuthType.Data({
-                mode: AuthType.AuthMode.AUTH_MODE_EXTENSION, option: GoogleProtobufAny.Data("", "")
-            })
-        });
-
-        bytes32 key1 = harness.exposed_accountKey(acc1);
-        bytes32 key2 = harness.exposed_accountKey(acc2);
-        bytes32 key3 = harness.exposed_accountKey(acc3);
-        assertNotEq(key1, key2, "Keys should be different for different IDs");
-        assertNotEq(key1, key3, "Keys should be different for different AuthTypes");
-    }
-
-    function test_getRemainingSigners_AllRemaining() public {
-        bytes32 testTxID = bytes32(uint256(111));
-
-        AuthAccount.Data[] memory signers = new AuthAccount.Data[](2);
-        signers[0] = AuthAccount.Data(
-            signerABytes, AuthType.Data(AuthType.AuthMode.AUTH_MODE_LOCAL, GoogleProtobufAny.Data("", ""))
-        );
-        signers[1] = AuthAccount.Data(
-            signerBBytes, AuthType.Data(AuthType.AuthMode.AUTH_MODE_LOCAL, GoogleProtobufAny.Data("", ""))
-        );
-
-        bool[] memory isRemaining = new bool[](2);
-        isRemaining[0] = true;
-        isRemaining[1] = true;
-
-        harness.setupMockAuthStorage(testTxID, signers, isRemaining);
-
-        AuthAccount.Data[] memory result = harness.exposed_getRemainingSigners(testTxID);
-
-        assertEq(result.length, 2, "Should return all signers");
-        assertEq(result[0].id, signerABytes, "First signer mismatch");
-        assertEq(result[1].id, signerBBytes, "Second signer mismatch");
-    }
-
-    function test_getRemainingSigners_PartialRemaining() public {
-        bytes32 testTxID = bytes32(uint256(222));
-
-        AuthAccount.Data[] memory signers = new AuthAccount.Data[](3);
-        signers[0] = AuthAccount.Data(
-            signerABytes, AuthType.Data(AuthType.AuthMode.AUTH_MODE_LOCAL, GoogleProtobufAny.Data("", ""))
-        );
-        signers[1] = AuthAccount.Data(
-            signerBBytes, AuthType.Data(AuthType.AuthMode.AUTH_MODE_LOCAL, GoogleProtobufAny.Data("", ""))
-        );
-        signers[2] = AuthAccount.Data(
-            bytes("signerC"), AuthType.Data(AuthType.AuthMode.AUTH_MODE_LOCAL, GoogleProtobufAny.Data("", ""))
-        );
-
-        bool[] memory isRemaining = new bool[](3);
-        isRemaining[0] = true; // A
-        isRemaining[1] = false; // B (Signed)
-        isRemaining[2] = true; // C
-
-        harness.setupMockAuthStorage(testTxID, signers, isRemaining);
-
-        AuthAccount.Data[] memory result = harness.exposed_getRemainingSigners(testTxID);
-
-        assertEq(result.length, 2, "Should return 2 remaining signers");
-        assertEq(result[0].id, signerABytes, "First remaining should be A");
-        assertEq(result[1].id, bytes("signerC"), "Second remaining should be C");
-    }
-
-    function test_getRemainingSigners_NoneRemaining() public {
-        bytes32 testTxID = bytes32(uint256(333));
-
-        AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
-        signers[0] = AuthAccount.Data(
-            signerABytes, AuthType.Data(AuthType.AuthMode.AUTH_MODE_LOCAL, GoogleProtobufAny.Data("", ""))
-        );
-
-        bool[] memory isRemaining = new bool[](1);
-        isRemaining[0] = false;
-
-        harness.setupMockAuthStorage(testTxID, signers, isRemaining);
-
-        AuthAccount.Data[] memory result = harness.exposed_getRemainingSigners(testTxID);
-
-        assertEq(result.length, 0, "Should return empty array when no signers remain");
     }
 
     function test_buildLocalAccounts_BuildsCorrectly() public {

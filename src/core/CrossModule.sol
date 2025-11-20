@@ -16,12 +16,14 @@ import "./IBCKeeper.sol";
 import {Initiator} from "./Initiator.sol";
 import {Authenticator} from "./Authenticator.sol";
 import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
+import {CrossStore} from "./CrossStore.sol";
 
 abstract contract CrossModule is
     AccessControl,
     IIBCModule,
     IBCKeeper,
     PacketHandler,
+    CrossStore,
     Initiator,
     Authenticator,
     DelegatedLogicHandler
