@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {IAuthenticator} from "./IAuthenticator.sol";
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
-import {CrossStore} from "./CrossStore.sol";
 import {ICrossError} from "./ICrossError.sol";
 
 import {
@@ -20,7 +19,7 @@ import {
 } from "../proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
-abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerBase, CrossStore, ICrossError {
+abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerBase, ICrossError {
     function signTx(MsgSignTx.Data calldata msg_) external override returns (MsgSignTxResponse.Data memory) {
         bytes32 txID = _decodeTxID(msg_.txID);
 
@@ -62,18 +61,14 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
 
     function txAuthState(QueryTxAuthStateRequest.Data calldata req_)
         external
-        view
         override
         returns (QueryTxAuthStateResponse.Data memory resp)
     {
         bytes32 txID = _decodeTxID(req_.txID);
 
-        CrossStore.AuthStorage storage s = _getAuthStorage();
-        if (!s.authInitialized[txID]) revert IDNotFound(txID);
+        TxAuthState.Data memory state = _getAuthState(txID);
 
-        Account.Data[] memory remains = _getRemainingSigners(s, txID);
-
-        return QueryTxAuthStateResponse.Data({tx_auth_state: TxAuthState.Data({remaining_signers: remains})});
+        return QueryTxAuthStateResponse.Data({tx_auth_state: state});
     }
 
     function _decodeTxID(bytes calldata rawID) internal pure returns (bytes32) {
@@ -81,29 +76,6 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
             revert InvalidTxIDLength();
         }
         return abi.decode(rawID, (bytes32));
-    }
-
-    function _getRemainingSigners(CrossStore.AuthStorage storage s, bytes32 txID)
-        internal
-        view
-        returns (Account.Data[] memory out)
-    {
-        uint256 total = s.requiredAccounts[txID].length;
-        uint256 need = s.remainingCount[txID];
-        out = new Account.Data[](need);
-        uint256 p = 0;
-        for (uint256 i = 0; i < total; ++i) {
-            Account.Data memory acc = s.requiredAccounts[txID][i];
-            if (s.remaining[txID][_accountKey(acc)]) {
-                out[p] = acc;
-                ++p;
-                if (p == need) break;
-            }
-        }
-    }
-
-    function _accountKey(Account.Data memory a) internal pure returns (bytes32) {
-        return keccak256(abi.encode(a.id, a.auth_type));
     }
 
     function _buildLocalAccounts(bytes[] calldata signerIDs) internal pure returns (Account.Data[] memory) {
