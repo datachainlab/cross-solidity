@@ -44,14 +44,25 @@ contract MockTxAuthManager is ITxAuthManager, MockStore {
         return true;
     }
 
-    function isCompletedAuth(bytes32 txID) external override returns (bool) {
-        ++authStorage.callCounts[txID];
+    function isCompletedAuth(
+        bytes32 /*txID*/
+    )
+        external
+        pure
+        override
+        returns (bool)
+    {
         return true;
     }
 
-    function getAuthState(bytes32 txID) external override returns (TxAuthState.Data memory) {
-        ++authStorage.callCounts[txID];
-
+    function getAuthState(
+        bytes32 /*txID*/
+    )
+        external
+        pure
+        override
+        returns (TxAuthState.Data memory)
+    {
         AuthAccount.Data[] memory remaining = new AuthAccount.Data[](1);
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
         AuthType.Data memory localAuthType = AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: emptyAny});
@@ -76,8 +87,14 @@ contract MockTxManager is ITxManager, MockStore {
         txStorage.nonce[txID] = 1;
     }
 
-    function isTxRecorded(bytes32 txID) external override returns (bool) {
-        txStorage.nonce[txID] = 1;
+    function isTxRecorded(
+        bytes32 /*txID*/
+    )
+        external
+        pure
+        override
+        returns (bool)
+    {
         return true;
     }
 
@@ -115,6 +132,8 @@ contract MockRevertEmpty {
 }
 
 contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
+    uint256 public internalState;
+
     constructor(address txAuthManager_, address txManager_) DelegatedLogicHandler(txAuthManager_, txManager_) {}
 
     function exposed_initAuthState(bytes32 txID, AuthAccount.Data[] memory signers) public {
@@ -153,6 +172,28 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
         return _delegateWithData(impl, data);
     }
 
+    function exposed_staticCallSelf(bytes memory callData) public view returns (bytes memory) {
+        return _staticCallSelf(callData);
+    }
+
+    function echo(uint256 val) external pure returns (uint256) {
+        return val;
+    }
+
+    function revert(string calldata reason) external pure {
+        revert(reason);
+    }
+
+    function revertEmpty() external pure {
+        assembly {
+            revert(0, 0)
+        }
+    }
+
+    function stateChange(uint256 val) external {
+        internalState = val;
+    }
+
     function readAuth_callCount(bytes32 txID) public view returns (uint256) {
         return authStorage.callCounts[txID];
     }
@@ -170,7 +211,7 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
     }
 }
 
-contract DelegatedLogicHandlerTest is Test {
+contract DelegatedLogicHandlerTest is Test, ICrossError {
     MockTxAuthManager private mockAuth;
     MockTxManager private mockTx;
     DelegatedLogicHandlerHarness private harness;
@@ -215,16 +256,18 @@ contract DelegatedLogicHandlerTest is Test {
     }
 
     function test_isCompletedAuth_DelegatesToAuthManager() public {
+        vm.expectCall(address(mockAuth), abi.encodeWithSelector(ITxAuthManager.isCompletedAuth.selector, txID));
+
         bool result = harness.exposed_isCompletedAuth(txID);
 
         assertTrue(result, "Return value mismatch");
-        assertEq(harness.readAuth_callCount(txID), 1, "AuthManager.isCompletedAuth should be called once");
     }
 
     function test_getAuthState_DelegatesToAuthManager() public {
+        vm.expectCall(address(mockAuth), abi.encodeWithSelector(ITxAuthManager.getAuthState.selector, txID));
+
         TxAuthState.Data memory result = harness.exposed_getAuthState(txID);
 
-        assertEq(harness.readAuth_callCount(txID), 1, "AuthManager.getAuthState should be called once");
         assertEq(result.remaining_signers.length, 1, "Return value (signers length) mismatch");
         assertEq(result.remaining_signers[0].id, signers[0].id, "Return value (signer id) mismatch");
     }
@@ -258,10 +301,11 @@ contract DelegatedLogicHandlerTest is Test {
     }
 
     function test_isTxRecorded_DelegatesToTxManager() public {
+        vm.expectCall(address(mockTx), abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
+
         bool result = harness.exposed_isTxRecorded(txID);
 
         assertTrue(result, "Return value mismatch");
-        assertEq(harness.readTx_nonce(txID), 1, "isTxRecorded call count mismatch");
     }
 
     function test_delegateWithData_SucceedsAndReturnsData() public {
@@ -291,7 +335,58 @@ contract DelegatedLogicHandlerTest is Test {
         MockRevertEmpty reverter = new MockRevertEmpty();
         bytes memory data = abi.encodeWithSelector(reverter.revertNow.selector);
 
-        vm.expectRevert(abi.encodeWithSelector(ICrossError.DelegateCallFailed.selector, address(reverter)));
+        vm.expectRevert(abi.encodeWithSelector(DelegateCallFailed.selector, address(reverter)));
         harness.exposed_delegateWithData(address(reverter), data);
+    }
+
+    function test_staticCallSelf_Succeeds() public {
+        uint256 input = 999;
+        bytes memory callData = abi.encodeWithSelector(harness.echo.selector, input);
+
+        bytes memory ret = harness.exposed_staticCallSelf(callData);
+        uint256 decoded = abi.decode(ret, (uint256));
+
+        assertEq(decoded, input, "staticCallSelf return value mismatch");
+    }
+
+    function test_staticCallSelf_RevertsIf_TargetReverts() public {
+        string memory reason = "StaticCallError";
+        bytes memory callData = abi.encodeWithSelector(harness.revert.selector, reason);
+
+        vm.expectRevert(bytes(reason));
+        harness.exposed_staticCallSelf(callData);
+    }
+
+    function test_staticCallSelf_RevertsIf_CallFailsEmpty() public {
+        bytes memory callData = abi.encodeWithSelector(harness.revertEmpty.selector);
+
+        vm.expectRevert(StaticCallFailed.selector);
+        harness.exposed_staticCallSelf(callData);
+    }
+
+    function test_staticCallSelf_RevertsIf_OnStateChange() public {
+        uint256 newVal = 777;
+        bytes memory callData = abi.encodeWithSelector(harness.stateChange.selector, newVal);
+
+        vm.expectRevert(StaticCallFailed.selector);
+        harness.exposed_staticCallSelf(callData);
+    }
+
+    function test_isCompletedAuth_RevertIf_CalledExternally() public {
+        // Test: __isCompletedAuth
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
+        harness.__isCompletedAuth(txID);
+    }
+
+    function test_getAuthState_RevertIf_CalledExternally() public {
+        // Test: __getAuthState
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
+        harness.__getAuthState(txID);
+    }
+
+    function test_isTxRecorded_RevertIf_CalledExternally() public {
+        // Test: __isTxRecorded
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
+        harness.__isTxRecorded(txID);
     }
 }

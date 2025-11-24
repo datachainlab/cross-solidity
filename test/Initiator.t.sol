@@ -69,7 +69,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
         return _signReturns;
     }
 
-    function _getAuthState(bytes32) internal virtual override returns (TxAuthState.Data memory) {
+    function _getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {
         revert("MockTxAuthManager._getAuthState not implemented");
     }
 
