@@ -134,6 +134,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         // --- 4. Send IBC Packet (only if prepareOK) ---
 
         if (prepareOK) {
+            // slither-disable-next-line unused-return
             (, bool found) = getIBCHandler().getChannel(ch1.port, ch1.channel);
             if (!found) {
                 revert("channel not found");
@@ -343,7 +344,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         }
 
         // --- 2. Validate Channel ---
-
+        // slither-disable-next-line unused-return
         (, bool found) = getIBCHandler().getChannel(sourcePort, sourceChannel);
         if (!found) {
             revert("channel not found");
