@@ -15,6 +15,13 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
     address public immutable TX_AUTH_MANAGER;
     address public immutable TX_MANAGER;
 
+    modifier onlySelf() {
+        if (msg.sender != address(this)) {
+            revert UnauthorizedCaller(msg.sender);
+        }
+        _;
+    }
+
     constructor(address txAuthManager_, address txManager_) {
         TX_AUTH_MANAGER = txAuthManager_;
         TX_MANAGER = txManager_;
@@ -42,8 +49,7 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
      * will be THIS contract address, NOT the original caller.
      * Do not rely on `msg.sender` for access control in the implementation logic.
      */
-    function __isCompletedAuth(bytes32 txID) external returns (bool) {
-        if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
+    function __isCompletedAuth(bytes32 txID) external onlySelf returns (bool) {
         bytes memory ret =
             _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.isCompletedAuth.selector, txID));
         return abi.decode(ret, (bool));
@@ -61,8 +67,7 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
      * will be THIS contract address, NOT the original caller.
      * Do not rely on `msg.sender` for access control in the implementation logic.
      */
-    function __getAuthState(bytes32 txID) external returns (TxAuthState.Data memory) {
-        if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
+    function __getAuthState(bytes32 txID) external onlySelf returns (TxAuthState.Data memory) {
         bytes memory ret =
             _delegateWithData(TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.getAuthState.selector, txID));
         return abi.decode(ret, (TxAuthState.Data));
@@ -94,8 +99,7 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, ICr
      * will be THIS contract address, NOT the original caller.
      * Do not rely on `msg.sender` for access control in the implementation logic.
      */
-    function __isTxRecorded(bytes32 txID) external returns (bool) {
-        if (msg.sender != address(this)) revert UnauthorizedCaller(msg.sender);
+    function __isTxRecorded(bytes32 txID) external onlySelf returns (bool) {
         bytes memory ret = _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.isTxRecorded.selector, txID));
         return abi.decode(ret, (bool));
     }
