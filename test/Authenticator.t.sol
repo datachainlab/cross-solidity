@@ -9,6 +9,7 @@ import {TxAuthManagerBase} from "../src/core/TxAuthManagerBase.sol";
 
 import {MsgInitiateTx} from "../src/proto/cross/core/initiator/Initiator.sol";
 import {IAuthenticator} from "../src/core/IAuthenticator.sol";
+import {ICrossError} from "../src/core/ICrossError.sol";
 import {
     Account as AuthAccount,
     AuthType,
@@ -16,7 +17,9 @@ import {
     MsgSignTx,
     MsgSignTxResponse,
     MsgExtSignTx,
-    QueryTxAuthStateRequest
+    QueryTxAuthStateRequest,
+    QueryTxAuthStateResponse,
+    GoogleProtobufAny
 } from "../src/proto/cross/core/auth/Auth.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 
@@ -56,6 +59,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
     mapping(bytes32 => bool) public completed;
     bool private _signReturns = false;
     bool private _verifyShouldRevert = false;
+    TxAuthState.Data private _mockAuthState;
 
     error MockVerifyError();
 
@@ -95,7 +99,10 @@ contract MockTxAuthManager is TxAuthManagerBase {
         }
         return _signReturns;
     }
-    function _getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {}
+
+    function _getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {
+        return _mockAuthState;
+    }
 
     function _verifySignatures(
         bytes32,
@@ -119,20 +126,29 @@ contract MockTxAuthManager is TxAuthManagerBase {
     function setVerifyShouldRevert(bool shouldRevert) public {
         _verifyShouldRevert = shouldRevert;
     }
+
+    function setMockAuthState(TxAuthState.Data memory state) public {
+        _mockAuthState = state;
+    }
 }
 
 contract AuthenticatorHarness is Authenticator, MockTxAuthManager, MockTxManager {
+    function exposed_decodeTxID(bytes calldata rawID) public pure returns (bytes32) {
+        return _decodeTxID(rawID);
+    }
+
     function exposed_buildLocalAccounts(bytes[] calldata signerIDs) public pure returns (AuthAccount.Data[] memory) {
         return _buildLocalAccounts(signerIDs);
     }
 }
 
-contract AuthenticatorTest is Test {
+contract AuthenticatorTest is Test, ICrossError {
     AuthenticatorHarness private harness;
     MsgSignTx.Data private baseMsg;
-    bytes32 private txIDHash;
+    bytes32 private txID;
     MsgExtSignTx.Data private extMsg;
-    bytes32 private extTxIDHash;
+    bytes32 private extTxID;
+
     bytes private signerABytes = bytes("signerA");
     bytes private signerBBytes = bytes("signerB");
 
@@ -144,17 +160,18 @@ contract AuthenticatorTest is Test {
         bytes[] memory signers = new bytes[](1);
         signers[0] = expectedSignerId;
 
+        bytes32 rawTxID = bytes32("test-tx-id");
+        txID = rawTxID;
+
         baseMsg = MsgSignTx.Data({
-            txID: bytes("test-tx-id"),
+            txID: abi.encodePacked(rawTxID),
             signers: signers,
             timeout_height: IbcCoreClientV1Height.Data(0, 0),
             timeout_timestamp: 0
         });
 
-        txIDHash = sha256(baseMsg.txID);
-
-        bytes memory extTxID = bytes("ext-test-tx-id");
-        extTxIDHash = sha256(extTxID);
+        bytes32 rawExtTxID = bytes32("ext-test-tx-id");
+        extTxID = rawExtTxID;
 
         AuthAccount.Data[] memory extSigners = new AuthAccount.Data[](1);
         extSigners[0] = AuthAccount.Data({
@@ -165,7 +182,7 @@ contract AuthenticatorTest is Test {
             })
         });
 
-        extMsg = MsgExtSignTx.Data({txID: extTxID, signers: extSigners});
+        extMsg = MsgExtSignTx.Data({txID: abi.encodePacked(rawExtTxID), signers: extSigners});
     }
 
     function test_signTx_SucceedsAsPending() public {
@@ -174,7 +191,7 @@ contract AuthenticatorTest is Test {
         MsgSignTxResponse.Data memory resp = harness.signTx(baseMsg);
         assertFalse(resp.tx_auth_completed, "response should indicate not completed");
         assertEq(resp.log, "", "log should be empty");
-        assertFalse(harness.completed(txIDHash), "Mock: auth should not be completed");
+        assertFalse(harness.completed(txID), "Mock: auth should not be completed");
         assertEq(harness.runTxCount(), 0, "Mock: runTxIfCompleted should not be called");
     }
 
@@ -182,15 +199,22 @@ contract AuthenticatorTest is Test {
         harness.setSignReturns(true);
 
         vm.expectEmit(true, true, false, true, address(harness));
-        emit IAuthenticator.TxSigned(address(this), txIDHash, AuthType.AuthMode.AUTH_MODE_LOCAL);
+        emit IAuthenticator.TxSigned(address(this), txID, AuthType.AuthMode.AUTH_MODE_LOCAL);
 
         MsgSignTxResponse.Data memory resp = harness.signTx(baseMsg);
 
         assertTrue(resp.tx_auth_completed, "response should indicate completed");
         assertEq(resp.log, "", "log should be empty");
-        assertTrue(harness.completed(txIDHash), "Mock: auth should be completed");
+        assertTrue(harness.completed(txID), "Mock: auth should be completed");
         assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxID(), txIDHash, "Mock: runTxIfCompleted called with correct txID");
+        assertEq(harness.lastRunTxID(), txID, "Mock: runTxIfCompleted called with correct txID");
+    }
+
+    function test_signTx_RevertsIf_TxIDLengthInvalid() public {
+        baseMsg.txID = bytes("short-id");
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.signTx(baseMsg);
     }
 
     function test_signTx_RevertsIf_SignersLengthZero() public {
@@ -221,14 +245,13 @@ contract AuthenticatorTest is Test {
 
     function test_extSignTx_SucceedsAsPending() public {
         harness.setSignReturns(false);
-
         vm.expectEmit(address(harness));
-        emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+        emit IAuthenticator.TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
 
         assertTrue(resp.x, "response.x should be true");
-        assertFalse(harness.completed(extTxIDHash), "Mock: auth should not be completed");
+        assertFalse(harness.completed(extTxID), "Mock: auth should not be completed");
         assertEq(harness.runTxCount(), 0, "Mock: runTxIfCompleted should not be called");
     }
 
@@ -236,28 +259,92 @@ contract AuthenticatorTest is Test {
         harness.setSignReturns(true);
 
         vm.expectEmit(address(harness));
-        emit IAuthenticator.TxSigned(address(this), extTxIDHash, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+        emit IAuthenticator.TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
 
         assertTrue(resp.x, "response.x should be true");
-        assertTrue(harness.completed(extTxIDHash), "Mock: auth should be completed");
+        assertTrue(harness.completed(extTxID), "Mock: auth should be completed");
         assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxID(), extTxIDHash, "Mock: runTxIfCompleted called with correct txID");
+        assertEq(harness.lastRunTxID(), extTxID, "Mock: runTxIfCompleted called with correct txID");
     }
 
-    function test_extSignTx_RevertsIfVerificationFails() public {
+    function test_extSignTx_RevertsIf_TxIDLengthInvalid() public {
+        extMsg.txID = new bytes(33);
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.extSignTx(extMsg);
+    }
+
+    function test_extSignTx_RevertsIf_VerificationFails() public {
         harness.setVerifyShouldRevert(true);
 
         vm.expectRevert(MockTxAuthManager.MockVerifyError.selector);
         harness.extSignTx(extMsg);
     }
 
-    function test_txAuthState_RevertsNotImplemented() public {
-        QueryTxAuthStateRequest.Data memory req;
-        req.txID = bytes("query-tx");
+    function test_decodeTxID_SucceedsWith32Bytes() public {
+        bytes32 expected = keccak256("valid-id");
+        bytes memory input = abi.encodePacked(expected);
 
-        vm.expectRevert(ICrossError.TxAuthStateNotImplemented.selector);
+        bytes32 actual = harness.exposed_decodeTxID(input);
+        assertEq(actual, expected, "Should return correct bytes32 for 32-byte input");
+    }
+
+    function test_decodeTxID_RevertsIf_LengthIsZero() public {
+        bytes memory input = "";
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.exposed_decodeTxID(input);
+    }
+
+    function test_decodeTxID_RevertsIf_LengthIsShort() public {
+        bytes memory input = new bytes(31);
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.exposed_decodeTxID(input);
+    }
+
+    function test_decodeTxID_RevertsIf_LengthIsLong() public {
+        bytes memory input = new bytes(33);
+
+        vm.expectRevert(InvalidTxIDLength.selector);
+        harness.exposed_decodeTxID(input);
+    }
+
+    function test_txAuthState_ReturnsState() public {
+        bytes32 queryTxID = bytes32("query-tx");
+
+        AuthAccount.Data[] memory remainingSigners = new AuthAccount.Data[](1);
+        remainingSigners[0] = AuthAccount.Data({
+            id: signerBBytes,
+            auth_type: AuthType.Data({
+                mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: GoogleProtobufAny.Data({type_url: "", value: ""})
+            })
+        });
+        TxAuthState.Data memory expectedState = TxAuthState.Data({remaining_signers: remainingSigners});
+
+        harness.setMockAuthState(expectedState);
+
+        QueryTxAuthStateRequest.Data memory req;
+        req.txID = abi.encodePacked(queryTxID);
+
+        QueryTxAuthStateResponse.Data memory resp = harness.txAuthState(req);
+
+        assertEq(resp.tx_auth_state.remaining_signers.length, 1, "Remaining signers length mismatch");
+        assertEq(resp.tx_auth_state.remaining_signers[0].id, signerBBytes, "Remaining signer ID mismatch");
+        assertEq(
+            uint256(resp.tx_auth_state.remaining_signers[0].auth_type.mode),
+            uint256(AuthType.AuthMode.AUTH_MODE_LOCAL),
+            "Remaining signer auth mode mismatch"
+        );
+    }
+
+    function test_txAuthState_RevertsIf_TxIDLengthInvalid() public {
+        QueryTxAuthStateRequest.Data memory req;
+        req.txID = "";
+
+        vm.expectRevert(InvalidTxIDLength.selector);
         harness.txAuthState(req);
     }
 

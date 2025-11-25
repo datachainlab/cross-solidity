@@ -5,8 +5,8 @@ import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 
 abstract contract TxAuthManagerBase {
     function _initAuthState(bytes32 txID, Account.Data[] memory signers) internal virtual;
-    function _isCompletedAuth(bytes32 txID) internal virtual returns (bool);
+    function _isCompletedAuth(bytes32 txID) internal view virtual returns (bool);
     function _sign(bytes32 txID, Account.Data[] memory signers) internal virtual returns (bool);
-    function _getAuthState(bytes32 txID) internal virtual returns (TxAuthState.Data memory);
+    function _getAuthState(bytes32 txID) internal view virtual returns (TxAuthState.Data memory);
     function _verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers) internal virtual;
 }

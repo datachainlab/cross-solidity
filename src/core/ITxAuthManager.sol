@@ -5,8 +5,8 @@ import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
 
 interface ITxAuthManager {
     function initAuthState(bytes32 txID, Account.Data[] calldata signers) external;
-    function isCompletedAuth(bytes32 txID) external returns (bool);
+    function isCompletedAuth(bytes32 txID) external view returns (bool);
     function sign(bytes32 txID, Account.Data[] calldata signers) external returns (bool);
-    function getAuthState(bytes32 txID) external returns (TxAuthState.Data memory);
+    function getAuthState(bytes32 txID) external view returns (TxAuthState.Data memory);
     function verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers) external;
 }
