@@ -30,7 +30,6 @@ import {
 } from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/OwnableIBCHandler.sol";
 
 // === App ===
-import {IContractModule} from "src/core/IContractModule.sol";
 import {CrossSimpleModule} from "src/core/CrossSimpleModule.sol";
 import {TxAuthManager} from "src/core/TxAuthManager.sol";
 import {TxManager} from "src/core/TxManager.sol";

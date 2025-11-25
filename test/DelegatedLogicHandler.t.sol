@@ -98,11 +98,11 @@ contract MockTxManager is ITxManager, MockStore {
         return true;
     }
 
-    function handlePacket(Packet memory) external override returns (bytes memory) {
+    function handlePacket(Packet calldata) external override returns (bytes memory) {
         return "";
     }
 
-    function handleAcknowledgement(Packet memory, bytes memory) external override {}
+    function handleAcknowledgement(Packet calldata, bytes calldata) external override {}
 
     function handleTimeout(Packet calldata) external override {}
 }

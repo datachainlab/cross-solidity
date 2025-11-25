@@ -29,11 +29,11 @@ contract TxManager is TxManagerBase, ITxManager, TxAtomicSimple, SimpleContractR
         return _isTxRecorded(txID);
     }
 
-    function handlePacket(Packet memory packet) external returns (bytes memory acknowledgement) {
+    function handlePacket(Packet calldata packet) external returns (bytes memory acknowledgement) {
         return _handlePacket(packet);
     }
 
-    function handleAcknowledgement(Packet memory packet, bytes memory acknowledgement) external {
+    function handleAcknowledgement(Packet calldata packet, bytes calldata acknowledgement) external {
         _handleAcknowledgement(packet, acknowledgement);
     }
 

@@ -82,13 +82,13 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, Pac
         return abi.decode(ret, (bool));
     }
 
-    function _handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
+    function _handlePacket(Packet calldata packet) internal virtual override returns (bytes memory acknowledgement) {
         bytes memory ret =
             _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.handlePacket.selector, packet));
         return abi.decode(ret, (bytes));
     }
 
-    function _handleAcknowledgement(Packet memory packet, bytes memory acknowledgement) internal virtual override {
+    function _handleAcknowledgement(Packet calldata packet, bytes calldata acknowledgement) internal virtual override {
         _delegateWithData(
             TX_MANAGER, abi.encodeWithSelector(ITxManager.handleAcknowledgement.selector, packet, acknowledgement)
         );

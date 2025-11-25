@@ -25,7 +25,7 @@ contract TestableCrossModule is CrossModule {
     constructor(IIBCHandler h, address txAuthManager_, address txManager_) CrossModule(h, txAuthManager_, txManager_) {}
 
     function _handlePacket(
-        Packet memory /*packet*/
+        Packet calldata /*packet*/
     )
         internal
         virtual
@@ -37,9 +37,9 @@ contract TestableCrossModule is CrossModule {
     }
 
     function _handleAcknowledgement(
-        Packet memory,
+        Packet calldata,
         /*packet*/
-        bytes memory acknowledgement
+        bytes calldata acknowledgement
     )
         internal
         virtual

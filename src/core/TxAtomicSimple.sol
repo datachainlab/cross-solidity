@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {GoogleProtobufAny as Any} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
-import {Packet, Channel} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 import {Height} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Client.sol";
 
 import "./PacketHandler.sol";
@@ -57,12 +57,12 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             revert ArrayLengthMismatch();
         }
 
-        if (msg_.timeout_height.revision_height > 0 && block.number >= msg_.timeout_height.revision_height) {
+        if (msg_.timeout_height.revision_height > 0 && block.number > msg_.timeout_height.revision_height - 1) {
             revert MessageTimeoutHeight(block.number, msg_.timeout_height.revision_height);
         }
 
         // slither-disable-next-line timestamp
-        if (msg_.timeout_timestamp > 0 && block.timestamp >= msg_.timeout_timestamp) {
+        if (msg_.timeout_timestamp > 0 && block.timestamp > msg_.timeout_timestamp - 1) {
             revert MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
@@ -134,7 +134,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         // --- 4. Send IBC Packet (only if prepareOK) ---
 
         if (prepareOK) {
-            (Channel.Data memory channel, bool found) = getIBCHandler().getChannel(ch1.port, ch1.channel);
+            (, bool found) = getIBCHandler().getChannel(ch1.port, ch1.channel);
             if (!found) {
                 revert("channel not found");
             }
@@ -225,7 +225,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
     /**
      * @dev Participant side: Receive PacketDataCall, execute onContractCall, and return ACK.
      */
-    function _handlePacket(Packet memory packet) internal virtual override returns (bytes memory acknowledgement) {
+    function _handlePacket(Packet calldata packet) internal virtual override returns (bytes memory acknowledgement) {
         IContractModule module = getModule(packet);
 
         PacketData.Data memory pd = PacketData.decode(packet.data);
@@ -259,7 +259,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
     /**
      * @dev Coordinator side: Handle ACK, update CoordinatorState, and execute Commit/Abort.
      */
-    function _handleAcknowledgement(Packet memory packet, bytes memory acknowledgement) internal virtual override {
+    function _handleAcknowledgement(Packet calldata packet, bytes calldata acknowledgement) internal virtual override {
         // --- 1. Decode Acknowledgement ---
 
         Acknowledgement.Data memory ackOuter = Acknowledgement.decode(acknowledgement);
@@ -291,7 +291,10 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         }
         PacketDataCall.Data memory pdc = PacketDataCall.decode(callAny.value);
 
-        bytes32 txID = _bytesToBytes32(pdc.tx_id);
+        if (pdc.tx_id.length != 32) {
+            revert InvalidTxIDLength();
+        }
+        bytes32 txID = abi.decode(pdc.tx_id, (bytes32));
 
         // --- 3. Process Acknowledgement & TryCommit ---
 
@@ -341,7 +344,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         // --- 2. Validate Channel ---
 
-        (Channel.Data memory channel, bool found) = getIBCHandler().getChannel(sourcePort, sourceChannel);
+        (, bool found) = getIBCHandler().getChannel(sourcePort, sourceChannel);
         if (!found) {
             revert("channel not found");
         }
@@ -447,17 +450,10 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
     // --- Helpers ---
 
     function _containsUint32(uint32[] storage arr, uint32 value) internal view returns (bool) {
-        for (uint256 i = 0; i < arr.length; i++) {
+        for (uint256 i = 0; i < arr.length; ++i) {
             if (arr[i] == value) return true;
         }
         return false;
-    }
-
-    function _bytesToBytes32(bytes memory b) internal pure returns (bytes32 out) {
-        require(b.length == 32, "invalid txID length");
-        assembly {
-            out := mload(add(b, 32))
-        }
     }
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack)
