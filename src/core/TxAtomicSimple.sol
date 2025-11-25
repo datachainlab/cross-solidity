@@ -61,6 +61,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             revert MessageTimeoutHeight(block.number, msg_.timeout_height.revision_height);
         }
 
+        // slither-disable-next-line timestamp
         if (msg_.timeout_timestamp > 0 && block.timestamp >= msg_.timeout_timestamp) {
             revert MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
@@ -163,6 +164,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
             bytes memory finalPacketData = PacketData.encode(pd);
 
+            // slither-disable-next-line unused-return
             getIBCHandler()
                 .sendPacket(
                     ch1.port,
@@ -230,6 +232,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         if (pd.payload.length == 0) revert PayloadDecodeFailed();
 
         Any.Data memory anyPayload = Any.decode(pd.payload);
+        // TODO should be more gas efficient
         // solhint-disable-next-line gas-small-strings
         if (sha256(bytes(anyPayload.type_url)) != sha256(bytes("/cross.core.atomic.simple.PacketDataCall"))) {
             revert UnexpectedTypeURL();
@@ -242,9 +245,11 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             CrossContext(pdc.tx_id, TX_INDEX_PARTICIPANT, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
+            // slither-disable-next-line reentrancy-events
             emit OnContractCall(pdc.tx_id, TX_INDEX_PARTICIPANT, true, ret);
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
+            // slither-disable-next-line reentrancy-events
             emit OnContractCall(pdc.tx_id, TX_INDEX_PARTICIPANT, false, new bytes(0));
         }
 
