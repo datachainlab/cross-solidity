@@ -139,12 +139,16 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             }
 
             // Construct PacketDataCall
-            PacketDataCall.Data memory callData;
-            callData.tx_id = abi.encodePacked(txID);
-            callData.tx.cross_chain_channel = tx1.cross_chain_channel;
-            callData.tx.signers = tx1.signers;
-            callData.tx.call_info = tx1.call_info;
-            callData.tx.return_value = tx1.return_value;
+            PacketDataCall.Data memory callData = PacketDataCall.Data({
+                tx_id: abi.encodePacked(txID),
+                tx: PacketDataCallResolvedContractTransaction.Data({
+                    cross_chain_channel: tx1.cross_chain_channel,
+                    signers: tx1.signers,
+                    call_info: tx1.call_info,
+                    return_value: tx1.return_value,
+                    objects: new GoogleProtobufAny.Data[](0)
+                })
+            });
 
             // Wrap in Any
             Any.Data memory anyPayload = Any.Data({
@@ -176,22 +180,26 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         channels[0] = ch0;
         channels[1] = ch1;
 
-        CoordinatorState.Data memory newState;
-        newState.commit_protocol = Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE;
-        newState.channels = channels;
-        newState.phase = phase;
-        newState.decision = decision;
+        uint32[] memory confirmedTxs = new uint32[](1);
+        confirmedTxs[0] = TX_INDEX_COORDINATOR;
 
-        // Mark Coordinator (TxIndex=0) prepare as confirmed
-        newState.confirmed_txs = new uint32[](1);
-        newState.confirmed_txs[0] = TX_INDEX_COORDINATOR;
-
+        uint32[] memory acks;
         if (!prepareOK) {
-            // Already aborted; mark all ACKs received
-            newState.acks = new uint32[](2);
-            newState.acks[0] = TX_INDEX_COORDINATOR;
-            newState.acks[1] = TX_INDEX_PARTICIPANT;
+            acks = new uint32[](2);
+            acks[0] = TX_INDEX_COORDINATOR;
+            acks[1] = TX_INDEX_PARTICIPANT;
+        } else {
+            acks = new uint32[](0);
         }
+
+        CoordinatorState.Data memory newState = CoordinatorState.Data({
+            commit_protocol: Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE,
+            channels: channels,
+            phase: phase,
+            decision: decision,
+            confirmed_txs: confirmedTxs,
+            acks: acks
+        });
 
         coordStorage.states[txID] = CoordEntry({exists: true, data: newState});
 
@@ -211,8 +219,6 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         txStorage.states[txID][TX_INDEX_COORDINATOR] =
             ContractTransactionState.Data({status: status, prepare_result: prepareStatus, coordinator_channel: ch0});
     }
-
-    // --- PacketHandler Implementation (Participant Side) ---
 
     /**
      * @dev Participant side: Receive PacketDataCall, execute onContractCall, and return ACK.
@@ -353,7 +359,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         // --- 3. Determine Commit/Abort based on ACK ---
 
-        bool isCommittable;
+        bool isCommittable = false;
 
         if (ack.status == PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK) {
             cs.decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_COMMIT;
