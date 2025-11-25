@@ -108,7 +108,8 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         }
 
         CoordinatorState.CoordinatorPhase phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN;
-        CoordinatorState.CoordinatorDecision decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
+        CoordinatorState.CoordinatorDecision decision =
+        CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
         bool prepareOK = false;
         try module.onContractPrepare(
             CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
