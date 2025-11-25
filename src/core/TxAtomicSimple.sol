@@ -89,12 +89,8 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         // --- 3. Local Prepare (Coordinator) ---
 
-        CoordinatorState.CoordinatorPhase phase;
-        CoordinatorState.CoordinatorDecision decision;
-        bool prepareOK;
-
         // Dummy packet for getModule (local execution)
-        Height.Data memory emptyHeight;
+        Height.Data memory emptyHeight = Height.Data(0, 0);
         Packet memory dummyPacket = Packet({
             sequence: 0,
             sourcePort: "",
@@ -111,6 +107,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             revert ModuleNotInitialized();
         }
 
+        CoordinatorState.CoordinatorPhase phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN;
+        CoordinatorState.CoordinatorDecision decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
+        bool prepareOK = false;
         try module.onContractPrepare(
             CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
             tx0.call_info
@@ -154,31 +153,19 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             });
 
             // Wrap in PacketData
-            HeaderField.Data[] memory fields;
-            Header.Data memory header = Header.Data({fields: fields});
+            Header.Data memory header = Header.Data({fields: new HeaderField.Data[](0)});
             PacketData.Data memory pd = PacketData.Data({header: header, payload: Any.encode(anyPayload)});
 
             bytes memory finalPacketData = PacketData.encode(pd);
 
-            // Construct IBC Packet
-            Packet memory ibcPacket;
-            ibcPacket.data = finalPacketData;
-            ibcPacket.sequence = getIBCHandler().getNextSequenceSend(ch1.port, ch1.channel);
-            ibcPacket.sourcePort = ch1.port;
-            ibcPacket.sourceChannel = ch1.channel;
-            ibcPacket.destinationPort = channel.counterparty.port_id;
-            ibcPacket.destinationChannel = channel.counterparty.channel_id;
-            // Simple protocol does not support packet timeouts
-            ibcPacket.timeoutHeight = Height.Data(0, type(uint64).max);
-            ibcPacket.timeoutTimestamp = 0;
-
             getIBCHandler()
                 .sendPacket(
-                    ibcPacket.sourcePort,
-                    ibcPacket.sourceChannel,
-                    ibcPacket.timeoutHeight,
-                    ibcPacket.timeoutTimestamp,
-                    ibcPacket.data
+                    ch1.port,
+                    ch1.channel,
+                    // Simple protocol does not support packet timeouts
+                    Height.Data(0, type(uint64).max),
+                    0,
+                    finalPacketData
                 );
         }
 
@@ -405,7 +392,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         }
 
         // Dummy packet for getModule
-        Height.Data memory emptyHeight;
+        Height.Data memory emptyHeight = Height.Data(0, 0);
         Packet memory dummyPacket = Packet({
             sequence: 0,
             sourcePort: "",
