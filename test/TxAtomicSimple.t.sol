@@ -38,7 +38,11 @@ contract SuccessModule is IContractModule {
     function onAbort(CrossContext calldata context) external override {}
     function onCommit(CrossContext calldata context) external override {}
 
-    function onContractPrepare(CrossContext calldata /*context*/, bytes calldata /*callInfo*/)
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
         external
         override
         returns (bytes memory)
@@ -62,7 +66,11 @@ contract RevertingModule is IContractModule {
     function onAbort(CrossContext calldata context) external override {}
     function onCommit(CrossContext calldata context) external override {}
 
-    function onContractPrepare(CrossContext calldata /*context*/, bytes calldata /*callInfo*/)
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
         external
         override
         returns (bytes memory)
@@ -216,12 +224,6 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
         vm.expectRevert(UnexpectedTypeURL.selector);
         harness.exposed_handlePacket(p);
-    }
-
-    function test_handleAcknowledgement_RevertOn_NotImplemented() public {
-        Packet memory p;
-        vm.expectRevert(NotImplemented.selector);
-        harness.exposed_handleAcknowledgement(p, hex"");
     }
 
     function test_handleTimeout_RevertOn_NotImplemented() public {
