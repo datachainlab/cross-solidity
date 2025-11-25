@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// solhint-disable function-max-lines
 pragma solidity ^0.8.20;
 
 import {GoogleProtobufAny as Any} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
@@ -43,9 +44,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE) {
             _runSimpleProtocol(txID, msg_);
         } else if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_TPC) {
-            revert("TPC protocol not implemented");
+            revert TPCNotImplemented();
         } else {
-            revert("Unknown commit protocol");
+            revert UnknownCommitProtocol();
         }
     }
 
@@ -77,7 +78,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         // Simple protocol does not support links
         if (tx0.links.length > 0 || tx1.links.length > 0) {
-            revert("simple protocol does not support links");
+            revert LinksNotSupported();
         }
 
         ChannelInfo.Data memory ch0 = abi.decode(tx0.cross_chain_channel.value, (ChannelInfo.Data));
@@ -85,7 +86,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         // Ensure tx0 points to self (empty port/channel)
         if (bytes(ch0.port).length != 0 || bytes(ch0.channel).length != 0) {
-            revert("tx0 must be for self chain");
+            revert Tx0MustBeForSelfChain();
         }
 
         // --- 3. Local Prepare (Coordinator) ---
@@ -119,7 +120,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             // Verify return value if set
             if (tx0.return_value.value.length > 0) {
                 if (keccak256(tx0.return_value.value) != keccak256(callResult)) {
-                    revert("unexpected return value");
+                    revert UnexpectedReturnValue();
                 }
             }
             prepareOK = true;
@@ -137,7 +138,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             // slither-disable-next-line unused-return
             (, bool found) = getIBCHandler().getChannel(ch1.port, ch1.channel);
             if (!found) {
-                revert("channel not found");
+                revert ChannelNotFound();
             }
 
             // Construct PacketDataCall
@@ -153,10 +154,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             });
 
             // Wrap in Any
+            // solhint-disable-next-line gas-small-strings
             Any.Data memory anyPayload = Any.Data({
-                // solhint-disable-next-line gas-small-strings
-                type_url: "/cross.core.atomic.simple.PacketDataCall",
-                value: PacketDataCall.encode(callData)
+                type_url: "/cross.core.atomic.simple.PacketDataCall", value: PacketDataCall.encode(callData)
             });
 
             // Wrap in PacketData
@@ -266,7 +266,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         Acknowledgement.Data memory ackOuter = Acknowledgement.decode(acknowledgement);
         // Simple protocol assumes is_success=true
         if (!ackOuter.is_success) {
-            revert("ack is not success");
+            revert AckIsNotSuccess();
         }
 
         PacketData.Data memory ackPd = PacketData.decode(ackOuter.result);
@@ -297,57 +297,34 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         }
         bytes32 txID = abi.decode(pdc.tx_id, (bytes32));
 
-        // --- 3. Process Acknowledgement & TryCommit ---
+        // --- 3. Retrieve & Validate CoordinatorState ---
 
-        _receiveCallAcknowledgement(txID, packet.sourcePort, packet.sourceChannel, ack);
-    }
-
-    function _handleTimeout(
-        Packet calldata /*packet*/
-    )
-        internal
-        virtual
-        override
-    {
-        revert NotImplemented();
-    }
-
-    // --- ACK Processing & Local Commit Logic ---
-
-    function _receiveCallAcknowledgement(
-        bytes32 txID,
-        string memory sourcePort,
-        string memory sourceChannel,
-        PacketAcknowledgementCall.Data memory ack
-    ) internal {
         CoordStorage storage coordStorage = _getCoordStorage();
         TxStorage storage txStorage = _getTxStorage();
 
-        // --- 1. Retrieve & Validate CoordinatorState ---
-
         CoordEntry storage entry = coordStorage.states[txID];
         if (!entry.exists) {
-            revert("coordinator state not found");
+            revert CoordinatorStateNotFound(txID);
         }
 
         CoordinatorState.Data storage cs = entry.data;
 
         if (cs.phase != CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE) {
-            revert("coordinator phase must be PREPARE");
+            revert CoordinatorPhaseNotPrepare();
         }
 
         bool allPreparesAlreadyConfirmed =
             _containsUint32(cs.confirmed_txs, TX_INDEX_COORDINATOR)
             && _containsUint32(cs.confirmed_txs, TX_INDEX_PARTICIPANT);
         if (allPreparesAlreadyConfirmed) {
-            revert("all transactions are already confirmed");
+            revert AllTransactionsConfirmed();
         }
 
-        // --- 2. Validate Channel ---
+        // --- 4. Validate Channel ---
         // slither-disable-next-line unused-return
-        (, bool found) = getIBCHandler().getChannel(sourcePort, sourceChannel);
+        (, bool found) = getIBCHandler().getChannel(packet.sourcePort, packet.sourceChannel);
         if (!found) {
-            revert("channel not found");
+            revert ChannelNotFound();
         }
 
         // Verify Participant channel matches
@@ -355,10 +332,10 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         ChannelInfo.Data memory expectedParticipantChannel = cs.channels[TX_INDEX_PARTICIPANT];
 
         if (
-            keccak256(bytes(expectedParticipantChannel.port)) != keccak256(bytes(sourcePort))
-                || keccak256(bytes(expectedParticipantChannel.channel)) != keccak256(bytes(sourceChannel))
+            keccak256(bytes(expectedParticipantChannel.port)) != keccak256(bytes(packet.sourcePort))
+                || keccak256(bytes(expectedParticipantChannel.channel)) != keccak256(bytes(packet.sourceChannel))
         ) {
-            revert("unexpected source channel for participant");
+            revert UnexpectedSourceChannel();
         }
 
         // Mark Participant prepare as confirmed
@@ -366,7 +343,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             cs.confirmed_txs.push(TX_INDEX_PARTICIPANT);
         }
 
-        // --- 3. Determine Commit/Abort based on ACK ---
+        // --- 5. Determine Commit/Abort based on ACK ---
 
         bool isCommittable = false;
 
@@ -377,7 +354,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             cs.decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT;
             isCommittable = false;
         } else {
-            revert("unexpected commit status");
+            revert UnexpectedCommitStatus();
         }
 
         cs.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
@@ -396,15 +373,15 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         bool allCommits =
             _containsUint32(cs.acks, TX_INDEX_COORDINATOR) && _containsUint32(cs.acks, TX_INDEX_PARTICIPANT);
         if (!allPrepares || !allCommits) {
-            revert("fatal: coordinator state inconsistent");
+            revert CoordinatorStateInconsistent();
         }
 
-        // --- 4. Execute Local Commit/Abort ---
+        // --- 6. Execute Local Commit/Abort ---
 
         ContractTransactionState.Data storage txState = txStorage.states[txID][TX_INDEX_COORDINATOR];
 
         if (txState.status != ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_PREPARE) {
-            revert("coordinator tx status must be PREPARE");
+            revert CoordinatorTxStatusNotPrepare();
         }
 
         // Dummy packet for getModule
@@ -433,19 +410,23 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         if (isCommittable) {
             // Commit
-            try module.onCommit(ctx) {
-                txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_COMMIT;
-            } catch {
-                revert("contract commit failed");
-            }
+            module.onCommit(ctx);
+            txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_COMMIT;
         } else {
             // Abort
-            try module.onAbort(ctx) {
-                txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_ABORT;
-            } catch {
-                revert("contract abort failed");
-            }
+            module.onAbort(ctx);
+            txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_ABORT;
         }
+    }
+
+    function _handleTimeout(
+        Packet calldata /*packet*/
+    )
+        internal
+        virtual
+        override
+    {
+        revert NotImplemented();
     }
 
     // --- Helpers ---
