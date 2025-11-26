@@ -33,13 +33,8 @@ abstract contract CrossStore {
         mapping(bytes32 => mapping(uint256 => ContractTransactionState.Data)) states;
     }
 
-    struct CoordEntry {
-        bool exists;
-        CoordinatorState.Data data;
-    }
-
     struct CoordStorage {
-        mapping(bytes32 => CoordEntry) states;
+        mapping(bytes32 => CoordinatorState.Data) states;
     }
 
     function _getAuthStorage() internal pure returns (AuthStorage storage $) {

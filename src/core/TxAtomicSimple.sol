@@ -67,7 +67,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             revert MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
-        if (coordStorage.states[txID].exists) {
+        if (coordStorage.states[txID].commit_protocol != Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
             revert TxIDAlreadyExists(txID);
         }
 
@@ -204,7 +204,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             acks: acks
         });
 
-        coordStorage.states[txID] = CoordEntry({exists: true, data: newState});
+        coordStorage.states[txID] = newState;
 
         // --- 6. Save ContractTransactionState ---
 
@@ -302,12 +302,10 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         CoordStorage storage coordStorage = _getCoordStorage();
         TxStorage storage txStorage = _getTxStorage();
 
-        CoordEntry storage entry = coordStorage.states[txID];
-        if (!entry.exists) {
+        CoordinatorState.Data storage cs = coordStorage.states[txID];
+        if (cs.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
             revert CoordinatorStateNotFound(txID);
         }
-
-        CoordinatorState.Data storage cs = entry.data;
 
         if (cs.phase != CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE) {
             revert CoordinatorPhaseNotPrepare();
