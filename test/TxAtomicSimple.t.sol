@@ -84,20 +84,6 @@ contract TxAtomicSimpleHarness is TxAtomicSimple {
 
     constructor(IIBCHandler h, IContractModule m) TxAtomicSimple(h, m) {}
 
-    function registerModule(IContractModule module) internal override {
-        _module = module;
-    }
-
-    function getModule(
-        Packet memory /*packet*/
-    )
-        internal
-        override
-        returns (IContractModule)
-    {
-        return _module;
-    }
-
     function exposed_handlePacket(Packet calldata p) external returns (bytes memory ack) {
         return _handlePacket(p);
     }
