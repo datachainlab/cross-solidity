@@ -210,19 +210,20 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
      * @dev Participant side: Receive PacketDataCall, execute onContractCall, and return ACK.
      */
     function _handlePacket(Packet calldata packet) internal virtual override returns (bytes memory acknowledgement) {
+        PacketAcknowledgementCall.Data memory ack =
+            PacketAcknowledgementCall.Data({status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED});
+            
         PacketData.Data memory pd = PacketData.decode(packet.data);
-        if (pd.payload.length == 0) revert PayloadDecodeFailed();
+        if (pd.payload.length == 0) return packPacketAcknowledgementCall(ack);
 
         Any.Data memory anyPayload = Any.decode(pd.payload);
         // TODO should be more gas efficient
         // solhint-disable-next-line gas-small-strings
         if (sha256(bytes(anyPayload.type_url)) != sha256(bytes("/cross.core.atomic.simple.PacketDataCall"))) {
-            revert UnexpectedTypeURL();
+            return packPacketAcknowledgementCall(ack);
         }
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
-        PacketAcknowledgementCall.Data memory ack =
-            PacketAcknowledgementCall.Data({status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_UNKNOWN});
         try CONTRACT_MODULE.onContractCommitImmediately(
             CrossContext(pdc.tx_id, TX_INDEX_PARTICIPANT, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
