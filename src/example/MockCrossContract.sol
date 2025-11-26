@@ -5,7 +5,7 @@ import "../core/IContractModule.sol";
 import "../proto/cross/core/auth/Auth.sol";
 
 contract MockCrossContract is IContractModule {
-    function onContractCall(CrossContext calldata context, bytes calldata callInfo)
+    function onContractCommitImmediately(CrossContext calldata context, bytes calldata callInfo)
         external
         override
         returns (bytes memory)

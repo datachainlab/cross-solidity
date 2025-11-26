@@ -223,7 +223,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
 
         PacketAcknowledgementCall.Data memory ack =
             PacketAcknowledgementCall.Data({status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_UNKNOWN});
-        try CONTRACT_MODULE.onContractCall(
+        try CONTRACT_MODULE.onContractCommitImmediately(
             CrossContext(pdc.tx_id, TX_INDEX_PARTICIPANT, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;

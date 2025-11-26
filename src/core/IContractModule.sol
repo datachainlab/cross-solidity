@@ -5,8 +5,10 @@ import "../proto/cross/core/auth/Auth.sol";
 
 // IContractModule defines the expected interface of a contract module on Cross Framework
 interface IContractModule {
-    // onContractCall is a callback function that is called at the commit(simple-commit) phase
-    function onContractCall(CrossContext calldata context, bytes calldata callInfo) external returns (bytes memory);
+    // CommitImmediately is a callback function that is called to commit immediately in a single-phase commit
+    function onContractCommitImmediately(CrossContext calldata context, bytes calldata callInfo)
+        external
+        returns (bytes memory);
 
     // // onContractPrepare is a callback function that is called at the prepare(2pc) phase
     function onContractPrepare(CrossContext calldata context, bytes calldata callInfo) external returns (bytes memory);

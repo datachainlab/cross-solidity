@@ -15,7 +15,7 @@ contract DummyHandler {}
 
 contract DummyModule is IContractModule {
     // do nothing implementation
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/

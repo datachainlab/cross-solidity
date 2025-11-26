@@ -24,7 +24,7 @@ contract SuccessModule is IContractModule {
         retBytes = r;
     }
 
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/
@@ -52,7 +52,7 @@ contract SuccessModule is IContractModule {
 }
 
 contract RevertingModule is IContractModule {
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/
