@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
 import "../src/core/Coordinator.sol";
-import "../src/core/TxManagerBase.sol"; // 追加
+import "../src/core/TxManagerBase.sol";
 import {ICrossError} from "../src/core/ICrossError.sol";
 import {
     QueryCoordinatorStateRequest,
