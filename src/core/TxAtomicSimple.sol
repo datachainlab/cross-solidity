@@ -212,7 +212,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
     function _handlePacket(Packet calldata packet) internal virtual override returns (bytes memory acknowledgement) {
         PacketAcknowledgementCall.Data memory ack =
             PacketAcknowledgementCall.Data({status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED});
-            
+
         PacketData.Data memory pd = PacketData.decode(packet.data);
         if (pd.payload.length == 0) return packPacketAcknowledgementCall(ack);
 
