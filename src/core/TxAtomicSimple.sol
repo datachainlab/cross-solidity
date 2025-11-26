@@ -93,6 +93,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         // Dummy packet for getModule (local execution)
         Height.Data memory emptyHeight = Height.Data(0, 0);
+        // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
+        // but it is not correct to force that assumption on the caller as well.
+        // We should generate a proper Packet instead of dummyPacket to support multiple modules.
         Packet memory dummyPacket = Packet({
             sequence: 0,
             sourcePort: "",
@@ -384,6 +387,9 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
         // Dummy packet for getModule
         Height.Data memory emptyHeight = Height.Data(0, 0);
+        // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
+        // but it is not correct to force that assumption on the caller as well.
+        // We should generate a proper Packet instead of dummyPacket to support multiple modules.
         Packet memory dummyPacket = Packet({
             sequence: 0,
             sourcePort: "",
