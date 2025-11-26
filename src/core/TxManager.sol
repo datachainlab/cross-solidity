@@ -8,6 +8,7 @@ import {ITxManager} from "./ITxManager.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
+import {CoordinatorState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external override {
@@ -20,6 +21,10 @@ contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
 
     function isTxRecorded(bytes32 txID) external view override returns (bool) {
         return _isTxRecorded(txID);
+    }
+
+    function getCoordinatorState(bytes32 txID) external view returns (CoordinatorState.Data memory) {
+        return _getCoordinatorState(txID);
     }
 
     function _createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual override {
@@ -42,6 +47,14 @@ contract TxManager is TxManagerBase, TxRunner, CrossStore, ITxManager {
     function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         CrossStore.TxStorage storage t = _getTxStorage();
         return t.txStatus[txID] != MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_UNKNOWN;
+    }
+
+    function _getCoordinatorState(bytes32 txID) internal view override returns (CoordinatorState.Data memory) {
+        CrossStore.CoordStorage storage s = _getCoordStorage();
+        if (!s.states[txID].exists) {
+            revert CoordinatorStateNotFound(txID);
+        }
+        return s.states[txID].data;
     }
 
     function _deepStoreMsg(CrossStore.TxStorage storage t, bytes32 txID, MsgInitiateTx.Data calldata src) private {

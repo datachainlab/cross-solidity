@@ -13,11 +13,12 @@ import {
     Link,
     ReturnValue
 } from "../src/proto/cross/core/initiator/Initiator.sol";
+import {ICrossError} from "../src/core/ICrossError.sol";
 import {Account as AuthAccount, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
+import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
-import {ICrossError} from "../src/core/ICrossError.sol";
 
 contract TxManagerHarness is TxManager {
     uint256 public runCount;
@@ -36,6 +37,12 @@ contract TxManagerHarness is TxManager {
     function _runTx(bytes32 txID, MsgInitiateTx.Data storage) internal virtual override {
         ++runCount;
         lastRunTxID = txID;
+    }
+
+    function setCoordinatorState(bytes32 txID, CoordinatorState.Data calldata data) public {
+        CrossStore.CoordStorage storage s = _getCoordStorage();
+        s.states[txID].exists = true;
+        s.states[txID].data = data;
     }
 }
 
@@ -209,5 +216,23 @@ contract TxManagerTest is Test {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
+    }
+
+    function test_getCoordinatorState_ReturnsCorrectState() public {
+        CoordinatorState.Data memory expected;
+        expected.commit_protocol = Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE;
+        expected.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+
+        harness.setCoordinatorState(txID, expected);
+
+        CoordinatorState.Data memory actual = harness.getCoordinatorState(txID);
+
+        assertEq(uint256(actual.commit_protocol), uint256(expected.commit_protocol), "Commit protocol mismatch");
+        assertEq(uint256(actual.phase), uint256(expected.phase), "Phase mismatch");
+    }
+
+    function test_getCoordinatorState_RevertsIfNotFound() public {
+        vm.expectRevert(abi.encodeWithSelector(ICrossError.CoordinatorStateNotFound.selector, txID));
+        harness.getCoordinatorState(txID);
     }
 }
