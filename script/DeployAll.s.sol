@@ -30,7 +30,6 @@ import {
 } from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/OwnableIBCHandler.sol";
 
 // === App ===
-import {IContractModule} from "src/core/IContractModule.sol";
 import {CrossSimpleModule} from "src/core/CrossSimpleModule.sol";
 import {TxAuthManager} from "src/core/TxAuthManager.sol";
 import {TxManager} from "src/core/TxManager.sol";
@@ -85,12 +84,10 @@ contract DeployAll is Script, Config {
         TxAuthManager txAuthManager = new TxAuthManager(typeUrls, verifiers);
         console2.log("  TxAuthManager:", address(txAuthManager));
 
-        TxManager txManager = new TxManager();
+        TxManager txManager = new TxManager(handler, app);
         console2.log("  TxManager:", address(txManager));
 
-        CrossSimpleModule module = new CrossSimpleModule(
-            handler, address(txAuthManager), address(txManager), IContractModule(address(app)), debugMode
-        );
+        CrossSimpleModule module = new CrossSimpleModule(handler, address(txAuthManager), address(txManager), debugMode);
         console2.log("  CrossSimpleModule:", address(module));
 
         MockClient mclient = new MockClient(address(handler));

@@ -11,13 +11,27 @@ import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-chann
 
 contract DummyModule is IContractModule {
     // do nothing implementation
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/
     )
         external
         pure
+        returns (bytes memory)
+    {
+        return "";
+    }
+    function onAbort(CrossContext calldata context) external override {}
+    function onCommit(CrossContext calldata context) external override {}
+
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        override
         returns (bytes memory)
     {
         return "";

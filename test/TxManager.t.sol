@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
 import "../src/core/TxManager.sol";
-import "../src/core/TxRunner.sol";
 import "../src/core/TxManagerBase.sol";
 import {
     MsgInitiateTx,
@@ -22,6 +21,8 @@ import {ICrossError} from "../src/core/ICrossError.sol";
 contract TxManagerHarness is TxManager {
     uint256 public runCount;
     bytes32 public lastRunTxID;
+
+    constructor() TxManager(IIBCHandler(address(0)), IContractModule(address(0))) {}
 
     function getTxStatus(bytes32 txID) public view returns (MsgInitiateTxResponse.InitiateTxStatus) {
         CrossStore.TxStorage storage t = _getTxStorage();

@@ -16,6 +16,7 @@ import {Account as AuthAccount, AuthType, TxAuthState} from "../src/proto/cross/
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 contract MockStore {
     struct AuthStorage {
@@ -96,6 +97,14 @@ contract MockTxManager is ITxManager, MockStore {
     {
         return true;
     }
+
+    function handlePacket(Packet calldata) external override returns (bytes memory) {
+        return "";
+    }
+
+    function handleAcknowledgement(Packet calldata, bytes calldata) external override {}
+
+    function handleTimeout(Packet calldata) external override {}
 }
 
 contract MockSuccessContract {

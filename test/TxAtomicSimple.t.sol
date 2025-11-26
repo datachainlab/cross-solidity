@@ -24,7 +24,7 @@ contract SuccessModule is IContractModule {
         retBytes = r;
     }
 
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/
@@ -35,10 +35,24 @@ contract SuccessModule is IContractModule {
     {
         return retBytes;
     }
+    function onAbort(CrossContext calldata context) external override {}
+    function onCommit(CrossContext calldata context) external override {}
+
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        override
+        returns (bytes memory)
+    {
+        return "";
+    }
 }
 
 contract RevertingModule is IContractModule {
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/
@@ -49,12 +63,26 @@ contract RevertingModule is IContractModule {
     {
         revert("boom");
     }
+    function onAbort(CrossContext calldata context) external override {}
+    function onCommit(CrossContext calldata context) external override {}
+
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        override
+        returns (bytes memory)
+    {
+        return "";
+    }
 }
 
 contract TxAtomicSimpleHarness is TxAtomicSimple {
     IContractModule internal _module;
 
-    constructor(IIBCHandler h) IBCKeeper(h) {}
+    constructor(IIBCHandler h, IContractModule m) TxAtomicSimple(h, m) {}
 
     function registerModule(IContractModule module) internal override {
         _module = module;
@@ -71,15 +99,15 @@ contract TxAtomicSimpleHarness is TxAtomicSimple {
     }
 
     function exposed_handlePacket(Packet calldata p) external returns (bytes memory ack) {
-        return handlePacket(p);
+        return _handlePacket(p);
     }
 
     function exposed_handleAcknowledgement(Packet calldata p, bytes calldata ackBytes) external {
-        handleAcknowledgement(p, ackBytes);
+        _handleAcknowledgement(p, ackBytes);
     }
 
     function exposed_handleTimeout(Packet calldata p) external {
-        handleTimeout(p);
+        _handleTimeout(p);
     }
 
     function workaround_setModule(IContractModule m) external {
@@ -95,7 +123,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     function setUp() public {
         handler = new DummyHandler();
-        harness = new TxAtomicSimpleHarness(IIBCHandler(address(handler)));
+        harness = new TxAtomicSimpleHarness(IIBCHandler(address(handler)), IContractModule(address(0)));
     }
 
     function _mkPacketWithCall(bytes memory txId, bytes memory callInfo) internal pure returns (Packet memory p) {
@@ -196,12 +224,6 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
         vm.expectRevert(UnexpectedTypeURL.selector);
         harness.exposed_handlePacket(p);
-    }
-
-    function test_handleAcknowledgement_RevertOn_NotImplemented() public {
-        Packet memory p;
-        vm.expectRevert(NotImplemented.selector);
-        harness.exposed_handleAcknowledgement(p, hex"");
     }
 
     function test_handleTimeout_RevertOn_NotImplemented() public {

@@ -24,8 +24,8 @@ contract TestableCrossModule is CrossModule {
 
     constructor(IIBCHandler h, address txAuthManager_, address txManager_) CrossModule(h, txAuthManager_, txManager_) {}
 
-    function handlePacket(
-        Packet memory /*packet*/
+    function _handlePacket(
+        Packet calldata /*packet*/
     )
         internal
         virtual
@@ -36,10 +36,10 @@ contract TestableCrossModule is CrossModule {
         return bytes("ack-ok");
     }
 
-    function handleAcknowledgement(
-        Packet memory,
+    function _handleAcknowledgement(
+        Packet calldata,
         /*packet*/
-        bytes memory acknowledgement
+        bytes calldata acknowledgement
     )
         internal
         virtual
@@ -49,7 +49,7 @@ contract TestableCrossModule is CrossModule {
         lastAckArg = acknowledgement;
     }
 
-    function handleTimeout(
+    function _handleTimeout(
         Packet calldata /*packet*/
     )
         internal

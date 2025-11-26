@@ -22,7 +22,6 @@ abstract contract CrossModule is
     AccessControl,
     IIBCModule,
     IBCKeeper,
-    PacketHandler,
     CrossStore,
     Initiator,
     Authenticator,
@@ -57,7 +56,7 @@ abstract contract CrossModule is
         returns (bytes memory acknowledgement)
     {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
-        return handlePacket(packet);
+        return _handlePacket(packet);
     }
 
     function onAcknowledgementPacket(
@@ -70,7 +69,7 @@ abstract contract CrossModule is
         override
     {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
-        handleAcknowledgement(packet, acknowledgement);
+        _handleAcknowledgement(packet, acknowledgement);
     }
 
     function onTimeoutPacket(
@@ -82,7 +81,7 @@ abstract contract CrossModule is
         override
     {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
-        handleTimeout(packet);
+        _handleTimeout(packet);
     }
 
     function onChanOpenInit(IIBCModuleInitializer.MsgOnChanOpenInit calldata msg_)

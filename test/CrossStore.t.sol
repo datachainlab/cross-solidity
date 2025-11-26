@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import "forge-std/src/Test.sol";
 import "../src/core/CrossStore.sol";
 import {MsgInitiateTxResponse} from "../src/proto/cross/core/initiator/Initiator.sol";
+import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 contract CrossStoreHarness is CrossStore {
     //--- Auth Storage Accessors ---
@@ -30,14 +31,14 @@ contract CrossStoreHarness is CrossStore {
     }
 
     //--- Coord Storage Accessors ---
-    function writeCoord(bytes32 txID, bool val) public {
+    function writeCoord(bytes32 txID, CoordinatorState.CoordinatorPhase phase) public {
         CoordStorage storage s = _getCoordStorage();
-        s.states[txID].exists = val;
+        s.states[txID].phase = phase;
     }
 
-    function readCoord(bytes32 txID) public view returns (bool) {
+    function readCoord(bytes32 txID) public view returns (CoordinatorState.CoordinatorPhase) {
         CoordStorage storage s = _getCoordStorage();
-        return s.states[txID].exists;
+        return s.states[txID].phase;
     }
 }
 
@@ -53,7 +54,7 @@ contract CrossStoreTest is Test {
 
         harness.writeAuth(keyAuth, true);
         harness.writeTx(keyTx, MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED);
-        harness.writeCoord(keyCoord, true);
+        harness.writeCoord(keyCoord, CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
     }
 
     function test_getAuthStorage_IsIsolated() public view {
@@ -81,8 +82,20 @@ contract CrossStoreTest is Test {
     }
 
     function test_getCoordStorage_IsIsolated() public view {
-        assertTrue(harness.readCoord(keyCoord), "Coord write failed");
-        assertFalse(harness.readCoord(keyAuth), "Coord storage collision with Auth");
-        assertFalse(harness.readCoord(keyTx), "Coord storage collision with Tx");
+        assertEq(
+            uint256(harness.readCoord(keyCoord)),
+            uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE),
+            "Coord write failed"
+        );
+        assertEq(
+            uint256(harness.readCoord(keyAuth)),
+            uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN),
+            "Coord storage collision with Auth"
+        );
+        assertEq(
+            uint256(harness.readCoord(keyTx)),
+            uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN),
+            "Coord storage collision with Tx"
+        );
     }
 }

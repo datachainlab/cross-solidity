@@ -5,7 +5,7 @@ import "../core/IContractModule.sol";
 import "../proto/cross/core/auth/Auth.sol";
 
 contract MockCrossContract is IContractModule {
-    function onContractCall(CrossContext calldata context, bytes calldata callInfo)
+    function onContractCommitImmediately(CrossContext calldata context, bytes calldata callInfo)
         external
         override
         returns (bytes memory)
@@ -19,5 +19,30 @@ contract MockCrossContract is IContractModule {
         } else {
             revert("callInfo must be 0x01");
         }
+    }
+
+    function onCommit(
+        CrossContext calldata /*context*/
+    )
+        external
+        override
+    {}
+    function onAbort(
+        CrossContext calldata /*context*/
+    )
+        external
+        override
+    {}
+
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        override
+        returns (bytes memory)
+    {
+        return bytes("mock prepare succeed");
     }
 }

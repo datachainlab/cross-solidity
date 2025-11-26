@@ -95,3 +95,29 @@ message CoordinatorState {
   repeated uint32 confirmed_txs = 5 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxIndex"];
   repeated uint32 acks = 6 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxIndex"];
 }
+
+message ContractTransactionState {
+  option (gogoproto.equal)           = false;
+
+  enum ContractTransactionStatus {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    CONTRACT_TRANSACTION_STATUS_UNKNOWN = 0;
+    CONTRACT_TRANSACTION_STATUS_PREPARE = 1;
+    CONTRACT_TRANSACTION_STATUS_COMMIT  = 2;
+    CONTRACT_TRANSACTION_STATUS_ABORT   = 3;
+  }
+
+  ContractTransactionStatus status = 1;
+
+  enum PrepareResult {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    PREPARE_RESULT_UNKNOWN = 0;
+    PREPARE_RESULT_OK      = 1;
+    PREPARE_RESULT_FAILED  = 2;
+  }
+  PrepareResult prepare_result = 2;
+
+  ChannelInfo coordinator_channel = 3 [(gogoproto.nullable) = false];
+}
