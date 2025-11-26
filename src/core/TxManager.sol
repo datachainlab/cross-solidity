@@ -5,6 +5,7 @@ import {TxManagerBase} from "./TxManagerBase.sol";
 import {CrossStore} from "./CrossStore.sol";
 import {ITxManager} from "./ITxManager.sol";
 import {IContractModule} from "./IContractModule.sol";
+import {SimpleContractRegistry} from "./SimpleContractRegistry.sol";
 import {TxAtomicSimple} from "./TxAtomicSimple.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
@@ -13,7 +14,7 @@ import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
-contract TxManager is TxManagerBase, ITxManager, TxAtomicSimple {
+contract TxManager is TxManagerBase, ITxManager, TxAtomicSimple, SimpleContractRegistry {
     constructor(IIBCHandler handler_, IContractModule module) TxAtomicSimple(handler_, module) {}
 
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external override {

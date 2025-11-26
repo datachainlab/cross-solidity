@@ -7,6 +7,7 @@ import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-chann
 import {Height} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Client.sol";
 
 import "./PacketHandler.sol";
+import "./ContractRegistry.sol";
 import "./IContractModule.sol";
 import "./IBCKeeper.sol";
 import {TxRunnerBase} from "./TxRunnerBase.sol";
@@ -29,11 +30,9 @@ import {MsgInitiateTx, Tx, ContractTransaction} from "../proto/cross/core/initia
 import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
 
 // TxAtomicSimple implements PacketHandler and TxRunnerBase supporting the simple-commit protocol
-abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, CrossStore, ICrossError {
-    IContractModule public immutable CONTRACT_MODULE;
-
-    constructor(IIBCHandler handler_, IContractModule module_) IBCKeeper(handler_) {
-        CONTRACT_MODULE = module_;
+abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, ContractRegistry, CrossStore, ICrossError {
+    constructor(IIBCHandler handler_, IContractModule module) IBCKeeper(handler_) {
+        registerModule(module);
     }
 
     uint8 private constant TX_INDEX_COORDINATOR = 0;
@@ -92,11 +91,32 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
 
         // --- 3. Local Prepare (Coordinator) ---
 
+        // Dummy packet for getModule (local execution)
+        Height.Data memory emptyHeight = Height.Data(0, 0);
+        // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
+        // but it is not correct to force that assumption on the caller as well.
+        // We should generate a proper Packet instead of dummyPacket to support multiple modules.
+        Packet memory dummyPacket = Packet({
+            sequence: 0,
+            sourcePort: "",
+            sourceChannel: "",
+            destinationPort: "",
+            destinationChannel: "",
+            data: bytes(""),
+            timeoutHeight: emptyHeight,
+            timeoutTimestamp: 0
+        });
+
+        IContractModule module = getModule(dummyPacket);
+        if (address(module) == address(0)) {
+            revert ModuleNotInitialized();
+        }
+
         CoordinatorState.CoordinatorPhase phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN;
         CoordinatorState.CoordinatorDecision decision =
         CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
         bool prepareOK = false;
-        try CONTRACT_MODULE.onContractPrepare(
+        try module.onContractPrepare(
             CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
             tx0.call_info
         ) returns (bytes memory callResult) {
@@ -213,6 +233,8 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
         PacketAcknowledgementCall.Data memory ack =
             PacketAcknowledgementCall.Data({status: PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED});
 
+        IContractModule module = getModule(packet);
+
         PacketData.Data memory pd = PacketData.decode(packet.data);
         if (pd.payload.length == 0) return packPacketAcknowledgementCall(ack);
 
@@ -224,7 +246,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
         }
         PacketDataCall.Data memory pdc = PacketDataCall.decode(anyPayload.value);
 
-        try CONTRACT_MODULE.onContractCommitImmediately(
+        try module.onContractCommitImmediately(
             CrossContext(pdc.tx_id, TX_INDEX_PARTICIPANT, pdc.tx.signers), pdc.tx.call_info
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
@@ -364,6 +386,27 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
             revert CoordinatorTxStatusNotPrepare();
         }
 
+        // Dummy packet for getModule
+        Height.Data memory emptyHeight = Height.Data(0, 0);
+        // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
+        // but it is not correct to force that assumption on the caller as well.
+        // We should generate a proper Packet instead of dummyPacket to support multiple modules.
+        Packet memory dummyPacket = Packet({
+            sequence: 0,
+            sourcePort: "",
+            sourceChannel: "",
+            destinationPort: "",
+            destinationChannel: "",
+            data: bytes(""),
+            timeoutHeight: emptyHeight,
+            timeoutTimestamp: 0
+        });
+
+        IContractModule module = getModule(dummyPacket);
+        if (address(module) == address(0)) {
+            revert ModuleNotInitialized();
+        }
+
         MsgInitiateTx.Data storage msg_ = txStorage.txMsg[txID];
         ContractTransaction.Data storage coordTx = msg_.contract_transactions[TX_INDEX_COORDINATOR];
 
@@ -372,11 +415,11 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cros
 
         if (isCommittable) {
             // Commit
-            CONTRACT_MODULE.onCommit(ctx);
+            module.onCommit(ctx);
             txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_COMMIT;
         } else {
             // Abort
-            CONTRACT_MODULE.onAbort(ctx);
+            module.onAbort(ctx);
             txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_ABORT;
         }
     }
