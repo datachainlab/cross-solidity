@@ -2,9 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
+import {IContractModule} from "./IContractModule.sol";
 import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {CoordinatorState, ContractTransactionState} from "src/proto/cross/core/atomic/simple/AtomicSimple.sol";
+import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 
 abstract contract CrossStore {
     // keccak256(abi.encode(uint256(keccak256("cross.core.auth")) - 1)) & ~bytes32(uint256(0xff))
@@ -31,6 +33,8 @@ abstract contract CrossStore {
         mapping(bytes32 => MsgInitiateTx.Data) txMsg;
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) txStatus;
         mapping(bytes32 => mapping(uint256 => ContractTransactionState.Data)) states;
+        IContractModule contractModule;
+        IIBCHandler ibcHandler;
     }
 
     struct CoordStorage {

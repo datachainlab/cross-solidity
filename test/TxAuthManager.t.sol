@@ -27,10 +27,6 @@ contract MockRevertingVerifier is IAuthExtensionVerifier {
 }
 
 contract TxAuthManagerHarness is TxAuthManager {
-    constructor(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers)
-        TxAuthManager(typeUrls, verifiers)
-    {}
-
     function exposed_accountKey(AuthAccount.Data memory a) public pure returns (bytes32) {
         return _accountKey(a);
     }
@@ -91,7 +87,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         verifiers[2] = IAuthExtensionVerifier(revertingVerifier);
 
         // 3. Deploy Harness
-        harness = new TxAuthManagerHarness(typeUrls, verifiers);
+        harness = new TxAuthManagerHarness();
 
         // 4. Setup Auth Types
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
@@ -130,7 +126,8 @@ contract TxAuthManagerTest is Test, ICrossError {
         string[] memory typeUrls = new string[](0);
         IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](0);
 
-        TxAuthManagerHarness localHarness = new TxAuthManagerHarness(typeUrls, verifiers);
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness();
+        localHarness.initialize(typeUrls, verifiers);
         assertTrue(address(localHarness) != address(0), "Harness should deploy");
     }
 
@@ -145,7 +142,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         verifiers[0] = verifier1;
         verifiers[1] = verifier2;
 
-        TxAuthManagerHarness localHarness = new TxAuthManagerHarness(typeUrls, verifiers);
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness();
         assertTrue(address(localHarness) != address(0), "Harness should deploy");
     }
 
@@ -158,7 +155,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         verifiers[1] = new MockValidVerifier();
 
         vm.expectRevert(ArrayLengthMismatch.selector);
-        new TxAuthManagerHarness(typeUrls, verifiers);
+        new TxAuthManagerHarness();
     }
 
     function test_constructor_RevertWhen_EmptyTypeUrl() public {
@@ -169,7 +166,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         verifiers[0] = new MockValidVerifier();
 
         vm.expectRevert(EmptyTypeUrl.selector);
-        new TxAuthManagerHarness(typeUrls, verifiers);
+        new TxAuthManagerHarness();
     }
 
     function test_constructor_RevertWhen_ZeroAddressVerifier() public {
@@ -180,7 +177,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         verifiers[0] = IAuthExtensionVerifier(address(0)); // Zero address
 
         vm.expectRevert(ZeroAddressVerifier.selector);
-        new TxAuthManagerHarness(typeUrls, verifiers);
+        new TxAuthManagerHarness();
     }
 
     function test_initAuthState_Succeeds() public {

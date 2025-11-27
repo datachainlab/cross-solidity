@@ -8,10 +8,12 @@ import {ITxAuthManager} from "./ITxAuthManager.sol";
 import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 import {ICrossError} from "./ICrossError.sol";
 
-contract TxAuthManager is TxAuthManagerBase, CrossStore, ITxAuthManager, ICrossError {
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract TxAuthManager is Initializable, TxAuthManagerBase, CrossStore, ITxAuthManager, ICrossError {
     uint256 private constant MAX_SIGNERS_PER_TX = 32;
 
-    constructor(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers) {
+    function initialize(string[] calldata typeUrls, IAuthExtensionVerifier[] calldata verifiers) public initializer {
         if (typeUrls.length != verifiers.length) revert ArrayLengthMismatch();
 
         CrossStore.AuthStorage storage s = _getAuthStorage();

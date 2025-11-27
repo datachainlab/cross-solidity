@@ -8,8 +8,6 @@ import "../src/core/IBCKeeper.sol";
 contract DummyHandler {}
 
 contract IBCKeeperHarness is IBCKeeper {
-    constructor(IIBCHandler h) IBCKeeper(h) {}
-
     function exposed_getIBCHandler() external view returns (address) {
         return address(getIBCHandler());
     }
@@ -21,7 +19,7 @@ contract IBCKeeperTest is Test {
 
     function setUp() public {
         dummy = new DummyHandler();
-        keeper = new IBCKeeperHarness(IIBCHandler(address(dummy)));
+        keeper = new IBCKeeperHarness();
     }
 
     function test_getIBCHandler_ReturnsSameAddress() public view {
@@ -30,7 +28,7 @@ contract IBCKeeperTest is Test {
     }
 
     function test_constructor_AllowsZeroAddress() public {
-        IBCKeeperHarness k = new IBCKeeperHarness(IIBCHandler(address(0)));
+        IBCKeeperHarness k = new IBCKeeperHarness();
         assertEq(k.exposed_getIBCHandler(), address(0));
     }
 }

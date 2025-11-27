@@ -11,7 +11,6 @@ import "./ContractRegistry.sol";
 import "./IContractModule.sol";
 import "./IBCKeeper.sol";
 import {TxRunnerBase} from "./TxRunnerBase.sol";
-import {CrossStore} from "./CrossStore.sol";
 import {ICrossError} from "./ICrossError.sol";
 
 import {
@@ -29,9 +28,19 @@ import {
 import {MsgInitiateTx, Tx, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
 
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
 // TxAtomicSimple implements PacketHandler and TxRunnerBase supporting the simple-commit protocol
-abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, ContractRegistry, CrossStore, ICrossError {
-    constructor(IIBCHandler handler_, IContractModule module) IBCKeeper(handler_) {
+abstract contract TxAtomicSimple is
+    Initializable,
+    IBCKeeper,
+    PacketHandler,
+    TxRunnerBase,
+    ContractRegistry,
+    ICrossError
+{
+    function __initTxAtomicSimple(IIBCHandler handler_, IContractModule module) internal onlyInitializing {
+        __initIBCKeeper(handler_);
         registerModule(module);
     }
 
@@ -81,8 +90,8 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
             revert LinksNotSupported();
         }
 
-        ChannelInfo.Data memory ch0 = abi.decode(tx0.cross_chain_channel.value, (ChannelInfo.Data));
-        ChannelInfo.Data memory ch1 = abi.decode(tx1.cross_chain_channel.value, (ChannelInfo.Data));
+        ChannelInfo.Data memory ch0 = ChannelInfo.decode(tx0.cross_chain_channel.value);
+        ChannelInfo.Data memory ch1 = ChannelInfo.decode(tx1.cross_chain_channel.value);
 
         // Ensure tx0 points to self (empty port/channel)
         if (bytes(ch0.port).length != 0 || bytes(ch0.channel).length != 0) {
@@ -116,6 +125,8 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
         CoordinatorState.CoordinatorDecision decision =
         CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
         bool prepareOK = false;
+
+        // slither-disable-next-line reentrancy-no-eth
         try module.onContractPrepare(
             CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
             tx0.call_info
@@ -168,7 +179,7 @@ abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, Cont
 
             bytes memory finalPacketData = PacketData.encode(pd);
 
-            // slither-disable-next-line unused-return
+            // slither-disable-next-line unused-return reentrancy-no-eth
             getIBCHandler()
                 .sendPacket(
                     ch1.port,

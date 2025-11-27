@@ -8,7 +8,6 @@ import "../src/core/TxAtomicSimple.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/IBCKeeper.sol";
 import "../src/core/ICrossError.sol";
-import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 import "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
@@ -82,8 +81,6 @@ contract RevertingModule is IContractModule {
 contract TxAtomicSimpleHarness is TxAtomicSimple {
     IContractModule internal _module;
 
-    constructor(IIBCHandler h, IContractModule m) TxAtomicSimple(h, m) {}
-
     function registerModule(IContractModule module) internal override {
         _module = module;
     }
@@ -123,7 +120,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     function setUp() public {
         handler = new DummyHandler();
-        harness = new TxAtomicSimpleHarness(IIBCHandler(address(handler)), IContractModule(address(0)));
+        harness = new TxAtomicSimpleHarness();
     }
 
     function _mkPacketWithCall(bytes memory txId, bytes memory callInfo) internal pure returns (Packet memory p) {

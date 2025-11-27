@@ -46,10 +46,6 @@ contract SimpleContractRegistryHarness is SimpleContractRegistry {
     function exposed_getModule(Packet calldata p) external returns (IContractModule) {
         return getModule(p);
     }
-
-    function workaround_moduleAddr() external view returns (address) {
-        return address(contractModule);
-    }
 }
 
 contract SimpleContractRegistryTest is Test, ICrossError {
@@ -75,7 +71,6 @@ contract SimpleContractRegistryTest is Test, ICrossError {
 
         IContractModule got = registry.exposed_getModule(_emptyPacket);
         assertEq(address(got), address(m));
-        assertEq(registry.workaround_moduleAddr(), address(m));
     }
 
     function test_register_RevertOn_SecondInitialization() public {

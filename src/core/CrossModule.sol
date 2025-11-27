@@ -16,24 +16,22 @@ import "./IBCKeeper.sol";
 import {Initiator} from "./Initiator.sol";
 import {Authenticator} from "./Authenticator.sol";
 import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
-import {CrossStore} from "./CrossStore.sol";
+import {IContractModule} from "./IContractModule.sol";
+import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
-abstract contract CrossModule is
-    AccessControl,
-    IIBCModule,
-    IBCKeeper,
-    CrossStore,
-    Initiator,
-    Authenticator,
-    DelegatedLogicHandler
-{
+abstract contract CrossModule is AccessControl, IIBCModule, Initiator, Authenticator, DelegatedLogicHandler {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IIBCHandler ibcHandler_, address txAuthManager_, address txManager_)
-        Initiator()
-        IBCKeeper(ibcHandler_)
-        DelegatedLogicHandler(txAuthManager_, txManager_)
-    {
+    constructor(
+        IIBCHandler ibcHandler_,
+        address txAuthManager_,
+        address txManager_,
+        IContractModule contractModule_,
+        string[] memory authTypeUrls_,
+        IAuthExtensionVerifier[] memory authVerifiers_
+    ) Initiator() DelegatedLogicHandler(txAuthManager_, txManager_) {
+        _initializeTxAuthManager(authTypeUrls_, authVerifiers_);
+        _initializeTxManager(ibcHandler_, contractModule_);
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 
@@ -41,8 +39,6 @@ abstract contract CrossModule is
         return interfaceID == type(IIBCModule).interfaceId || interfaceID == type(IIBCModuleInitializer).interfaceId
             || super.supportsInterface(interfaceID);
     }
-
-    // function initiateTx() external {}
 
     /// Module callbacks ///
 

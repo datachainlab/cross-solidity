@@ -54,9 +54,15 @@ contract DummyModule is IContractModule {
 }
 
 contract CrossSimpleModuleHarness is CrossSimpleModule {
-    constructor(IIBCHandler h, address txAuthManager_, address txManager_, bool debugMode)
-        CrossSimpleModule(h, txAuthManager_, txManager_, debugMode)
-    {}
+    constructor(
+        IIBCHandler h,
+        address txAuthManager_,
+        address txManager_,
+        IContractModule module_,
+        string[] memory authTypeUrls_,
+        IAuthExtensionVerifier[] memory authVerifiers_,
+        bool debugMode
+    ) CrossSimpleModule(h, txAuthManager_, txManager_, module_, authTypeUrls_, authVerifiers_, debugMode) {}
 
     function workaround_hasIbcRole(address a) external view returns (bool) {
         return hasRole(IBC_ROLE, a);
@@ -74,15 +80,29 @@ contract CrossSimpleModuleTest is Test, ICrossError {
     }
 
     function test_constructor_GrantsIbcRoleWhenDebugModeTrue() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), address(0), address(0), true);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            address(0),
+            address(0),
+            moduleImpl,
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            true
+        );
 
         assertTrue(harness.workaround_hasIbcRole(address(this)), "role on debug");
     }
 
     function test_constructor_DoesNotGrantIbcRoleWhenDebugModeFalse() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), address(0), address(0), false);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            address(0),
+            address(0),
+            moduleImpl,
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            false
+        );
 
         assertFalse(harness.workaround_hasIbcRole(address(this)), "no role on debug");
     }
