@@ -125,6 +125,8 @@ abstract contract TxAtomicSimple is
         CoordinatorState.CoordinatorDecision decision =
         CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
         bool prepareOK = false;
+
+        // slither-disable-next-line reentrancy-no-eth
         try module.onContractPrepare(
             CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
             tx0.call_info
@@ -177,7 +179,7 @@ abstract contract TxAtomicSimple is
 
             bytes memory finalPacketData = PacketData.encode(pd);
 
-            // slither-disable-next-line unused-return
+            // slither-disable-next-line unused-return reentrancy-no-eth
             getIBCHandler()
                 .sendPacket(
                     ch1.port,
