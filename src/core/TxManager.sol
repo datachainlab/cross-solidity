@@ -15,8 +15,16 @@ import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract TxManager is Initializable, TxManagerBase, ITxManager, TxAtomicSimple, SimpleContractRegistry {
+contract TxManager is
+    Initializable,
+    ReentrancyGuard,
+    TxManagerBase,
+    ITxManager,
+    TxAtomicSimple,
+    SimpleContractRegistry
+{
     function initialize(IIBCHandler handler_, IContractModule module_) public initializer {
         __initTxAtomicSimple(handler_, module_);
     }
@@ -25,7 +33,7 @@ contract TxManager is Initializable, TxManagerBase, ITxManager, TxAtomicSimple, 
         _createTx(txID, src);
     }
 
-    function runTxIfCompleted(bytes32 txID) external override {
+    function runTxIfCompleted(bytes32 txID) external override nonReentrant {
         _runTxIfCompleted(txID);
     }
 
