@@ -34,6 +34,10 @@ contract MockStore {
 }
 
 contract MockTxAuthManager is ITxAuthManager, MockStore {
+    function initialize(string[] calldata, IAuthExtensionVerifier[] calldata) external override {
+        // No-op
+    }
+
     function initAuthState(bytes32 txID, AuthAccount.Data[] calldata) external override {
         ++authStorage.callCounts[txID];
         authStorage.initialized[txID] = true;
@@ -77,6 +81,10 @@ contract MockTxAuthManager is ITxAuthManager, MockStore {
 }
 
 contract MockTxManager is ITxManager, MockStore {
+    function initialize(IIBCHandler, IContractModule) external override {
+        // No-op
+    }
+
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external override {
         txStorage.status[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
         txStorage.nonce[txID] = src.nonce;

@@ -14,8 +14,12 @@ import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
-contract TxManager is TxManagerBase, ITxManager, TxAtomicSimple, SimpleContractRegistry {
-    constructor(IIBCHandler handler_, IContractModule module) TxAtomicSimple(handler_, module) {}
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract TxManager is Initializable, TxManagerBase, ITxManager, TxAtomicSimple, SimpleContractRegistry {
+    function initialize(IIBCHandler handler_, IContractModule module_) public initializer {
+        __initTxAtomicSimple(handler_, module_);
+    }
 
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external override {
         _createTx(txID, src);

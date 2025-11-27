@@ -8,8 +8,11 @@ import {ITxAuthManager} from "./ITxAuthManager.sol";
 import {ITxManager} from "./ITxManager.sol";
 import {ICrossError} from "./ICrossError.sol";
 import {PacketHandler} from "./PacketHandler.sol";
+import {IContractModule} from "./IContractModule.sol";
+import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 
 import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
@@ -28,6 +31,16 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, Pac
     constructor(address txAuthManager_, address txManager_) {
         TX_AUTH_MANAGER = txAuthManager_;
         TX_MANAGER = txManager_;
+    }
+
+    function _txManagerInitialize(IIBCHandler handler, IContractModule module) internal {
+        _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.initialize.selector, handler, module));
+    }
+
+    function _txAuthManagerInitialize(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers) internal {
+        _delegateWithData(
+            TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.initialize.selector, typeUrls, verifiers)
+        );
     }
 
     function _initAuthState(bytes32 txID, Account.Data[] memory signers) internal virtual override {
