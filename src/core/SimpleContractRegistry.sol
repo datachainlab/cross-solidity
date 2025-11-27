@@ -8,10 +8,8 @@ import {ICrossError} from "./ICrossError.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 // SimpleContractRegistry is a simple registry that implements ContractRegistry
+// it keeps only one module.
 abstract contract SimpleContractRegistry is ContractRegistry, CrossStore, ICrossError {
-    // it keeps only one module.
-    IContractModule internal contractModule;
-
     function registerModule(IContractModule module) internal virtual override {
         CrossStore.TxStorage storage t = _getTxStorage();
 
