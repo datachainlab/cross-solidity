@@ -33,11 +33,11 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, Pac
         TX_MANAGER = txManager_;
     }
 
-    function _txManagerInitialize(IIBCHandler handler, IContractModule module) internal {
+    function _initializeTxManager(IIBCHandler handler, IContractModule module) internal {
         _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.initialize.selector, handler, module));
     }
 
-    function _txAuthManagerInitialize(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers) internal {
+    function _initializeTxAuthManager(string[] memory typeUrls, IAuthExtensionVerifier[] memory verifiers) internal {
         _delegateWithData(
             TX_AUTH_MANAGER, abi.encodeWithSelector(ITxAuthManager.initialize.selector, typeUrls, verifiers)
         );

@@ -30,8 +30,8 @@ abstract contract CrossModule is AccessControl, IIBCModule, Initiator, Authentic
         string[] memory authTypeUrls_,
         IAuthExtensionVerifier[] memory authVerifiers_
     ) Initiator() DelegatedLogicHandler(txAuthManager_, txManager_) {
-        _txAuthManagerInitialize(authTypeUrls_, authVerifiers_);
-        _txManagerInitialize(ibcHandler_, contractModule_);
+        _initializeTxAuthManager(authTypeUrls_, authVerifiers_);
+        _initializeTxManager(ibcHandler_, contractModule_);
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 
