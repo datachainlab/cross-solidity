@@ -22,6 +22,7 @@ import (
 
 	"github.com/datachainlab/cross-solidity/pkg/contract/crosssimplemodule"
 	"github.com/datachainlab/cross-solidity/pkg/contract/ownableibchandler"
+	"github.com/datachainlab/cross-solidity/pkg/contract/txmanager"
 	"github.com/datachainlab/cross-solidity/pkg/wallet"
 )
 
@@ -31,11 +32,11 @@ var (
 
 func init() {
 	var ok bool
-	parsedCrossModuleABI, err := abi.JSON(strings.NewReader(crosssimplemodule.CrosssimplemoduleABI))
+	parsedTxManagerABI, err := abi.JSON(strings.NewReader(txmanager.TxmanagerABI))
 	if err != nil {
 		panic(err)
 	}
-	abiEventOnContractCall, ok = parsedCrossModuleABI.Events["OnContractCall"]
+	abiEventOnContractCall, ok = parsedTxManagerABI.Events["OnContractCall"]
 	if !ok {
 		panic("OnContractCall not found")
 	}
@@ -90,8 +91,8 @@ func (chain *Chain) TxSyncIfNoError(ctx context.Context) func(tx *gethtypes.Tran
 	}
 }
 
-func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*crosssimplemodule.CrosssimplemoduleOnContractCall, error) {
-	filter, err := crosssimplemodule.NewCrosssimplemoduleFilterer(
+func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*txmanager.TxmanagerOnContractCall, error) {
+	filter, err := txmanager.NewTxmanagerFilterer(
 		chain.ContractConfig.GetCrossSimpleModuleAddress(), chain.ETHClient,
 	)
 	if err != nil {

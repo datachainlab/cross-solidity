@@ -54,8 +54,8 @@ contract DummyModule is IContractModule {
 }
 
 contract CrossSimpleModuleHarness is CrossSimpleModule {
-    constructor(IIBCHandler h, address txAuthManager_, address txManager_, bool debugMode)
-        CrossSimpleModule(h, txAuthManager_, txManager_, debugMode)
+    constructor(IIBCHandler h, address txAuthManager_, address txManager_, IContractModule m, bool debugMode)
+        CrossSimpleModule(h, txAuthManager_, txManager_, m, debugMode)
     {}
 
     function workaround_hasIbcRole(address a) external view returns (bool) {
@@ -75,14 +75,14 @@ contract CrossSimpleModuleTest is Test, ICrossError {
 
     function test_constructor_GrantsIbcRoleWhenDebugModeTrue() public {
         CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), address(0), address(0), true);
+            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), address(0), address(0), moduleImpl, true);
 
         assertTrue(harness.workaround_hasIbcRole(address(this)), "role on debug");
     }
 
     function test_constructor_DoesNotGrantIbcRoleWhenDebugModeFalse() public {
         CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), address(0), address(0), false);
+            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), address(0), address(0), moduleImpl, false);
 
         assertFalse(harness.workaround_hasIbcRole(address(this)), "no role on debug");
     }

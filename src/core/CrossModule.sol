@@ -17,24 +17,28 @@ import {Initiator} from "./Initiator.sol";
 import {Authenticator} from "./Authenticator.sol";
 import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
 import {CrossStore} from "./CrossStore.sol";
+import {SimpleContractRegistry} from "./SimpleContractRegistry.sol";
+import {IContractModule} from "./IContractModule.sol";
 
 abstract contract CrossModule is
     AccessControl,
     IIBCModule,
     IBCKeeper,
     CrossStore,
+    SimpleContractRegistry,
     Initiator,
     Authenticator,
     DelegatedLogicHandler
 {
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IIBCHandler ibcHandler_, address txAuthManager_, address txManager_)
+    constructor(IIBCHandler ibcHandler_, address txAuthManager_, address txManager_, IContractModule module)
         Initiator()
         IBCKeeper(ibcHandler_)
         DelegatedLogicHandler(txAuthManager_, txManager_)
     {
         _grantRole(IBC_ROLE, address(ibcHandler_));
+        registerModule(module);
     }
 
     function supportsInterface(bytes4 interfaceID) public view virtual override(AccessControl, IERC165) returns (bool) {

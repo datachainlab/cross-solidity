@@ -10,7 +10,6 @@ import (
 	simpletypes "github.com/datachainlab/cross/x/core/atomic/protocol/simple/types"
 	authtypes "github.com/datachainlab/cross/x/core/auth/types"
 	"github.com/datachainlab/cross/x/core/tx/types"
-	crosstypes "github.com/datachainlab/cross/x/core/types"
 	xcctypes "github.com/datachainlab/cross/x/core/xcc/types"
 	"github.com/datachainlab/cross/x/packets"
 	"github.com/ethereum/go-ethereum/common"
@@ -102,38 +101,6 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 	}
 }
 
-func (suite *CrossTestSuite) TestPBSerialization() {
-	ctx := context.Background()
-
-	// check if the serialization of a successful ack is correct
-	{
-		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
-			suite.chain.CallOpts(ctx, 0),
-			uint8(simpletypes.COMMIT_STATUS_OK),
-		)
-		suite.Require().NoError(err)
-		expectedAckData := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_OK))
-		expectedAckDataBz, err := proto.Marshal(&expectedAckData)
-		suite.Require().NoError(err)
-		expectedAck := crosstypes.NewAcknowledgement(true, expectedAckDataBz)
-		suite.Require().Equal(ack, expectedAck.Acknowledgement())
-	}
-
-	// check if the serialization of a failure ack is correct
-	{
-		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
-			suite.chain.CallOpts(ctx, 0),
-			uint8(simpletypes.COMMIT_STATUS_FAILED),
-		)
-		suite.Require().NoError(err)
-		expectedAckData := packets.NewPacketAcknowledgementData(nil, simpletypes.NewPacketAcknowledgementCall(simpletypes.COMMIT_STATUS_FAILED))
-		expectedAckDataBz, err := proto.Marshal(&expectedAckData)
-		suite.Require().NoError(err)
-		expectedAck := crosstypes.NewAcknowledgement(true, expectedAckDataBz)
-		suite.Require().Equal(ack, expectedAck.Acknowledgement())
-	}
-}
-
 func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.PacketData {
 	xcc, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{})
 	suite.Require().NoError(err)
@@ -175,7 +142,7 @@ func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseTxRunNotImplemented
 	msg := crosssimplemodule.MsgInitiateTxData{
 		ChainId:              fmt.Sprintf("%d", suite.chain.chainID),
 		Nonce:                0,
-		CommitProtocol:       0,
+		CommitProtocol:       1,
 		ContractTransactions: []crosssimplemodule.ContractTransactionData{ctBinding},
 		Signers:              []crosssimplemodule.AccountData{signerBinding},
 		TimeoutHeight:        crosssimplemodule.IbcCoreClientV1HeightData{},

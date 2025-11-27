@@ -31,9 +31,7 @@ import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
 
 // TxAtomicSimple implements PacketHandler and TxRunnerBase supporting the simple-commit protocol
 abstract contract TxAtomicSimple is IBCKeeper, PacketHandler, TxRunnerBase, ContractRegistry, CrossStore, ICrossError {
-    constructor(IIBCHandler handler_, IContractModule module) IBCKeeper(handler_) {
-        registerModule(module);
-    }
+    constructor(IIBCHandler handler_) IBCKeeper(handler_) {}
 
     uint8 private constant TX_INDEX_COORDINATOR = 0;
     uint8 private constant TX_INDEX_PARTICIPANT = 1;

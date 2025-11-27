@@ -3,17 +3,20 @@ pragma solidity ^0.8.20;
 
 import "./ContractRegistry.sol";
 import "./IContractModule.sol";
+import {CrossStore} from "./CrossStore.sol";
 import {ICrossError} from "./ICrossError.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 // SimpleContractRegistry is a simple registry that implements ContractRegistry
-abstract contract SimpleContractRegistry is ContractRegistry, ICrossError {
+abstract contract SimpleContractRegistry is ContractRegistry, CrossStore, ICrossError {
     // it keeps only one module.
     IContractModule internal contractModule;
 
     function registerModule(IContractModule module) internal virtual override {
-        if (address(contractModule) != address(0)) revert ModuleAlreadyInitialized();
-        contractModule = module;
+        CrossStore.TxStorage storage t = _getTxStorage();
+
+        if (address(t.contractModule) != address(0)) revert ModuleAlreadyInitialized();
+        t.contractModule = module;
     }
 
     function getModule(
@@ -24,7 +27,9 @@ abstract contract SimpleContractRegistry is ContractRegistry, ICrossError {
         override
         returns (IContractModule)
     {
-        if (address(contractModule) == address(0)) revert ModuleNotInitialized();
-        return contractModule;
+        CrossStore.TxStorage storage t = _getTxStorage();
+
+        if (address(t.contractModule) == address(0)) revert ModuleNotInitialized();
+        return t.contractModule;
     }
 }

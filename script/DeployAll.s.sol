@@ -84,10 +84,11 @@ contract DeployAll is Script, Config {
         TxAuthManager txAuthManager = new TxAuthManager(typeUrls, verifiers);
         console2.log("  TxAuthManager:", address(txAuthManager));
 
-        TxManager txManager = new TxManager(handler, app);
+        TxManager txManager = new TxManager(handler);
         console2.log("  TxManager:", address(txManager));
 
-        CrossSimpleModule module = new CrossSimpleModule(handler, address(txAuthManager), address(txManager), debugMode);
+        CrossSimpleModule module =
+            new CrossSimpleModule(handler, address(txAuthManager), address(txManager), app, debugMode);
         console2.log("  CrossSimpleModule:", address(module));
 
         MockClient mclient = new MockClient(address(handler));

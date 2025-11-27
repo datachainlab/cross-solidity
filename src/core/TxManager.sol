@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {TxManagerBase} from "./TxManagerBase.sol";
 import {CrossStore} from "./CrossStore.sol";
 import {ITxManager} from "./ITxManager.sol";
-import {IContractModule} from "./IContractModule.sol";
 import {SimpleContractRegistry} from "./SimpleContractRegistry.sol";
 import {TxAtomicSimple} from "./TxAtomicSimple.sol";
 
@@ -15,7 +14,7 @@ import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
 contract TxManager is TxManagerBase, ITxManager, TxAtomicSimple, SimpleContractRegistry {
-    constructor(IIBCHandler handler_, IContractModule module) TxAtomicSimple(handler_, module) {}
+    constructor(IIBCHandler handler_) TxAtomicSimple(handler_) {}
 
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external override {
         _createTx(txID, src);

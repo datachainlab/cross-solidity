@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import "forge-std/src/Test.sol";
 
 import "../src/core/CrossModule.sol";
+import "../src/core/IContractModule.sol";
 import {
     IIBCModule,
     IIBCModuleInitializer
@@ -16,13 +17,55 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 
 contract DummyHandler {}
 
+contract DummyModule is IContractModule {
+    // do nothing implementation
+    function onContractCommitImmediately(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        pure
+        returns (bytes memory)
+    {
+        return "";
+    }
+
+    function onAbort(
+        CrossContext calldata /*context*/
+    )
+        external
+        override
+    {}
+    function onCommit(
+        CrossContext calldata /*context*/
+    )
+        external
+        override
+    {}
+
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        override
+        returns (bytes memory)
+    {
+        return "";
+    }
+}
+
 contract TestableCrossModule is CrossModule {
     uint256 public recvCount;
     uint256 public ackCount;
     uint256 public timeoutCount;
     bytes public lastAckArg;
 
-    constructor(IIBCHandler h, address txAuthManager_, address txManager_) CrossModule(h, txAuthManager_, txManager_) {}
+    constructor(IIBCHandler h, address txAuthManager_, address txManager_, IContractModule module)
+        CrossModule(h, txAuthManager_, txManager_, module)
+    {}
 
     function _handlePacket(
         Packet calldata /*packet*/
@@ -67,7 +110,7 @@ contract CrossModuleTest is Test {
 
     function setUp() public {
         handler = new DummyHandler();
-        mod = new TestableCrossModule(IIBCHandler(address(handler)), address(0), address(0));
+        mod = new TestableCrossModule(IIBCHandler(address(handler)), address(0), address(0), new DummyModule());
     }
 
     function test_constructor_GrantsIbcRoleToHandler() public {

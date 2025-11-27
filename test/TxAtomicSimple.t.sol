@@ -82,7 +82,7 @@ contract RevertingModule is IContractModule {
 contract TxAtomicSimpleHarness is TxAtomicSimple {
     IContractModule internal _module;
 
-    constructor(IIBCHandler h, IContractModule m) TxAtomicSimple(h, m) {}
+    constructor(IIBCHandler h) TxAtomicSimple(h) {}
 
     function registerModule(IContractModule module) internal override {
         _module = module;
@@ -123,7 +123,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     function setUp() public {
         handler = new DummyHandler();
-        harness = new TxAtomicSimpleHarness(IIBCHandler(address(handler)), IContractModule(address(0)));
+        harness = new TxAtomicSimpleHarness(IIBCHandler(address(handler)));
     }
 
     function _mkPacketWithCall(bytes memory txId, bytes memory callInfo) internal pure returns (Packet memory p) {
