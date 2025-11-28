@@ -3,7 +3,6 @@ package testing
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"math/big"
 	"testing"
@@ -16,9 +15,7 @@ import (
 	xcctypes "github.com/datachainlab/cross/x/core/xcc/types"
 	"github.com/datachainlab/cross/x/packets"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
@@ -148,10 +145,9 @@ func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.
 	return packets.NewPacketData(nil, pdc)
 }
 
-func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseChannelNotFound() {
+func (suite *CrossTestSuite) TestInitiateTx() {
 	ctx := context.Background()
 	opts := suite.chain.LegacyTxOpts(ctx, 0)
-	opts.GasLimit = 0 // let the contract estimate gas
 
 	decodeB64 := func(s string) []byte {
 		b, err := base64.StdEncoding.DecodeString(s)
@@ -210,7 +206,7 @@ func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseChannelNotFound() {
 		Nonce:                0,
 		CommitProtocol:       1, // SIMPLE_COMMIT_PROTOCOL
 		ContractTransactions: []crosssimplemodule.ContractTransactionData{ct1, ct2},
-		Signers:              []crosssimplemodule.AccountData{signer1, signer2},
+		Signers:              []crosssimplemodule.AccountData{signer1},
 		TimeoutHeight: crosssimplemodule.IbcCoreClientV1HeightData{
 			RevisionNumber: 0,
 			RevisionHeight: 0,
@@ -222,33 +218,12 @@ func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseChannelNotFound() {
 		suite.chain.CrossSimpleModule.InitiateTx(opts, msg),
 	)
 
-	suite.Require().Error(err, "transaction should have reverted with ChannelNotFound")
-	suite.T().Logf("Received error: %s", err.Error())
+	suite.Require().NoError(err)
 
-	var dataErr rpc.DataError
-	if !errors.As(err, &dataErr) {
-		suite.Fail("Error is not of type rpc.DataError: " + err.Error())
-		return
-	}
-
-	revertDataRaw := dataErr.ErrorData()
-	revertDataHex, ok := revertDataRaw.(string)
-	if !ok {
-		suite.Fail("Error data is not a string")
-		return
-	}
-
-	expectErrorName := "ChannelNotFound"
-	errDef, ok := crossSimpleModuleABI.Errors[expectErrorName]
-	suite.Require().True(ok, "Error definition not found in ABI: %s", expectErrorName)
-
-	expectedSig := hexutil.Encode(errDef.ID[:4])
-
-	if len(revertDataHex) < 10 {
-		suite.Fail("Revert data is too short")
-	}
-
-	suite.Require().Equal(expectedSig, revertDataHex[:10], "Contract should revert with "+expectErrorName)
+	event, err := suite.chain.findEventTxInitiated(ctx, opts.From)
+	suite.Require().NoError(err)
+	suite.Require().Equal(opts.From, event.Proposer)
+	suite.Require().NotEmpty(event.TxID)
 }
 
 func TestChainTestSuite(t *testing.T) {

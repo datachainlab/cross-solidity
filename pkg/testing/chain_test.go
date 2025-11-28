@@ -118,6 +118,29 @@ func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*
 	return nil, fmt.Errorf("event not found: txID(hash)=%s", idHash.Hex())
 }
 
+func (chain *Chain) findEventTxInitiated(ctx context.Context, proposer common.Address) (*crosssimplemodule.CrosssimplemoduleTxInitiated, error) {
+	filter, err := crosssimplemodule.NewCrosssimplemoduleFilterer(
+		chain.ContractConfig.GetCrossSimpleModuleAddress(), chain.ETHClient,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	iter, err := filter.FilterTxInitiated(
+		&bind.FilterOpts{Context: ctx, Start: 0}, // Start from block 0
+		[]common.Address{proposer},               // Filter by indexed proposer
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		return iter.Event, nil
+	}
+	return nil, fmt.Errorf("event TxInitiated not found for proposer %s", proposer.Hex())
+}
+
 func (chain *Chain) TxOpts(ctx context.Context, index uint32) *bind.TransactOpts {
 	return makeGenTxOpts(big.NewInt(chain.chainID), chain.prvKey(index))(ctx)
 }
