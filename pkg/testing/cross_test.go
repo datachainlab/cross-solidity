@@ -2,6 +2,8 @@ package testing
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"math/big"
 	"testing"
@@ -14,7 +16,9 @@ import (
 	xcctypes "github.com/datachainlab/cross/x/core/xcc/types"
 	"github.com/datachainlab/cross/x/packets"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
@@ -107,7 +111,7 @@ func (suite *CrossTestSuite) TestPBSerialization() {
 
 	// check if the serialization of a successful ack is correct
 	{
-		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
+		ack, err := suite.chain.TxManager.GetPacketAcknowledgementCall(
 			suite.chain.CallOpts(ctx, 0),
 			uint8(simpletypes.COMMIT_STATUS_OK),
 		)
@@ -121,7 +125,7 @@ func (suite *CrossTestSuite) TestPBSerialization() {
 
 	// check if the serialization of a failure ack is correct
 	{
-		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
+		ack, err := suite.chain.TxManager.GetPacketAcknowledgementCall(
 			suite.chain.CallOpts(ctx, 0),
 			uint8(simpletypes.COMMIT_STATUS_FAILED),
 		)
@@ -144,52 +148,115 @@ func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.
 	return packets.NewPacketData(nil, pdc)
 }
 
-func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseTxRunNotImplemented() {
+func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseChannelNotFound() {
 	ctx := context.Background()
 	opts := suite.chain.LegacyTxOpts(ctx, 0)
+	opts.GasLimit = 0 // let the contract estimate gas
 
-	xcc, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{})
+	decodeB64 := func(s string) []byte {
+		b, err := base64.StdEncoding.DecodeString(s)
+		suite.Require().NoError(err)
+		return b
+	}
+
+	xcc1, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{
+		Port:    "",
+		Channel: "",
+	})
 	suite.Require().NoError(err)
 
-	authTypeBinding := crosssimplemodule.AuthTypeData{
-		Mode: uint8(authtypes.AuthMode_AUTH_MODE_CHANNEL),
-		Option: crosssimplemodule.GoogleProtobufAnyData{
-			TypeUrl: xcc.TypeUrl,
-			Value:   xcc.Value,
+	xcc2, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{
+		Port:    "cross",
+		Channel: "channel-0",
+	})
+	suite.Require().NoError(err)
+
+	signer1 := crosssimplemodule.AccountData{
+		Id: decodeB64("0/syrvWS1CkCswOi9XwXq+gd+dIByQLeH9t/qFrDXqE="),
+		AuthType: crosssimplemodule.AuthTypeData{
+			Mode: uint8(authtypes.AuthMode_AUTH_MODE_EXTENSION),
+			Option: crosssimplemodule.GoogleProtobufAnyData{
+				TypeUrl: "/erc20mgr.FabricAuthExtension",
+				Value:   []byte{},
+			},
 		},
-	}
-	signerBinding := crosssimplemodule.AccountData{
-		Id:       opts.From.Bytes(),
-		AuthType: authTypeBinding,
 	}
 
-	ctBinding := crosssimplemodule.ContractTransactionData{
-		CrossChainChannel: crosssimplemodule.GoogleProtobufAnyData{
-			TypeUrl: xcc.TypeUrl,
-			Value:   xcc.Value,
+	signer2 := crosssimplemodule.AccountData{
+		Id: decodeB64("y+1kWxwaYlTxFJ31HTWRxrOAMAc="),
+		AuthType: crosssimplemodule.AuthTypeData{
+			Mode: uint8(authtypes.AuthMode_AUTH_MODE_EXTENSION),
+			Option: crosssimplemodule.GoogleProtobufAnyData{
+				TypeUrl: "/extension.types.BesuAuthExtension",
+				Value:   []byte{},
+			},
 		},
-		Signers:  []crosssimplemodule.AccountData{signerBinding},
-		CallInfo: []byte("dummy call info"),
+	}
+
+	ct1 := crosssimplemodule.ContractTransactionData{
+		CrossChainChannel: crosssimplemodule.GoogleProtobufAnyData{
+			TypeUrl: xcc1.TypeUrl,
+			Value:   xcc1.Value,
+		},
+		Signers:  []crosssimplemodule.AccountData{signer1},
+		CallInfo: decodeB64("eyJtZXRob2QiOiJ0cmFuc2ZlciIsImFyZ3MiOlsiNzkwOGE5ZGY5MzJkYmUwZjk5Nzg5NGE0MjMwOTdjYjViYTUxYWI0MDliZTAwZmM1YmZhODJkMjJmNDMyZjJiYiIsIjEwIl19"),
+		Links:    []crosssimplemodule.LinkData{},
+	}
+
+	ct2 := crosssimplemodule.ContractTransactionData{
+		CrossChainChannel: crosssimplemodule.GoogleProtobufAnyData{
+			TypeUrl: xcc2.TypeUrl,
+			Value:   xcc2.Value,
+		},
+		Signers:  []crosssimplemodule.AccountData{signer2},
+		CallInfo: decodeB64("+DuU3VEJ0FrDV+RGmSpg5kdkBBoOhSmMdHJhbnNmZXJGcm9t2JQAcxVAzWBgmR1rnFfOKVmY2bwvq4IGug=="),
+		Links:    []crosssimplemodule.LinkData{},
 	}
 
 	msg := crosssimplemodule.MsgInitiateTxData{
 		ChainId:              fmt.Sprintf("%d", suite.chain.chainID),
 		Nonce:                0,
-		CommitProtocol:       0,
-		ContractTransactions: []crosssimplemodule.ContractTransactionData{ctBinding},
-		Signers:              []crosssimplemodule.AccountData{signerBinding},
-		TimeoutHeight:        crosssimplemodule.IbcCoreClientV1HeightData{},
-		TimeoutTimestamp:     uint64(time.Now().Add(5 * time.Minute).Unix()),
+		CommitProtocol:       1,
+		ContractTransactions: []crosssimplemodule.ContractTransactionData{ct1, ct2},
+		Signers:              []crosssimplemodule.AccountData{signer1, signer2},
+		TimeoutHeight: crosssimplemodule.IbcCoreClientV1HeightData{
+			RevisionNumber: 0,
+			RevisionHeight: 0,
+		},
+		TimeoutTimestamp: 0,
 	}
 
 	err = suite.chain.TxSyncIfNoError(ctx)(
 		suite.chain.CrossSimpleModule.InitiateTx(opts, msg),
 	)
 
-	suite.Require().Error(err, "transaction should have reverted, but it succeeded")
-	suite.T().Logf("Received expected error from TxSync: %s", err.Error())
+	suite.Require().Error(err, "transaction should have reverted with ChannelNotFound")
+	suite.T().Logf("Received error: %s", err.Error())
 
-	suite.Require().Contains(err.Error(), "failed to call transaction", "Error message should indicate a failed receipt")
+	var dataErr rpc.DataError
+	if !errors.As(err, &dataErr) {
+		suite.Fail("Error is not of type rpc.DataError: " + err.Error())
+		return
+	}
+
+	revertDataRaw := dataErr.ErrorData()
+	revertDataHex, ok := revertDataRaw.(string)
+	if !ok {
+		suite.Fail("Error data is not a string")
+		return
+	}
+
+	expectErrorName := "ChannelNotFound"
+	errDef, ok := crossSimpleModuleABI.Errors[expectErrorName]
+	suite.Require().True(ok, "Error definition not found in ABI: %s", expectErrorName)
+
+	expectedSig := hexutil.Encode(errDef.ID[:4])
+
+	if len(revertDataHex) < 10 {
+		suite.Fail("Revert data is too short")
+	}
+
+	suite.Require().Equal(expectedSig, revertDataHex[:10], "Contract should revert with "+expectErrorName)
 }
 
 func TestChainTestSuite(t *testing.T) {

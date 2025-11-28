@@ -7,6 +7,7 @@ import (
 const (
 	IBCHandlerAddress = "<%= IBCHandlerAddress; %>"
 	CrossSimpleModuleAddress = "<%= CrossSimpleModuleAddress; %>"
+	TxManagerAddress = "<%= TxManagerAddress; %>"
 )
 
 type contractConfig struct{}
@@ -19,4 +20,8 @@ func (contractConfig) GetIBCHandlerAddress() common.Address {
 
 func (contractConfig) GetCrossSimpleModuleAddress() common.Address {
 	return common.HexToAddress(CrossSimpleModuleAddress)
+}
+
+func (contractConfig) GetTxManagerAddress() common.Address {
+	return common.HexToAddress(TxManagerAddress)
 }

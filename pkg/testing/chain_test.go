@@ -22,23 +22,20 @@ import (
 
 	"github.com/datachainlab/cross-solidity/pkg/contract/crosssimplemodule"
 	"github.com/datachainlab/cross-solidity/pkg/contract/ownableibchandler"
+	"github.com/datachainlab/cross-solidity/pkg/contract/txmanager"
 	"github.com/datachainlab/cross-solidity/pkg/wallet"
 )
 
 var (
-	abiEventOnContractCall abi.Event
+	crossSimpleModuleABI abi.ABI
 )
 
 func init() {
-	var ok bool
-	parsedCrossModuleABI, err := abi.JSON(strings.NewReader(crosssimplemodule.CrosssimplemoduleABI))
+	parsedCrossSimpleModuleABI, err := abi.JSON(strings.NewReader(crosssimplemodule.CrosssimplemoduleABI))
 	if err != nil {
 		panic(err)
 	}
-	abiEventOnContractCall, ok = parsedCrossModuleABI.Events["OnContractCall"]
-	if !ok {
-		panic("OnContractCall not found")
-	}
+	crossSimpleModuleABI = parsedCrossSimpleModuleABI
 }
 
 type Chain struct {
@@ -51,6 +48,7 @@ type Chain struct {
 
 	// Core modules
 	IBCHandler ownableibchandler.Ownableibchandler
+	TxManager  txmanager.Txmanager
 
 	// App modules
 	CrossSimpleModule crosssimplemodule.Crosssimplemodule
@@ -90,8 +88,8 @@ func (chain *Chain) TxSyncIfNoError(ctx context.Context) func(tx *gethtypes.Tran
 	}
 }
 
-func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*crosssimplemodule.CrosssimplemoduleOnContractCall, error) {
-	filter, err := crosssimplemodule.NewCrosssimplemoduleFilterer(
+func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*txmanager.TxmanagerOnContractCall, error) {
+	filter, err := txmanager.NewTxmanagerFilterer(
 		chain.ContractConfig.GetCrossSimpleModuleAddress(), chain.ETHClient,
 	)
 	if err != nil {
@@ -185,6 +183,7 @@ func makeGenTxOpts(chainID *big.Int, prv *ecdsa.PrivateKey) GenTxOpts {
 type ContractConfig interface {
 	GetIBCHandlerAddress() common.Address
 	GetCrossSimpleModuleAddress() common.Address
+	GetTxManagerAddress() common.Address
 }
 
 func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg ContractConfig) *Chain {
@@ -196,6 +195,10 @@ func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg Contract
 	if err != nil {
 		panic(err)
 	}
+	txManager, err := txmanager.NewTxmanager(ccfg.GetTxManagerAddress(), ethc)
+	if err != nil {
+		panic(err)
+	}
 	id, err := ethc.ChainID(context.Background())
 	if err != nil {
 		panic(err)
@@ -204,6 +207,7 @@ func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg Contract
 		ETHClient:         ethc,
 		CrossSimpleModule: *crossMod,
 		ContractConfig:    ccfg,
+		TxManager:         *txManager,
 
 		chainID:        id.Int64(),
 		mnemonicPhrase: mnemonicPhrase,
