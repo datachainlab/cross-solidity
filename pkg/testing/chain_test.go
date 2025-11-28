@@ -6,12 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -25,18 +23,6 @@ import (
 	"github.com/datachainlab/cross-solidity/pkg/contract/txmanager"
 	"github.com/datachainlab/cross-solidity/pkg/wallet"
 )
-
-var (
-	crossSimpleModuleABI abi.ABI
-)
-
-func init() {
-	parsedCrossSimpleModuleABI, err := abi.JSON(strings.NewReader(crosssimplemodule.CrosssimplemoduleABI))
-	if err != nil {
-		panic(err)
-	}
-	crossSimpleModuleABI = parsedCrossSimpleModuleABI
-}
 
 type Chain struct {
 	chainID        int64
