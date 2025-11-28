@@ -324,6 +324,17 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         harness.exposed_runTx(TX_ID, msg_);
     }
 
+    function test_runTx_RevertWhen_UnexpectedReturnValue() public {
+        MsgInitiateTx.Data memory msg_ = _createValidSimpleMsg();
+
+        // MockModule returns hex"01" by default (set in setUp)
+        // Set expectation to something else to trigger error
+        msg_.contract_transactions[0].return_value = ReturnValue.Data(hex"02");
+
+        vm.expectRevert(UnexpectedReturnValue.selector);
+        harness.exposed_runTx(TX_ID, msg_);
+    }
+
     // --- _handleAcknowledgement Tests ---
 
     function test_handleAck_Commit_Success() public {
