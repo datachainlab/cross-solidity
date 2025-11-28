@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
 import "../src/core/IBCKeeper.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract DummyHandler {}
 
@@ -36,5 +37,10 @@ contract IBCKeeperTest is Test {
         IBCKeeperHarness k = new IBCKeeperHarness();
         k.exposed_initIBCKeeper(IIBCHandler(address(0)));
         assertEq(k.exposed_getIBCHandler(), address(0));
+    }
+
+    function test_exposed_initIBCKeeper_RevertOn_SecondInitialization() public {
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        keeper.exposed_initIBCKeeper(IIBCHandler(address(dummy)));
     }
 }
