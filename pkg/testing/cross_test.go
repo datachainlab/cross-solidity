@@ -174,22 +174,14 @@ func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseChannelNotFound() {
 	signer1 := crosssimplemodule.AccountData{
 		Id: decodeB64("0/syrvWS1CkCswOi9XwXq+gd+dIByQLeH9t/qFrDXqE="),
 		AuthType: crosssimplemodule.AuthTypeData{
-			Mode: uint8(authtypes.AuthMode_AUTH_MODE_EXTENSION),
-			Option: crosssimplemodule.GoogleProtobufAnyData{
-				TypeUrl: "/erc20mgr.FabricAuthExtension",
-				Value:   []byte{},
-			},
+			Mode: uint8(authtypes.AuthMode_AUTH_MODE_LOCAL),
 		},
 	}
 
 	signer2 := crosssimplemodule.AccountData{
 		Id: decodeB64("y+1kWxwaYlTxFJ31HTWRxrOAMAc="),
 		AuthType: crosssimplemodule.AuthTypeData{
-			Mode: uint8(authtypes.AuthMode_AUTH_MODE_EXTENSION),
-			Option: crosssimplemodule.GoogleProtobufAnyData{
-				TypeUrl: "/extension.types.BesuAuthExtension",
-				Value:   []byte{},
-			},
+			Mode: uint8(authtypes.AuthMode_AUTH_MODE_LOCAL),
 		},
 	}
 
@@ -216,7 +208,7 @@ func (suite *CrossTestSuite) TestInitiateTx_ShouldFailBecauseChannelNotFound() {
 	msg := crosssimplemodule.MsgInitiateTxData{
 		ChainId:              fmt.Sprintf("%d", suite.chain.chainID),
 		Nonce:                0,
-		CommitProtocol:       1,
+		CommitProtocol:       1, // SIMPLE_COMMIT_PROTOCOL
 		ContractTransactions: []crosssimplemodule.ContractTransactionData{ct1, ct2},
 		Signers:              []crosssimplemodule.AccountData{signer1, signer2},
 		TimeoutHeight: crosssimplemodule.IbcCoreClientV1HeightData{
