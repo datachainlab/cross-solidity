@@ -17,6 +17,7 @@ import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+import {Height} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Client.sol";
 
 contract MockStore {
     struct AuthStorage {
@@ -27,6 +28,9 @@ contract MockStore {
     struct TxStorage {
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) status;
         mapping(bytes32 => uint64) nonce;
+        uint256 handlePacketCount;
+        uint256 handleAckCount;
+        uint256 handleTimeoutCount;
     }
 
     AuthStorage internal authStorage;
@@ -107,12 +111,17 @@ contract MockTxManager is ITxManager, MockStore {
     }
 
     function handlePacket(Packet calldata) external override returns (bytes memory) {
-        return "";
+        txStorage.handlePacketCount++;
+        return hex"1234";
     }
 
-    function handleAcknowledgement(Packet calldata, bytes calldata) external override {}
+    function handleAcknowledgement(Packet calldata, bytes calldata) external override {
+        txStorage.handleAckCount++;
+    }
 
-    function handleTimeout(Packet calldata) external override {}
+    function handleTimeout(Packet calldata) external override {
+        txStorage.handleTimeoutCount++;
+    }
 }
 
 contract MockSuccessContract {
@@ -176,6 +185,18 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
         return _isTxRecorded(txID);
     }
 
+    function exposed_handlePacket(Packet calldata packet) public returns (bytes memory) {
+        return _handlePacket(packet);
+    }
+
+    function exposed_handleAcknowledgement(Packet calldata packet, bytes calldata acknowledgement) public {
+        _handleAcknowledgement(packet, acknowledgement);
+    }
+
+    function exposed_handleTimeout(Packet calldata packet) public {
+        _handleTimeout(packet);
+    }
+
     function exposed_delegateWithData(address impl, bytes memory data) public returns (bytes memory) {
         return _delegateWithData(impl, data);
     }
@@ -217,6 +238,18 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
     function readTx_nonce(bytes32 txID) public view returns (uint64) {
         return txStorage.nonce[txID];
     }
+
+    function readTx_handlePacketCount() public view returns (uint256) {
+        return txStorage.handlePacketCount;
+    }
+
+    function readTx_handleAckCount() public view returns (uint256) {
+        return txStorage.handleAckCount;
+    }
+
+    function readTx_handleTimeoutCount() public view returns (uint256) {
+        return txStorage.handleTimeoutCount;
+    }
 }
 
 contract DelegatedLogicHandlerTest is Test, ICrossError {
@@ -227,6 +260,7 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
     bytes32 private txID = keccak256("test_tx_id");
     AuthAccount.Data[] private signers;
     MsgInitiateTx.Data private txMsg;
+    Packet private dummyPacket;
 
     function setUp() public {
         mockAuth = new MockTxAuthManager();
@@ -246,6 +280,17 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
             timeout_timestamp: 0,
             signers: signers,
             contract_transactions: new ContractTransaction.Data[](0)
+        });
+
+        dummyPacket = Packet({
+            sequence: 1,
+            sourcePort: "src",
+            sourceChannel: "channel-0",
+            destinationPort: "dst",
+            destinationChannel: "channel-1",
+            data: hex"00",
+            timeoutHeight: Height.Data(0, 0),
+            timeoutTimestamp: 0
         });
     }
 
@@ -314,6 +359,25 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
         bool result = harness.exposed_isTxRecorded(txID);
 
         assertTrue(result, "Return value mismatch");
+    }
+
+    function test_handlePacket_DelegatesToTxManager() public {
+        bytes memory ack = harness.exposed_handlePacket(dummyPacket);
+
+        assertEq(harness.readTx_handlePacketCount(), 1, "handlePacket call count mismatch");
+        assertEq(ack, hex"1234", "Acknowledgement return value mismatch");
+    }
+
+    function test_handleAcknowledgement_DelegatesToTxManager() public {
+        harness.exposed_handleAcknowledgement(dummyPacket, hex"beef");
+
+        assertEq(harness.readTx_handleAckCount(), 1, "handleAcknowledgement call count mismatch");
+    }
+
+    function test_handleTimeout_DelegatesToTxManager() public {
+        harness.exposed_handleTimeout(dummyPacket);
+
+        assertEq(harness.readTx_handleTimeoutCount(), 1, "handleTimeout call count mismatch");
     }
 
     function test_delegateWithData_SucceedsAndReturnsData() public {
