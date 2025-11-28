@@ -8,6 +8,7 @@ import "../src/core/SimpleContractRegistry.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/ICrossError.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract DummyModule is IContractModule {
     // do nothing implementation
@@ -39,7 +40,7 @@ contract DummyModule is IContractModule {
 }
 
 contract SimpleContractRegistryHarness is SimpleContractRegistry {
-    function exposed_registerModule(IContractModule m) external {
+    function exposed_registerModule(IContractModule m) external initializer {
         registerModule(m);
     }
 
@@ -78,7 +79,7 @@ contract SimpleContractRegistryTest is Test, ICrossError {
 
         registry.exposed_registerModule(m);
 
-        vm.expectRevert(ModuleAlreadyInitialized.selector);
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
         registry.exposed_registerModule(m);
     }
 
