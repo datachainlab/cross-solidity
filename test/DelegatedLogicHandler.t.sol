@@ -111,16 +111,16 @@ contract MockTxManager is ITxManager, MockStore {
     }
 
     function handlePacket(Packet calldata) external override returns (bytes memory) {
-        txStorage.handlePacketCount++;
+        ++txStorage.handlePacketCount;
         return hex"1234";
     }
 
     function handleAcknowledgement(Packet calldata, bytes calldata) external override {
-        txStorage.handleAckCount++;
+        ++txStorage.handleAckCount;
     }
 
     function handleTimeout(Packet calldata) external override {
-        txStorage.handleTimeoutCount++;
+        ++txStorage.handleTimeoutCount;
     }
 }
 
