@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings, function-max-lines
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
