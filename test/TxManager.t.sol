@@ -19,58 +19,17 @@ import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/pr
 import {ICrossError} from "../src/core/ICrossError.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
-import {IContractModule, CrossContext} from "../src/core/IContractModule.sol";
+import {IContractModule} from "../src/core/IContractModule.sol";
 import {
     PacketAcknowledgementCall,
     PacketData,
     Acknowledgement
 } from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {Height} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Client.sol";
-import {Channel, ChannelCounterparty} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Channel.sol";
 
-contract MockIBCHandler {
-    function sendPacket(string calldata, string calldata, Height.Data calldata, uint64, bytes calldata)
-        external
-        returns (uint64)
-    {
-        return 1;
-    }
+contract DummyIBCHandler {}
 
-    function getChannel(string calldata, string calldata)
-        external
-        pure
-        returns (Channel.Data memory channel, bool found)
-    {
-        return (
-            Channel.Data(
-                Channel.State.STATE_OPEN,
-                Channel.Order.ORDER_UNORDERED,
-                ChannelCounterparty.Data("", ""),
-                new string[](0),
-                "",
-                0
-            ),
-            true
-        );
-    }
-}
-
-contract MockContractModule is IContractModule {
-    function onContractCommitImmediately(CrossContext calldata, bytes calldata)
-        external
-        override
-        returns (bytes memory)
-    {
-        return hex"AA";
-    }
-    function onAbort(CrossContext calldata) external override {}
-    function onCommit(CrossContext calldata) external override {}
-
-    function onContractPrepare(CrossContext calldata, bytes calldata) external override returns (bytes memory) {
-        return hex"BB";
-    }
-}
+contract DummyContractModule {}
 
 contract TxManagerHarness is TxManager {
     uint256 public runCount;
@@ -129,13 +88,13 @@ contract TxManagerTest is Test {
     bytes32 private txID = keccak256("test_tx_id");
     MsgInitiateTx.Data private txMsg;
 
-    MockIBCHandler private mockHandler;
-    MockContractModule private mockModule;
+    DummyIBCHandler private dummyHandler;
+    DummyContractModule private dummyModule;
 
     function setUp() public {
         harness = new TxManagerHarness();
-        mockHandler = new MockIBCHandler();
-        mockModule = new MockContractModule();
+        dummyHandler = new DummyIBCHandler();
+        dummyModule = new DummyContractModule();
 
         AuthAccount.Data[] memory signers;
         ContractTransaction.Data[] memory txs;
@@ -154,22 +113,22 @@ contract TxManagerTest is Test {
     // --- initialize ---
 
     function test_initialize_SetsHandlerAndModule() public {
-        harness.initialize(IIBCHandler(address(mockHandler)), mockModule);
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
 
         assertEq(harness.initCount(), 1, "initialize should be called once");
     }
 
     function test_initialize_RevertWhen_DoubleInit() public {
-        harness.initialize(IIBCHandler(address(mockHandler)), mockModule);
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
 
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        harness.initialize(IIBCHandler(address(mockHandler)), mockModule);
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
     }
 
     // --- handlePacket ---
 
     function test_handlePacket_DelegatesToModule() public {
-        harness.initialize(IIBCHandler(address(mockHandler)), mockModule);
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
 
         Packet memory p;
         bytes memory ack = harness.handlePacket(p);
@@ -181,7 +140,7 @@ contract TxManagerTest is Test {
     // --- handleAcknowledgement ---
 
     function test_handleAcknowledgement_CallsLogic() public {
-        harness.initialize(IIBCHandler(address(mockHandler)), mockModule);
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
 
         Packet memory p;
         bytes memory emptyAck;
@@ -193,7 +152,7 @@ contract TxManagerTest is Test {
     // --- handleTimeout ---
 
     function test_handleTimeout_CallsLogic() public {
-        harness.initialize(IIBCHandler(address(mockHandler)), mockModule);
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
 
         Packet memory p;
         harness.handleTimeout(p);
