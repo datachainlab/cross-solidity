@@ -112,7 +112,7 @@ contract TxManagerTest is Test {
 
     // --- initialize ---
 
-    function test_initialize_SetsHandlerAndModule() public {
+    function test_initialize_Succeeds() public {
         harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
 
         assertEq(harness.initCount(), 1, "initialize should be called once");
@@ -127,7 +127,7 @@ contract TxManagerTest is Test {
 
     // --- handlePacket ---
 
-    function test_handlePacket_DelegatesToModule() public {
+    function test_handlePacket_CallsLogic() public {
         harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
 
         Packet memory p;
