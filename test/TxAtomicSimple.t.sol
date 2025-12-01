@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings, function-max-lines
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -29,6 +29,8 @@ import {MsgInitiateTx, ContractTransaction, ReturnValue, Link} from "../src/prot
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {ChannelInfo} from "../src/proto/cross/core/xcc/XCC.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
+
+// --- Mocks ---
 
 contract MockIBCHandler {
     bool public foundChannel = true;
@@ -64,9 +66,15 @@ contract MockIBCHandler {
 contract MockModule is IContractModule {
     bytes public retBytes;
     bool public prepareResult = true;
-    bool public onCommitCalled;
-    bool public onAbortCalled;
+
+    uint256 public onContractCommitImmediatelyCallCount;
+    uint256 public onCommitCallCount;
+    uint256 public onAbortCallCount;
+    uint256 public onContractPrepareCallCount;
+
     bool public revertOnCommitImmediately;
+    bool public revertOnCommit;
+    bool public revertOnAbort;
 
     constructor(bytes memory r) {
         retBytes = r;
@@ -80,12 +88,20 @@ contract MockModule is IContractModule {
         revertOnCommitImmediately = b;
     }
 
+    function setRevertOnCommit(bool b) external {
+        revertOnCommit = b;
+    }
+
+    function setRevertOnAbort(bool b) external {
+        revertOnAbort = b;
+    }
+
     function onContractCommitImmediately(CrossContext calldata, bytes calldata)
         external
-        view
         override
         returns (bytes memory)
     {
+        ++onContractCommitImmediatelyCallCount;
         if (revertOnCommitImmediately) {
             revert("MockModule: CommitImmediately failed");
         }
@@ -93,14 +109,21 @@ contract MockModule is IContractModule {
     }
 
     function onAbort(CrossContext calldata) external override {
-        onAbortCalled = true;
+        ++onAbortCallCount;
+        if (revertOnAbort) {
+            revert("MockModule: OnAbort failed");
+        }
     }
 
     function onCommit(CrossContext calldata) external override {
-        onCommitCalled = true;
+        ++onCommitCallCount;
+        if (revertOnCommit) {
+            revert("MockModule: OnCommit failed");
+        }
     }
 
     function onContractPrepare(CrossContext calldata, bytes calldata) external override returns (bytes memory) {
+        ++onContractPrepareCallCount;
         if (!prepareResult) {
             revert("MockModule: Prepare failed");
         }
@@ -108,26 +131,30 @@ contract MockModule is IContractModule {
     }
 }
 
-contract TxAtomicSimpleHarness is TxAtomicSimple {
+abstract contract MockContractRegistry is ContractRegistry {
     IContractModule internal _module;
-
-    function initialize(IIBCHandler handler, IContractModule module) public initializer {
-        __initTxAtomicSimple(handler, module);
-    }
 
     function registerModule(IContractModule module) internal override {
         _module = module;
     }
 
-    function setModule(IContractModule module) external {
-        _module = module;
-    }
-
-    function getModule(Packet memory) internal override returns (IContractModule) {
+    function getModule(Packet memory) internal view override returns (IContractModule) {
         return _module;
     }
 
-    function exposed_runTx(bytes32 txID, MsgInitiateTx.Data memory msg_) external {
+    function setModule(IContractModule module) external {
+        _module = module;
+    }
+}
+
+// --- Harness ---
+
+contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
+    function initialize(IIBCHandler handler, IContractModule module) public initializer {
+        __initTxAtomicSimple(handler, module);
+    }
+
+    function exposed_runTx(bytes32 txID, MsgInitiateTx.Data calldata msg_) external {
         CrossStore.TxStorage storage t = _getTxStorage();
         t.txMsg[txID] = msg_;
         _runTx(txID, t.txMsg[txID]);
@@ -145,15 +172,15 @@ contract TxAtomicSimpleHarness is TxAtomicSimple {
         _handleTimeout(p);
     }
 
-    function setCoordinatorState(bytes32 txID, CoordinatorState.Data memory state) external {
+    function setCoordinatorState(bytes32 txID, CoordinatorState.Data calldata state) external {
         _getCoordStorage().states[txID] = state;
     }
 
-    function setContractTxState(bytes32 txID, uint8 index, ContractTransactionState.Data memory state) external {
+    function setContractTxState(bytes32 txID, uint8 index, ContractTransactionState.Data calldata state) external {
         _getTxStorage().states[txID][index] = state;
     }
 
-    function setTxMsg(bytes32 txID, MsgInitiateTx.Data memory msg_) external {
+    function setTxMsg(bytes32 txID, MsgInitiateTx.Data calldata msg_) external {
         _getTxStorage().txMsg[txID] = msg_;
     }
 
@@ -220,33 +247,11 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         });
     }
 
-    function _createPacket(string memory srcPort, string memory srcChannel) internal view returns (Packet memory) {
-        // Construct a valid PacketDataCall containing the TX_ID, even for simple Ack tests
-        // This is necessary because _handleAcknowledgement extracts TX_ID from the original packet data.
-        PacketDataCall.Data memory pdc = PacketDataCall.Data({
-            tx_id: abi.encode(TX_ID),
-            tx: PacketDataCallResolvedContractTransaction.Data(
-                Any.Data("", ""), new AuthAccount.Data[](0), "", ReturnValue.Data(""), new Any.Data[](0)
-            )
-        });
-
-        bytes memory payload =
-            Any.encode(Any.Data("/cross.core.atomic.simple.PacketDataCall", PacketDataCall.encode(pdc)));
-        bytes memory data = PacketData.encode(PacketData.Data(Header.Data(new HeaderField.Data[](0)), payload));
-
-        return Packet({
-            sequence: 1,
-            sourcePort: srcPort,
-            sourceChannel: srcChannel,
-            destinationPort: "dst",
-            destinationChannel: "dst",
-            data: data,
-            timeoutHeight: Height.Data(0, 0),
-            timeoutTimestamp: 0
-        });
-    }
-
-    function _createPacketWithCall(bytes32 txId, bytes memory callInfo) internal pure returns (Packet memory p) {
+    function _createPacket(bytes32 txId, bytes memory callInfo, string memory srcPort, string memory srcChannel)
+        internal
+        pure
+        returns (Packet memory)
+    {
         Any.Data memory emptyAny = Any.Data({type_url: "", value: ""});
         ReturnValue.Data memory emptyRet = ReturnValue.Data({value: ""});
 
@@ -262,18 +267,22 @@ contract TxAtomicSimpleTest is Test, ICrossError {
                 objects: objects
             });
 
-        PacketDataCall.Data memory callData = PacketDataCall.Data({tx_id: abi.encodePacked(txId), tx: txResolved});
+        PacketDataCall.Data memory callData = PacketDataCall.Data({tx_id: abi.encode(txId), tx: txResolved});
 
-        bytes memory anyPayload = Any.encode(
-            // solhint-disable-next-line gas-small-strings
-            Any.Data({type_url: "/cross.core.atomic.simple.PacketDataCall", value: PacketDataCall.encode(callData)})
-        );
+        bytes memory payload =
+            Any.encode(Any.Data("/cross.core.atomic.simple.PacketDataCall", PacketDataCall.encode(callData)));
+        bytes memory data = PacketData.encode(PacketData.Data(Header.Data(new HeaderField.Data[](0)), payload));
 
-        HeaderField.Data[] memory fields;
-        bytes memory packetDataBytes =
-            PacketData.encode(PacketData.Data({header: Header.Data({fields: fields}), payload: anyPayload}));
-
-        p.data = packetDataBytes;
+        return Packet({
+            sequence: 1,
+            sourcePort: srcPort,
+            sourceChannel: srcChannel,
+            destinationPort: "dst",
+            destinationChannel: "dst",
+            data: data,
+            timeoutHeight: Height.Data(0, 0),
+            timeoutTimestamp: 0
+        });
     }
 
     function _createAck(PacketAcknowledgementCall.CommitStatus status) internal pure returns (bytes memory) {
@@ -298,7 +307,6 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         channels[0] = ChannelInfo.Data("", "");
         channels[1] = ChannelInfo.Data("port-1", "channel-1");
 
-        // Initial setup assumes coordinator (index 0) is already confirmed (PREPARE phase complete)
         uint32[] memory confirmed = new uint32[](1);
         confirmed[0] = 0; // TX_INDEX_COORDINATOR
 
@@ -312,7 +320,6 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         });
         harness.setCoordinatorState(TX_ID, cs);
 
-        // Also need transaction state for commit/abort execution
         ContractTransactionState.Data memory ts = ContractTransactionState.Data({
             status: ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_PREPARE,
             prepare_result: ContractTransactionState.PrepareResult.PREPARE_RESULT_OK,
@@ -320,14 +327,13 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         });
         harness.setContractTxState(TX_ID, 0, ts);
 
-        // Also need TxMsg stored to retrieve signers etc for onCommit/onAbort
         harness.setTxMsg(TX_ID, _createValidSimpleMsg());
     }
 
     // --- handlePacket ---
 
     function test_handlePacket_ReturnsOkAndEmitsEventWhenModuleSucceeds() public {
-        Packet memory packet = _createPacketWithCall(TX_ID, hex"c0ffee");
+        Packet memory packet = _createPacket(TX_ID, hex"c0ffee", "port-1", "channel-1");
 
         vm.expectEmit(address(harness));
         emit OnContractCall(abi.encodePacked(TX_ID), 1, true, hex"01");
@@ -339,12 +345,15 @@ contract TxAtomicSimpleTest is Test, ICrossError {
             uint256(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK),
             "ACK should be OK"
         );
+        assertEq(
+            mockModule.onContractCommitImmediatelyCallCount(), 1, "onContractCommitImmediately should be called once"
+        );
     }
 
     function test_handlePacket_ReturnsFailedAndEmitsEventWhenModuleReverts() public {
         mockModule.setRevertOnCommitImmediately(true);
 
-        Packet memory packet = _createPacketWithCall(TX_ID, hex"00");
+        Packet memory packet = _createPacket(TX_ID, hex"00", "port-1", "channel-1");
 
         vm.expectEmit(address(harness));
         emit OnContractCall(abi.encodePacked(TX_ID), 1, false, "");
@@ -356,6 +365,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
             uint256(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED),
             "ACK should be FAILED"
         );
+        assertEq(mockModule.onContractCommitImmediatelyCallCount(), 0, "Counter should be 0 due to revert rollback");
     }
 
     function test_handlePacket_ReturnsFailedWhenPayloadEmpty() public {
@@ -406,13 +416,11 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
         harness.exposed_runTx(TX_ID, msg_);
 
-        // Verify Coordinator State
         CoordinatorState.Data memory cs = harness.getCoordState(TX_ID);
         assertEq(uint256(cs.phase), uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE));
         assertEq(uint256(cs.commit_protocol), uint256(Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE));
-
-        // Verify Packet Sent (MockHandler records hash)
         assertNotEq(mockHandler.lastSentPacketHash(), bytes32(0), "Packet should be sent");
+        assertEq(mockModule.onContractPrepareCallCount(), 1, "onContractPrepare should be called once");
     }
 
     function test_runTx_Simple_RevertWhen_SignerLenMismatch() public {
@@ -448,6 +456,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         // Should transition to COMMIT phase with ABORT decision immediately
         assertEq(uint256(cs.phase), uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT));
         assertEq(uint256(cs.decision), uint256(CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT));
+        assertEq(mockModule.onContractPrepareCallCount(), 0, "Counter should be 0 due to revert rollback");
     }
 
     function test_runTx_RevertWhen_TPCNotImplemented() public {
@@ -487,7 +496,6 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     }
 
     function test_runTx_RevertWhen_TxIDAlreadyExists() public {
-        // Setup state to simulate existing transaction
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         MsgInitiateTx.Data memory msg_ = _createValidSimpleMsg();
@@ -544,7 +552,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_Commit_Success() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         harness.exposed_handleAcknowledgement(p, ack);
@@ -553,14 +561,14 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         assertEq(uint256(cs.phase), uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT));
         assertEq(uint256(cs.decision), uint256(CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_COMMIT));
 
-        assertTrue(mockModule.onCommitCalled(), "onCommit should be called");
-        assertFalse(mockModule.onAbortCalled(), "onAbort should not be called");
+        assertEq(mockModule.onCommitCallCount(), 1, "onCommit should be called once");
+        assertEq(mockModule.onAbortCallCount(), 0, "onAbort should not be called");
     }
 
     function test_handleAck_Abort_Failure() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
 
         harness.exposed_handleAcknowledgement(p, ack);
@@ -569,14 +577,14 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         assertEq(uint256(cs.phase), uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT));
         assertEq(uint256(cs.decision), uint256(CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT));
 
-        assertTrue(mockModule.onAbortCalled(), "onAbort should be called");
-        assertFalse(mockModule.onCommitCalled(), "onCommit should not be called");
+        assertEq(mockModule.onAbortCallCount(), 1, "onAbort should be called once");
+        assertEq(mockModule.onCommitCallCount(), 0, "onCommit should not be called");
     }
 
     function test_handleAck_RevertWhen_AckIsNotSuccess() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
 
         // Create an Ack with is_success = false
         bytes memory res = hex"";
@@ -589,7 +597,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_RevertWhen_AckPayloadDecodeFailed() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
 
         // PacketData with empty payload
         bytes memory emptyPayload =
@@ -603,7 +611,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_RevertWhen_AckTypeURLUnexpected() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
 
         // Wrong type URL
         PacketAcknowledgementCall.Data memory pac =
@@ -620,7 +628,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         // Create packet with empty payload data
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         p.data = PacketData.encode(PacketData.Data(Header.Data(new HeaderField.Data[](0)), bytes("")));
 
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
@@ -633,7 +641,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         // Packet with wrong type URL
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
 
         PacketDataCall.Data memory pdc = PacketDataCall.Data({
             tx_id: abi.encode(TX_ID),
@@ -656,7 +664,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         // Packet with wrong TxID length (empty bytes instead of 32 bytes)
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
 
         PacketDataCall.Data memory pdc = PacketDataCall.Data({
             tx_id: hex"", // Empty ID
@@ -684,7 +692,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         cs.commit_protocol = Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN;
         harness.setCoordinatorState(TX_ID, cs);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         vm.expectRevert(abi.encodeWithSelector(CoordinatorStateNotFound.selector, TX_ID));
@@ -694,7 +702,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_RevertWhen_CoordinatorPhaseNotPrepare() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         vm.expectRevert(CoordinatorPhaseNotPrepare.selector);
@@ -712,7 +720,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         cs.confirmed_txs = allConfirmed;
         harness.setCoordinatorState(TX_ID, cs);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         vm.expectRevert(AllTransactionsConfirmed.selector);
@@ -722,7 +730,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_RevertWhen_ChannelNotFound() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         // Mock Handler returns not found
@@ -735,7 +743,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_RevertWhen_ChannelMismatch() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-bad", "channel-bad"); // Wrong channel
+        Packet memory p = _createPacket(TX_ID, "", "port-bad", "channel-bad"); // Wrong channel
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         vm.expectRevert(UnexpectedSourceChannel.selector);
@@ -745,7 +753,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_RevertWhen_UnexpectedCommitStatus() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
 
         // Status UNKNOWN (0)
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_UNKNOWN);
@@ -763,7 +771,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         cs.confirmed_txs = new uint32[](0); // Empty confirmation
         harness.setCoordinatorState(TX_ID, cs);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         vm.expectRevert(CoordinatorStateInconsistent.selector);
@@ -778,7 +786,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         ts.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_ABORT;
         harness.setContractTxState(TX_ID, 0, ts);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         vm.expectRevert(CoordinatorTxStatusNotPrepare.selector);
@@ -788,7 +796,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     function test_handleAck_RevertWhen_ModuleNotInitialized() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         // Unregister module
@@ -799,10 +807,34 @@ contract TxAtomicSimpleTest is Test, ICrossError {
     }
 
     function test_handleAck_RevertWhen_StateNotFound() public {
-        Packet memory p = _createPacket("port-1", "channel-1");
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
 
         vm.expectRevert(abi.encodeWithSelector(CoordinatorStateNotFound.selector, TX_ID));
+        harness.exposed_handleAcknowledgement(p, ack);
+    }
+
+    function test_handleAck_RevertWhen_OnCommitReverts() public {
+        _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
+
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
+        bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
+
+        mockModule.setRevertOnCommit(true);
+
+        vm.expectRevert("MockModule: OnCommit failed");
+        harness.exposed_handleAcknowledgement(p, ack);
+    }
+
+    function test_handleAck_RevertWhen_OnAbortReverts() public {
+        _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
+
+        Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
+        bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
+
+        mockModule.setRevertOnAbort(true);
+
+        vm.expectRevert("MockModule: OnAbort failed");
         harness.exposed_handleAcknowledgement(p, ack);
     }
 }
