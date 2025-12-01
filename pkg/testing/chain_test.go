@@ -74,8 +74,8 @@ func (chain *Chain) TxSyncIfNoError(ctx context.Context) func(tx *gethtypes.Tran
 	}
 }
 
-func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*txmanager.TxmanagerOnContractCall, error) {
-	filter, err := txmanager.NewTxmanagerFilterer(
+func (chain *Chain) findEventOnContractCommitImmediately(ctx context.Context, txID []byte) (*crosssimplemodule.CrosssimplemoduleOnContractCommitImmediately, error) {
+	filter, err := crosssimplemodule.NewCrosssimplemoduleFilterer(
 		chain.ContractConfig.GetCrossSimpleModuleAddress(), chain.ETHClient,
 	)
 	if err != nil {
@@ -84,7 +84,7 @@ func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*
 
 	idHash := crypto.Keccak256Hash(txID)
 
-	iter, err := filter.FilterOnContractCall(
+	iter, err := filter.FilterOnContractCommitImmediately(
 		&bind.FilterOpts{Context: ctx},
 		[][]byte{txID}, // txId
 		nil,            // txIndex
