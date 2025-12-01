@@ -10,6 +10,8 @@ import {TxAtomicSimple} from "./TxAtomicSimple.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
+import {PacketAcknowledgementCall} from "../proto/cross/core/atomic/simple/AtomicSimple.sol";
+
 
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
@@ -108,5 +110,15 @@ contract TxManager is
                 d.links.push(s.links[j]);
             }
         }
+    }
+
+    // ---- debug for serialization ----
+    function getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus status)
+        public
+        pure
+        returns (bytes memory acknowledgement)
+    {
+        PacketAcknowledgementCall.Data memory ack = PacketAcknowledgementCall.Data({status: status});
+        return packPacketAcknowledgementCall(ack);
     }
 }

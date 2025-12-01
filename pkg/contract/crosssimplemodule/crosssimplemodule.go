@@ -124,6 +124,17 @@ type LinkData struct {
 	SrcIndex uint32
 }
 
+// MsgExtSignTxData is an auto generated low-level Go binding around an user-defined struct.
+type MsgExtSignTxData struct {
+	TxID    []byte
+	Signers []AccountData
+}
+
+// MsgExtSignTxResponseData is an auto generated low-level Go binding around an user-defined struct.
+type MsgExtSignTxResponseData struct {
+	X bool
+}
+
 // MsgInitiateTxData is an auto generated low-level Go binding around an user-defined struct.
 type MsgInitiateTxData struct {
 	ChainId              string
@@ -139,6 +150,20 @@ type MsgInitiateTxData struct {
 type MsgInitiateTxResponseData struct {
 	TxID   []byte
 	Status uint8
+}
+
+// MsgSignTxData is an auto generated low-level Go binding around an user-defined struct.
+type MsgSignTxData struct {
+	TxID             []byte
+	Signers          [][]byte
+	TimeoutHeight    IbcCoreClientV1HeightData
+	TimeoutTimestamp uint64
+}
+
+// MsgSignTxResponseData is an auto generated low-level Go binding around an user-defined struct.
+type MsgSignTxResponseData struct {
+	TxAuthCompleted bool
+	Log             string
 }
 
 // Packet is an auto generated low-level Go binding around an user-defined struct.
@@ -158,14 +183,29 @@ type QuerySelfXCCResponseData struct {
 	Xcc GoogleProtobufAnyData
 }
 
+// QueryTxAuthStateRequestData is an auto generated low-level Go binding around an user-defined struct.
+type QueryTxAuthStateRequestData struct {
+	TxID []byte
+}
+
+// QueryTxAuthStateResponseData is an auto generated low-level Go binding around an user-defined struct.
+type QueryTxAuthStateResponseData struct {
+	TxAuthState TxAuthStateData
+}
+
 // ReturnValueData is an auto generated low-level Go binding around an user-defined struct.
 type ReturnValueData struct {
 	Value []byte
 }
 
+// TxAuthStateData is an auto generated low-level Go binding around an user-defined struct.
+type TxAuthStateData struct {
+	RemainingSigners []AccountData
+}
+
 // CrosssimplemoduleMetaData contains all meta data concerning the Crosssimplemodule contract.
 var CrosssimplemoduleMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"ibcHandler_\",\"type\":\"address\",\"internalType\":\"contractIIBCHandler\"},{\"name\":\"txAuthManager_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"txManager_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"contractIContractModule\"},{\"name\":\"debugMode\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID_HASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"DEFAULT_ADMIN_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"IBC_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"TX_AUTH_MANAGER\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"TX_MANAGER\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPacketAcknowledgementCall\",\"inputs\":[{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumPacketAcknowledgementCall.CommitStatus\"}],\"outputs\":[{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getRoleAdmin\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"grantRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"hasRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initiateTx\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structMsgInitiateTx.Data\",\"components\":[{\"name\":\"chain_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"nonce\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"commit_protocol\",\"type\":\"uint8\",\"internalType\":\"enumTx.CommitProtocol\"},{\"name\":\"contract_transactions\",\"type\":\"tuple[]\",\"internalType\":\"structContractTransaction.Data[]\",\"components\":[{\"name\":\"cross_chain_channel\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"signers\",\"type\":\"tuple[]\",\"internalType\":\"structAccount.Data[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"auth_type\",\"type\":\"tuple\",\"internalType\":\"structAuthType.Data\",\"components\":[{\"name\":\"mode\",\"type\":\"uint8\",\"internalType\":\"enumAuthType.AuthMode\"},{\"name\":\"option\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}]},{\"name\":\"call_info\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"return_value\",\"type\":\"tuple\",\"internalType\":\"structReturnValue.Data\",\"components\":[{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"links\",\"type\":\"tuple[]\",\"internalType\":\"structLink.Data[]\",\"components\":[{\"name\":\"src_index\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}]},{\"name\":\"signers\",\"type\":\"tuple[]\",\"internalType\":\"structAccount.Data[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"auth_type\",\"type\":\"tuple\",\"internalType\":\"structAuthType.Data\",\"components\":[{\"name\":\"mode\",\"type\":\"uint8\",\"internalType\":\"enumAuthType.AuthMode\"},{\"name\":\"option\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}]},{\"name\":\"timeout_height\",\"type\":\"tuple\",\"internalType\":\"structIbcCoreClientV1Height.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeout_timestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]}],\"outputs\":[{\"name\":\"resp\",\"type\":\"tuple\",\"internalType\":\"structMsgInitiateTxResponse.Data\",\"components\":[{\"name\":\"txID\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumMsgInitiateTxResponse.InitiateTxStatus\"}]}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onAcknowledgementPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanCloseConfirm\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanCloseConfirm\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanCloseInit\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanCloseInit\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenAck\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanOpenAck\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterpartyVersion\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenConfirm\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanOpenConfirm\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenInit\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structIIBCModuleInitializer.MsgOnChanOpenInit\",\"components\":[{\"name\":\"order\",\"type\":\"uint8\",\"internalType\":\"enumChannel.Order\"},{\"name\":\"connectionHops\",\"type\":\"string[]\",\"internalType\":\"string[]\"},{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterparty\",\"type\":\"tuple\",\"internalType\":\"structChannelCounterparty.Data\",\"components\":[{\"name\":\"port_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channel_id\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[{\"name\":\"moduleAddr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenTry\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structIIBCModuleInitializer.MsgOnChanOpenTry\",\"components\":[{\"name\":\"order\",\"type\":\"uint8\",\"internalType\":\"enumChannel.Order\"},{\"name\":\"connectionHops\",\"type\":\"string[]\",\"internalType\":\"string[]\"},{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterparty\",\"type\":\"tuple\",\"internalType\":\"structChannelCounterparty.Data\",\"components\":[{\"name\":\"port_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channel_id\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"counterpartyVersion\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[{\"name\":\"moduleAddr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRecvPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onTimeoutPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"renounceRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"callerConfirmation\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"revokeRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"selfXCC\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structQuerySelfXCCResponse.Data\",\"components\":[{\"name\":\"xcc\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceID\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"OnContractCall\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes\",\"indexed\":true,\"internalType\":\"bytes\"},{\"name\":\"txIndex\",\"type\":\"uint8\",\"indexed\":true,\"internalType\":\"uint8\"},{\"name\":\"success\",\"type\":\"bool\",\"indexed\":true,\"internalType\":\"bool\"},{\"name\":\"ret\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleAdminChanged\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"previousAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"newAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleGranted\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleRevoked\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TxInitiated\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"},{\"name\":\"proposer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AccessControlBadConfirmation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AccessControlUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"neededRole\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"AuthAlreadyCompleted\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"AuthStateAlreadyInitialized\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CoordinatorStateNotFound\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"DelegateCallAuthFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DelegateCallTxFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"IDNotFound\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"MessageTimeoutHeight\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"timeoutVersionHeight\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"type\":\"error\",\"name\":\"MessageTimeoutTimestamp\",\"inputs\":[{\"name\":\"blockTimestamp\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"type\":\"error\",\"name\":\"ModuleAlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ModuleNotInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotImplemented\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"PayloadDecodeFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SelfXCCNotImplemented\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaticCallAuthFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaticCallTxFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TxAlreadyExists\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"TxAlreadyVerified\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"TxIDAlreadyExists\",\"inputs\":[{\"name\":\"txIDHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"TxRunNotImplemented\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnexpectedChainID\",\"inputs\":[{\"name\":\"expectedHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"gotHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"UnexpectedTypeURL\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"ibcHandler_\",\"type\":\"address\",\"internalType\":\"contractIIBCHandler\"},{\"name\":\"txAuthManager_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"txManager_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"module_\",\"type\":\"address\",\"internalType\":\"contractIContractModule\"},{\"name\":\"authTypeUrls_\",\"type\":\"string[]\",\"internalType\":\"string[]\"},{\"name\":\"authVerifiers_\",\"type\":\"address[]\",\"internalType\":\"contractIAuthExtensionVerifier[]\"},{\"name\":\"debugMode\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID_HASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"DEFAULT_ADMIN_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"IBC_ROLE\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"TX_AUTH_MANAGER\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"TX_MANAGER\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"__getAuthState\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structTxAuthState.Data\",\"components\":[{\"name\":\"remaining_signers\",\"type\":\"tuple[]\",\"internalType\":\"structAccount.Data[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"auth_type\",\"type\":\"tuple\",\"internalType\":\"structAuthType.Data\",\"components\":[{\"name\":\"mode\",\"type\":\"uint8\",\"internalType\":\"enumAuthType.AuthMode\"},{\"name\":\"option\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}]}]}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"__isCompletedAuth\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"__isTxRecorded\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"extSignTx\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structMsgExtSignTx.Data\",\"components\":[{\"name\":\"txID\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"signers\",\"type\":\"tuple[]\",\"internalType\":\"structAccount.Data[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"auth_type\",\"type\":\"tuple\",\"internalType\":\"structAuthType.Data\",\"components\":[{\"name\":\"mode\",\"type\":\"uint8\",\"internalType\":\"enumAuthType.AuthMode\"},{\"name\":\"option\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structMsgExtSignTxResponse.Data\",\"components\":[{\"name\":\"x\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getRoleAdmin\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"grantRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"hasRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initiateTx\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structMsgInitiateTx.Data\",\"components\":[{\"name\":\"chain_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"nonce\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"commit_protocol\",\"type\":\"uint8\",\"internalType\":\"enumTx.CommitProtocol\"},{\"name\":\"contract_transactions\",\"type\":\"tuple[]\",\"internalType\":\"structContractTransaction.Data[]\",\"components\":[{\"name\":\"cross_chain_channel\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"signers\",\"type\":\"tuple[]\",\"internalType\":\"structAccount.Data[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"auth_type\",\"type\":\"tuple\",\"internalType\":\"structAuthType.Data\",\"components\":[{\"name\":\"mode\",\"type\":\"uint8\",\"internalType\":\"enumAuthType.AuthMode\"},{\"name\":\"option\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}]},{\"name\":\"call_info\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"return_value\",\"type\":\"tuple\",\"internalType\":\"structReturnValue.Data\",\"components\":[{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"links\",\"type\":\"tuple[]\",\"internalType\":\"structLink.Data[]\",\"components\":[{\"name\":\"src_index\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}]},{\"name\":\"signers\",\"type\":\"tuple[]\",\"internalType\":\"structAccount.Data[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"auth_type\",\"type\":\"tuple\",\"internalType\":\"structAuthType.Data\",\"components\":[{\"name\":\"mode\",\"type\":\"uint8\",\"internalType\":\"enumAuthType.AuthMode\"},{\"name\":\"option\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}]},{\"name\":\"timeout_height\",\"type\":\"tuple\",\"internalType\":\"structIbcCoreClientV1Height.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeout_timestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]}],\"outputs\":[{\"name\":\"resp\",\"type\":\"tuple\",\"internalType\":\"structMsgInitiateTxResponse.Data\",\"components\":[{\"name\":\"txID\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"status\",\"type\":\"uint8\",\"internalType\":\"enumMsgInitiateTxResponse.InitiateTxStatus\"}]}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onAcknowledgementPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanCloseConfirm\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanCloseConfirm\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanCloseInit\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanCloseInit\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenAck\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanOpenAck\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterpartyVersion\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenConfirm\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIIBCModule.MsgOnChanOpenConfirm\",\"components\":[{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenInit\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structIIBCModuleInitializer.MsgOnChanOpenInit\",\"components\":[{\"name\":\"order\",\"type\":\"uint8\",\"internalType\":\"enumChannel.Order\"},{\"name\":\"connectionHops\",\"type\":\"string[]\",\"internalType\":\"string[]\"},{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterparty\",\"type\":\"tuple\",\"internalType\":\"structChannelCounterparty.Data\",\"components\":[{\"name\":\"port_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channel_id\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[{\"name\":\"moduleAddr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onChanOpenTry\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structIIBCModuleInitializer.MsgOnChanOpenTry\",\"components\":[{\"name\":\"order\",\"type\":\"uint8\",\"internalType\":\"enumChannel.Order\"},{\"name\":\"connectionHops\",\"type\":\"string[]\",\"internalType\":\"string[]\"},{\"name\":\"portId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channelId\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"counterparty\",\"type\":\"tuple\",\"internalType\":\"structChannelCounterparty.Data\",\"components\":[{\"name\":\"port_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"channel_id\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"name\":\"counterpartyVersion\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[{\"name\":\"moduleAddr\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRecvPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"acknowledgement\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onTimeoutPacket\",\"inputs\":[{\"name\":\"packet\",\"type\":\"tuple\",\"internalType\":\"structPacket\",\"components\":[{\"name\":\"sequence\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"sourcePort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"sourceChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationPort\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"destinationChannel\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"timeoutHeight\",\"type\":\"tuple\",\"internalType\":\"structHeight.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"renounceRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"callerConfirmation\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"revokeRole\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"selfXCC\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structQuerySelfXCCResponse.Data\",\"components\":[{\"name\":\"xcc\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"signTx\",\"inputs\":[{\"name\":\"msg_\",\"type\":\"tuple\",\"internalType\":\"structMsgSignTx.Data\",\"components\":[{\"name\":\"txID\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"signers\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"timeout_height\",\"type\":\"tuple\",\"internalType\":\"structIbcCoreClientV1Height.Data\",\"components\":[{\"name\":\"revision_number\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revision_height\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"name\":\"timeout_timestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structMsgSignTxResponse.Data\",\"components\":[{\"name\":\"tx_auth_completed\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"log\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceID\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"txAuthState\",\"inputs\":[{\"name\":\"req_\",\"type\":\"tuple\",\"internalType\":\"structQueryTxAuthStateRequest.Data\",\"components\":[{\"name\":\"txID\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[{\"name\":\"resp\",\"type\":\"tuple\",\"internalType\":\"structQueryTxAuthStateResponse.Data\",\"components\":[{\"name\":\"tx_auth_state\",\"type\":\"tuple\",\"internalType\":\"structTxAuthState.Data\",\"components\":[{\"name\":\"remaining_signers\",\"type\":\"tuple[]\",\"internalType\":\"structAccount.Data[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"auth_type\",\"type\":\"tuple\",\"internalType\":\"structAuthType.Data\",\"components\":[{\"name\":\"mode\",\"type\":\"uint8\",\"internalType\":\"enumAuthType.AuthMode\"},{\"name\":\"option\",\"type\":\"tuple\",\"internalType\":\"structGoogleProtobufAny.Data\",\"components\":[{\"name\":\"type_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"value\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}]}]}]}]}],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"RoleAdminChanged\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"previousAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"newAdminRole\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleGranted\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"RoleRevoked\",\"inputs\":[{\"name\":\"role\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"account\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TxInitiated\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"},{\"name\":\"proposer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TxSigned\",\"inputs\":[{\"name\":\"signer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"txID\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"method\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumAuthType.AuthMode\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AccessControlBadConfirmation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AccessControlUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"neededRole\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"AckIsNotSuccess\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AllTransactionsConfirmed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ArrayLengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AuthAlreadyCompleted\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"AuthModeMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AuthStateAlreadyInitialized\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"ChannelNotFound\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CoordinatorPhaseNotPrepare\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CoordinatorStateInconsistent\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CoordinatorStateNotFound\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CoordinatorTxStatusNotPrepare\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DelegateCallFailed\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"EmptyTypeUrl\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"IDNotFound\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidSignersLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidTxIDLength\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"LinksNotSupported\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"MessageTimeoutHeight\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"timeoutVersionHeight\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"type\":\"error\",\"name\":\"MessageTimeoutTimestamp\",\"inputs\":[{\"name\":\"blockTimestamp\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"timeoutTimestamp\",\"type\":\"uint64\",\"internalType\":\"uint64\"}]},{\"type\":\"error\",\"name\":\"ModuleAlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ModuleNotInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotImplemented\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"PayloadDecodeFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SignatureVerificationFailed\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"SignerCountMismatch\",\"inputs\":[{\"name\":\"signerCount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signatureCount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"SignerMustEqualSender\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaticCallFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TPCNotImplemented\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TooManySigners\",\"inputs\":[{\"name\":\"got\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxAllowed\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"Tx0MustBeForSelfChain\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TxAlreadyExists\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"TxAlreadyVerified\",\"inputs\":[{\"name\":\"txID\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"TxIDAlreadyExists\",\"inputs\":[{\"name\":\"txIDHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"UnauthorizedCaller\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"UnexpectedChainID\",\"inputs\":[{\"name\":\"expectedHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"gotHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"UnexpectedCommitStatus\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnexpectedReturnValue\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnexpectedSourceChannel\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnexpectedTypeURL\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnknownCommitProtocol\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"VerifierNotFound\",\"inputs\":[{\"name\":\"typeUrl\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"type\":\"error\",\"name\":\"VerifierReturnedFalse\",\"inputs\":[{\"name\":\"txIDHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"typeUrl\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"type\":\"error\",\"name\":\"ZeroAddressVerifier\",\"inputs\":[]}]",
 }
 
 // CrosssimplemoduleABI is the input ABI used to generate the binding from.
@@ -469,37 +509,6 @@ func (_Crosssimplemodule *CrosssimplemoduleCallerSession) TXMANAGER() (common.Ad
 	return _Crosssimplemodule.Contract.TXMANAGER(&_Crosssimplemodule.CallOpts)
 }
 
-// GetPacketAcknowledgementCall is a free data retrieval call binding the contract method 0x34a30a65.
-//
-// Solidity: function getPacketAcknowledgementCall(uint8 status) pure returns(bytes acknowledgement)
-func (_Crosssimplemodule *CrosssimplemoduleCaller) GetPacketAcknowledgementCall(opts *bind.CallOpts, status uint8) ([]byte, error) {
-	var out []interface{}
-	err := _Crosssimplemodule.contract.Call(opts, &out, "getPacketAcknowledgementCall", status)
-
-	if err != nil {
-		return *new([]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
-
-	return out0, err
-
-}
-
-// GetPacketAcknowledgementCall is a free data retrieval call binding the contract method 0x34a30a65.
-//
-// Solidity: function getPacketAcknowledgementCall(uint8 status) pure returns(bytes acknowledgement)
-func (_Crosssimplemodule *CrosssimplemoduleSession) GetPacketAcknowledgementCall(status uint8) ([]byte, error) {
-	return _Crosssimplemodule.Contract.GetPacketAcknowledgementCall(&_Crosssimplemodule.CallOpts, status)
-}
-
-// GetPacketAcknowledgementCall is a free data retrieval call binding the contract method 0x34a30a65.
-//
-// Solidity: function getPacketAcknowledgementCall(uint8 status) pure returns(bytes acknowledgement)
-func (_Crosssimplemodule *CrosssimplemoduleCallerSession) GetPacketAcknowledgementCall(status uint8) ([]byte, error) {
-	return _Crosssimplemodule.Contract.GetPacketAcknowledgementCall(&_Crosssimplemodule.CallOpts, status)
-}
-
 // GetRoleAdmin is a free data retrieval call binding the contract method 0x248a9ca3.
 //
 // Solidity: function getRoleAdmin(bytes32 role) view returns(bytes32)
@@ -622,6 +631,90 @@ func (_Crosssimplemodule *CrosssimplemoduleSession) SupportsInterface(interfaceI
 // Solidity: function supportsInterface(bytes4 interfaceID) view returns(bool)
 func (_Crosssimplemodule *CrosssimplemoduleCallerSession) SupportsInterface(interfaceID [4]byte) (bool, error) {
 	return _Crosssimplemodule.Contract.SupportsInterface(&_Crosssimplemodule.CallOpts, interfaceID)
+}
+
+// GetAuthState is a paid mutator transaction binding the contract method 0x5b3af7a0.
+//
+// Solidity: function __getAuthState(bytes32 txID) returns(((bytes,(uint8,(string,bytes)))[]))
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) GetAuthState(opts *bind.TransactOpts, txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "__getAuthState", txID)
+}
+
+// GetAuthState is a paid mutator transaction binding the contract method 0x5b3af7a0.
+//
+// Solidity: function __getAuthState(bytes32 txID) returns(((bytes,(uint8,(string,bytes)))[]))
+func (_Crosssimplemodule *CrosssimplemoduleSession) GetAuthState(txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.GetAuthState(&_Crosssimplemodule.TransactOpts, txID)
+}
+
+// GetAuthState is a paid mutator transaction binding the contract method 0x5b3af7a0.
+//
+// Solidity: function __getAuthState(bytes32 txID) returns(((bytes,(uint8,(string,bytes)))[]))
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) GetAuthState(txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.GetAuthState(&_Crosssimplemodule.TransactOpts, txID)
+}
+
+// IsCompletedAuth is a paid mutator transaction binding the contract method 0x8081e423.
+//
+// Solidity: function __isCompletedAuth(bytes32 txID) returns(bool)
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) IsCompletedAuth(opts *bind.TransactOpts, txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "__isCompletedAuth", txID)
+}
+
+// IsCompletedAuth is a paid mutator transaction binding the contract method 0x8081e423.
+//
+// Solidity: function __isCompletedAuth(bytes32 txID) returns(bool)
+func (_Crosssimplemodule *CrosssimplemoduleSession) IsCompletedAuth(txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.IsCompletedAuth(&_Crosssimplemodule.TransactOpts, txID)
+}
+
+// IsCompletedAuth is a paid mutator transaction binding the contract method 0x8081e423.
+//
+// Solidity: function __isCompletedAuth(bytes32 txID) returns(bool)
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) IsCompletedAuth(txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.IsCompletedAuth(&_Crosssimplemodule.TransactOpts, txID)
+}
+
+// IsTxRecorded is a paid mutator transaction binding the contract method 0x7d9c639c.
+//
+// Solidity: function __isTxRecorded(bytes32 txID) returns(bool)
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) IsTxRecorded(opts *bind.TransactOpts, txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "__isTxRecorded", txID)
+}
+
+// IsTxRecorded is a paid mutator transaction binding the contract method 0x7d9c639c.
+//
+// Solidity: function __isTxRecorded(bytes32 txID) returns(bool)
+func (_Crosssimplemodule *CrosssimplemoduleSession) IsTxRecorded(txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.IsTxRecorded(&_Crosssimplemodule.TransactOpts, txID)
+}
+
+// IsTxRecorded is a paid mutator transaction binding the contract method 0x7d9c639c.
+//
+// Solidity: function __isTxRecorded(bytes32 txID) returns(bool)
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) IsTxRecorded(txID [32]byte) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.IsTxRecorded(&_Crosssimplemodule.TransactOpts, txID)
+}
+
+// ExtSignTx is a paid mutator transaction binding the contract method 0x2df86abc.
+//
+// Solidity: function extSignTx((bytes,(bytes,(uint8,(string,bytes)))[]) msg_) returns((bool))
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) ExtSignTx(opts *bind.TransactOpts, msg_ MsgExtSignTxData) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "extSignTx", msg_)
+}
+
+// ExtSignTx is a paid mutator transaction binding the contract method 0x2df86abc.
+//
+// Solidity: function extSignTx((bytes,(bytes,(uint8,(string,bytes)))[]) msg_) returns((bool))
+func (_Crosssimplemodule *CrosssimplemoduleSession) ExtSignTx(msg_ MsgExtSignTxData) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.ExtSignTx(&_Crosssimplemodule.TransactOpts, msg_)
+}
+
+// ExtSignTx is a paid mutator transaction binding the contract method 0x2df86abc.
+//
+// Solidity: function extSignTx((bytes,(bytes,(uint8,(string,bytes)))[]) msg_) returns((bool))
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) ExtSignTx(msg_ MsgExtSignTxData) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.ExtSignTx(&_Crosssimplemodule.TransactOpts, msg_)
 }
 
 // GrantRole is a paid mutator transaction binding the contract method 0x2f2ff15d.
@@ -897,167 +990,46 @@ func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) RevokeRole(role [3
 	return _Crosssimplemodule.Contract.RevokeRole(&_Crosssimplemodule.TransactOpts, role, account)
 }
 
-// CrosssimplemoduleOnContractCallIterator is returned from FilterOnContractCall and is used to iterate over the raw logs and unpacked data for OnContractCall events raised by the Crosssimplemodule contract.
-type CrosssimplemoduleOnContractCallIterator struct {
-	Event *CrosssimplemoduleOnContractCall // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *CrosssimplemoduleOnContractCallIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(CrosssimplemoduleOnContractCall)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(CrosssimplemoduleOnContractCall)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *CrosssimplemoduleOnContractCallIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *CrosssimplemoduleOnContractCallIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// CrosssimplemoduleOnContractCall represents a OnContractCall event raised by the Crosssimplemodule contract.
-type CrosssimplemoduleOnContractCall struct {
-	TxID    common.Hash
-	TxIndex uint8
-	Success bool
-	Ret     []byte
-	Raw     types.Log // Blockchain specific contextual infos
-}
-
-// FilterOnContractCall is a free log retrieval operation binding the contract event 0x3cf6800c9da1119c1bcca8a173f94e0cd281ab3fae5f1e09ebbb95a64092584f.
+// SignTx is a paid mutator transaction binding the contract method 0x4391870b.
 //
-// Solidity: event OnContractCall(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret)
-func (_Crosssimplemodule *CrosssimplemoduleFilterer) FilterOnContractCall(opts *bind.FilterOpts, txID [][]byte, txIndex []uint8, success []bool) (*CrosssimplemoduleOnContractCallIterator, error) {
-
-	var txIDRule []interface{}
-	for _, txIDItem := range txID {
-		txIDRule = append(txIDRule, txIDItem)
-	}
-	var txIndexRule []interface{}
-	for _, txIndexItem := range txIndex {
-		txIndexRule = append(txIndexRule, txIndexItem)
-	}
-	var successRule []interface{}
-	for _, successItem := range success {
-		successRule = append(successRule, successItem)
-	}
-
-	logs, sub, err := _Crosssimplemodule.contract.FilterLogs(opts, "OnContractCall", txIDRule, txIndexRule, successRule)
-	if err != nil {
-		return nil, err
-	}
-	return &CrosssimplemoduleOnContractCallIterator{contract: _Crosssimplemodule.contract, event: "OnContractCall", logs: logs, sub: sub}, nil
+// Solidity: function signTx((bytes,bytes[],(uint64,uint64),uint64) msg_) returns((bool,string))
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) SignTx(opts *bind.TransactOpts, msg_ MsgSignTxData) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "signTx", msg_)
 }
 
-// WatchOnContractCall is a free log subscription operation binding the contract event 0x3cf6800c9da1119c1bcca8a173f94e0cd281ab3fae5f1e09ebbb95a64092584f.
+// SignTx is a paid mutator transaction binding the contract method 0x4391870b.
 //
-// Solidity: event OnContractCall(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret)
-func (_Crosssimplemodule *CrosssimplemoduleFilterer) WatchOnContractCall(opts *bind.WatchOpts, sink chan<- *CrosssimplemoduleOnContractCall, txID [][]byte, txIndex []uint8, success []bool) (event.Subscription, error) {
-
-	var txIDRule []interface{}
-	for _, txIDItem := range txID {
-		txIDRule = append(txIDRule, txIDItem)
-	}
-	var txIndexRule []interface{}
-	for _, txIndexItem := range txIndex {
-		txIndexRule = append(txIndexRule, txIndexItem)
-	}
-	var successRule []interface{}
-	for _, successItem := range success {
-		successRule = append(successRule, successItem)
-	}
-
-	logs, sub, err := _Crosssimplemodule.contract.WatchLogs(opts, "OnContractCall", txIDRule, txIndexRule, successRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(CrosssimplemoduleOnContractCall)
-				if err := _Crosssimplemodule.contract.UnpackLog(event, "OnContractCall", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
+// Solidity: function signTx((bytes,bytes[],(uint64,uint64),uint64) msg_) returns((bool,string))
+func (_Crosssimplemodule *CrosssimplemoduleSession) SignTx(msg_ MsgSignTxData) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.SignTx(&_Crosssimplemodule.TransactOpts, msg_)
 }
 
-// ParseOnContractCall is a log parse operation binding the contract event 0x3cf6800c9da1119c1bcca8a173f94e0cd281ab3fae5f1e09ebbb95a64092584f.
+// SignTx is a paid mutator transaction binding the contract method 0x4391870b.
 //
-// Solidity: event OnContractCall(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret)
-func (_Crosssimplemodule *CrosssimplemoduleFilterer) ParseOnContractCall(log types.Log) (*CrosssimplemoduleOnContractCall, error) {
-	event := new(CrosssimplemoduleOnContractCall)
-	if err := _Crosssimplemodule.contract.UnpackLog(event, "OnContractCall", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
+// Solidity: function signTx((bytes,bytes[],(uint64,uint64),uint64) msg_) returns((bool,string))
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) SignTx(msg_ MsgSignTxData) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.SignTx(&_Crosssimplemodule.TransactOpts, msg_)
+}
+
+// TxAuthState is a paid mutator transaction binding the contract method 0xa7edcfd6.
+//
+// Solidity: function txAuthState((bytes) req_) returns((((bytes,(uint8,(string,bytes)))[])) resp)
+func (_Crosssimplemodule *CrosssimplemoduleTransactor) TxAuthState(opts *bind.TransactOpts, req_ QueryTxAuthStateRequestData) (*types.Transaction, error) {
+	return _Crosssimplemodule.contract.Transact(opts, "txAuthState", req_)
+}
+
+// TxAuthState is a paid mutator transaction binding the contract method 0xa7edcfd6.
+//
+// Solidity: function txAuthState((bytes) req_) returns((((bytes,(uint8,(string,bytes)))[])) resp)
+func (_Crosssimplemodule *CrosssimplemoduleSession) TxAuthState(req_ QueryTxAuthStateRequestData) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.TxAuthState(&_Crosssimplemodule.TransactOpts, req_)
+}
+
+// TxAuthState is a paid mutator transaction binding the contract method 0xa7edcfd6.
+//
+// Solidity: function txAuthState((bytes) req_) returns((((bytes,(uint8,(string,bytes)))[])) resp)
+func (_Crosssimplemodule *CrosssimplemoduleTransactorSession) TxAuthState(req_ QueryTxAuthStateRequestData) (*types.Transaction, error) {
+	return _Crosssimplemodule.Contract.TxAuthState(&_Crosssimplemodule.TransactOpts, req_)
 }
 
 // CrosssimplemoduleRoleAdminChangedIterator is returned from FilterRoleAdminChanged and is used to iterate over the raw logs and unpacked data for RoleAdminChanged events raised by the Crosssimplemodule contract.
@@ -1685,6 +1657,160 @@ func (_Crosssimplemodule *CrosssimplemoduleFilterer) WatchTxInitiated(opts *bind
 func (_Crosssimplemodule *CrosssimplemoduleFilterer) ParseTxInitiated(log types.Log) (*CrosssimplemoduleTxInitiated, error) {
 	event := new(CrosssimplemoduleTxInitiated)
 	if err := _Crosssimplemodule.contract.UnpackLog(event, "TxInitiated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// CrosssimplemoduleTxSignedIterator is returned from FilterTxSigned and is used to iterate over the raw logs and unpacked data for TxSigned events raised by the Crosssimplemodule contract.
+type CrosssimplemoduleTxSignedIterator struct {
+	Event *CrosssimplemoduleTxSigned // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *CrosssimplemoduleTxSignedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(CrosssimplemoduleTxSigned)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(CrosssimplemoduleTxSigned)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *CrosssimplemoduleTxSignedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *CrosssimplemoduleTxSignedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// CrosssimplemoduleTxSigned represents a TxSigned event raised by the Crosssimplemodule contract.
+type CrosssimplemoduleTxSigned struct {
+	Signer common.Address
+	TxID   [32]byte
+	Method uint8
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterTxSigned is a free log retrieval operation binding the contract event 0x30c2a521823a6b9bc4f65ec80485542760a5639a135db9e69f36d257d9c3a716.
+//
+// Solidity: event TxSigned(address indexed signer, bytes32 indexed txID, uint8 method)
+func (_Crosssimplemodule *CrosssimplemoduleFilterer) FilterTxSigned(opts *bind.FilterOpts, signer []common.Address, txID [][32]byte) (*CrosssimplemoduleTxSignedIterator, error) {
+
+	var signerRule []interface{}
+	for _, signerItem := range signer {
+		signerRule = append(signerRule, signerItem)
+	}
+	var txIDRule []interface{}
+	for _, txIDItem := range txID {
+		txIDRule = append(txIDRule, txIDItem)
+	}
+
+	logs, sub, err := _Crosssimplemodule.contract.FilterLogs(opts, "TxSigned", signerRule, txIDRule)
+	if err != nil {
+		return nil, err
+	}
+	return &CrosssimplemoduleTxSignedIterator{contract: _Crosssimplemodule.contract, event: "TxSigned", logs: logs, sub: sub}, nil
+}
+
+// WatchTxSigned is a free log subscription operation binding the contract event 0x30c2a521823a6b9bc4f65ec80485542760a5639a135db9e69f36d257d9c3a716.
+//
+// Solidity: event TxSigned(address indexed signer, bytes32 indexed txID, uint8 method)
+func (_Crosssimplemodule *CrosssimplemoduleFilterer) WatchTxSigned(opts *bind.WatchOpts, sink chan<- *CrosssimplemoduleTxSigned, signer []common.Address, txID [][32]byte) (event.Subscription, error) {
+
+	var signerRule []interface{}
+	for _, signerItem := range signer {
+		signerRule = append(signerRule, signerItem)
+	}
+	var txIDRule []interface{}
+	for _, txIDItem := range txID {
+		txIDRule = append(txIDRule, txIDItem)
+	}
+
+	logs, sub, err := _Crosssimplemodule.contract.WatchLogs(opts, "TxSigned", signerRule, txIDRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(CrosssimplemoduleTxSigned)
+				if err := _Crosssimplemodule.contract.UnpackLog(event, "TxSigned", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTxSigned is a log parse operation binding the contract event 0x30c2a521823a6b9bc4f65ec80485542760a5639a135db9e69f36d257d9c3a716.
+//
+// Solidity: event TxSigned(address indexed signer, bytes32 indexed txID, uint8 method)
+func (_Crosssimplemodule *CrosssimplemoduleFilterer) ParseTxSigned(log types.Log) (*CrosssimplemoduleTxSigned, error) {
+	event := new(CrosssimplemoduleTxSigned)
+	if err := _Crosssimplemodule.contract.UnpackLog(event, "TxSigned", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

@@ -46,6 +46,7 @@ contract DeployAll is Script, Config {
     IBCHandler public ibcHandler;
     MockCrossContract public mockApp;
     CrossSimpleModule public crossSimpleModule;
+    TxManager public txManager;
     MockClient public mockClient;
 
     // ---------- helpers ----------
@@ -66,7 +67,7 @@ contract DeployAll is Script, Config {
 
     function _deployApp(IBCHandler handler, bool debugMode)
         internal
-        returns (MockCrossContract, CrossSimpleModule, MockClient)
+        returns (MockCrossContract, CrossSimpleModule, TxManager, MockClient)
     {
         console2.log("==> 02_DeployApp");
         MockCrossContract app = new MockCrossContract();
@@ -95,7 +96,7 @@ contract DeployAll is Script, Config {
         MockClient mclient = new MockClient(address(handler));
         console2.log("  MockClient:", address(mclient));
 
-        return (app, module, mclient);
+        return (app, module, txManager, mclient);
     }
 
     function _initialize(
@@ -164,7 +165,7 @@ contract DeployAll is Script, Config {
     ) internal {
         vm.startBroadcast(deployerPk);
         ibcHandler = _deployCore();
-        (mockApp, crossSimpleModule, mockClient) = _deployApp(ibcHandler, debugMode);
+        (mockApp, crossSimpleModule, txManager, mockClient) = _deployApp(ibcHandler, debugMode);
         _initialize(ibcHandler, crossSimpleModule, portCross, mockClientType, mockClient);
         vm.stopBroadcast();
     }
@@ -175,6 +176,7 @@ contract DeployAll is Script, Config {
         config.set("ibc_handler", address(ibcHandler));
         config.set("mock_cross_contract", address(mockApp));
         config.set("cross_simple_module", address(crossSimpleModule));
+        config.set("tx_manager", address(txManager));
         config.set("mock_client", address(mockClient));
 
         // Meta

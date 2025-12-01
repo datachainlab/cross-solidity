@@ -6,12 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -22,24 +20,9 @@ import (
 
 	"github.com/datachainlab/cross-solidity/pkg/contract/crosssimplemodule"
 	"github.com/datachainlab/cross-solidity/pkg/contract/ownableibchandler"
+	"github.com/datachainlab/cross-solidity/pkg/contract/txmanager"
 	"github.com/datachainlab/cross-solidity/pkg/wallet"
 )
-
-var (
-	abiEventOnContractCall abi.Event
-)
-
-func init() {
-	var ok bool
-	parsedCrossModuleABI, err := abi.JSON(strings.NewReader(crosssimplemodule.CrosssimplemoduleABI))
-	if err != nil {
-		panic(err)
-	}
-	abiEventOnContractCall, ok = parsedCrossModuleABI.Events["OnContractCall"]
-	if !ok {
-		panic("OnContractCall not found")
-	}
-}
 
 type Chain struct {
 	chainID        int64
@@ -51,6 +34,7 @@ type Chain struct {
 
 	// Core modules
 	IBCHandler ownableibchandler.Ownableibchandler
+	TxManager  txmanager.Txmanager
 
 	// App modules
 	CrossSimpleModule crosssimplemodule.Crosssimplemodule
@@ -90,8 +74,8 @@ func (chain *Chain) TxSyncIfNoError(ctx context.Context) func(tx *gethtypes.Tran
 	}
 }
 
-func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*crosssimplemodule.CrosssimplemoduleOnContractCall, error) {
-	filter, err := crosssimplemodule.NewCrosssimplemoduleFilterer(
+func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*txmanager.TxmanagerOnContractCall, error) {
+	filter, err := txmanager.NewTxmanagerFilterer(
 		chain.ContractConfig.GetCrossSimpleModuleAddress(), chain.ETHClient,
 	)
 	if err != nil {
@@ -118,6 +102,29 @@ func (chain *Chain) findEventOnContractCall(ctx context.Context, txID []byte) (*
 		}
 	}
 	return nil, fmt.Errorf("event not found: txID(hash)=%s", idHash.Hex())
+}
+
+func (chain *Chain) findEventTxInitiated(ctx context.Context, proposer common.Address) (*crosssimplemodule.CrosssimplemoduleTxInitiated, error) {
+	filter, err := crosssimplemodule.NewCrosssimplemoduleFilterer(
+		chain.ContractConfig.GetCrossSimpleModuleAddress(), chain.ETHClient,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	iter, err := filter.FilterTxInitiated(
+		&bind.FilterOpts{Context: ctx, Start: 0}, // Start from block 0
+		[]common.Address{proposer},               // Filter by indexed proposer
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		return iter.Event, nil
+	}
+	return nil, fmt.Errorf("event TxInitiated not found for proposer %s", proposer.Hex())
 }
 
 func (chain *Chain) TxOpts(ctx context.Context, index uint32) *bind.TransactOpts {
@@ -185,6 +192,7 @@ func makeGenTxOpts(chainID *big.Int, prv *ecdsa.PrivateKey) GenTxOpts {
 type ContractConfig interface {
 	GetIBCHandlerAddress() common.Address
 	GetCrossSimpleModuleAddress() common.Address
+	GetTxManagerAddress() common.Address
 }
 
 func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg ContractConfig) *Chain {
@@ -196,6 +204,10 @@ func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg Contract
 	if err != nil {
 		panic(err)
 	}
+	txManager, err := txmanager.NewTxmanager(ccfg.GetTxManagerAddress(), ethc)
+	if err != nil {
+		panic(err)
+	}
 	id, err := ethc.ChainID(context.Background())
 	if err != nil {
 		panic(err)
@@ -204,6 +216,7 @@ func NewChain(t *testing.T, rpcAddr string, mnemonicPhrase string, ccfg Contract
 		ETHClient:         ethc,
 		CrossSimpleModule: *crossMod,
 		ContractConfig:    ccfg,
+		TxManager:         *txManager,
 
 		chainID:        id.Int64(),
 		mnemonicPhrase: mnemonicPhrase,
