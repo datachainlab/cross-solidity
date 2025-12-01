@@ -17,10 +17,27 @@ import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {ICrossError} from "../src/core/ICrossError.sol";
+import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
+import {IContractModule} from "../src/core/IContractModule.sol";
+import {
+    PacketAcknowledgementCall,
+    PacketData,
+    Acknowledgement
+} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract DummyIBCHandler {}
+
+contract DummyContractModule {}
 
 contract TxManagerHarness is TxManager {
     uint256 public runCount;
     bytes32 public lastRunTxID;
+    uint256 public initCount;
+    uint256 public handlePacketCount;
+    uint256 public handleAckCount;
+    uint256 public handleTimeoutCount;
 
     constructor() TxManager() {}
 
@@ -38,6 +55,32 @@ contract TxManagerHarness is TxManager {
         ++runCount;
         lastRunTxID = txID;
     }
+
+    function __initTxAtomicSimple(IIBCHandler, IContractModule) internal override {
+        ++initCount;
+    }
+
+    function _handlePacket(Packet calldata) internal override returns (bytes memory) {
+        ++handlePacketCount;
+        return hex"1234"; // Dummy ACK
+    }
+
+    function _handleAcknowledgement(Packet calldata, bytes calldata) internal override {
+        ++handleAckCount;
+    }
+
+    function _handleTimeout(Packet calldata) internal override {
+        ++handleTimeoutCount;
+    }
+
+    function exposed_getIBCHandler() public view returns (IIBCHandler) {
+        return getIBCHandler();
+    }
+
+    function exposed_getModule() public returns (IContractModule) {
+        Packet memory p;
+        return getModule(p);
+    }
 }
 
 contract TxManagerTest is Test {
@@ -45,8 +88,13 @@ contract TxManagerTest is Test {
     bytes32 private txID = keccak256("test_tx_id");
     MsgInitiateTx.Data private txMsg;
 
+    DummyIBCHandler private dummyHandler;
+    DummyContractModule private dummyModule;
+
     function setUp() public {
         harness = new TxManagerHarness();
+        dummyHandler = new DummyIBCHandler();
+        dummyModule = new DummyContractModule();
 
         AuthAccount.Data[] memory signers;
         ContractTransaction.Data[] memory txs;
@@ -61,6 +109,79 @@ contract TxManagerTest is Test {
             contract_transactions: txs
         });
     }
+
+    // --- initialize ---
+
+    function test_initialize_Succeeds() public {
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
+
+        assertEq(harness.initCount(), 1, "initialize should be called once");
+    }
+
+    function test_initialize_RevertWhen_DoubleInit() public {
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
+
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
+    }
+
+    // --- handlePacket ---
+
+    function test_handlePacket_CallsLogic() public {
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
+
+        Packet memory p;
+        bytes memory ack = harness.handlePacket(p);
+
+        assertEq(harness.handlePacketCount(), 1);
+        assertEq(ack, hex"1234");
+    }
+
+    // --- handleAcknowledgement ---
+
+    function test_handleAcknowledgement_CallsLogic() public {
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
+
+        Packet memory p;
+        bytes memory emptyAck;
+        harness.handleAcknowledgement(p, emptyAck);
+
+        assertEq(harness.handleAckCount(), 1);
+    }
+
+    // --- handleTimeout ---
+
+    function test_handleTimeout_CallsLogic() public {
+        harness.initialize(IIBCHandler(address(dummyHandler)), IContractModule(address(dummyModule)));
+
+        Packet memory p;
+        harness.handleTimeout(p);
+
+        assertEq(harness.handleTimeoutCount(), 1);
+    }
+
+    // --- getPacketAcknowledgementCall ---
+
+    function test_getPacketAcknowledgementCall_EncodesCorrectly() public {
+        bytes memory ackBytes =
+            harness.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
+
+        Acknowledgement.Data memory ackData = Acknowledgement.decode(ackBytes);
+        assertTrue(ackData.is_success);
+        PacketData.Data memory pd = PacketData.decode(ackData.result);
+        GoogleProtobufAny.Data memory any_ = GoogleProtobufAny.decode(pd.payload);
+        PacketAcknowledgementCall.Data memory pac = PacketAcknowledgementCall.decode(any_.value);
+        assertEq(uint256(pac.status), uint256(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK));
+
+        ackBytes = harness.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
+        ackData = Acknowledgement.decode(ackBytes);
+        pd = PacketData.decode(ackData.result);
+        any_ = GoogleProtobufAny.decode(pd.payload);
+        pac = PacketAcknowledgementCall.decode(any_.value);
+        assertEq(uint256(pac.status), uint256(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED));
+    }
+
+    // --- isTxRecorded ---
 
     function test_isTxRecorded_ReturnsTrueForKnownTx() public {
         harness.createTx(txID, txMsg);

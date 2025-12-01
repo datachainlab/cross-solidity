@@ -39,7 +39,7 @@ abstract contract TxAtomicSimple is
     ContractRegistry,
     ICrossError
 {
-    function __initTxAtomicSimple(IIBCHandler handler_, IContractModule module) internal onlyInitializing {
+    function __initTxAtomicSimple(IIBCHandler handler_, IContractModule module) internal virtual onlyInitializing {
         __initIBCKeeper(handler_);
         registerModule(module);
     }

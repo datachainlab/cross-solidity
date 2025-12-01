@@ -96,4 +96,25 @@ contract MockCrossContractTest is Test {
         vm.expectRevert(bytes("callInfo must be 0x01"));
         mock.onContractCommitImmediately(ctx, hex"02");
     }
+
+    function test_onCommit_Succeeds() public {
+        CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
+        // onCommit is empty in MockCrossContract, so we just verify it doesn't revert
+        mock.onCommit(ctx);
+    }
+
+    function test_onAbort_Succeeds() public {
+        CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
+        // onAbort is empty in MockCrossContract, so we just verify it doesn't revert
+        mock.onAbort(ctx);
+    }
+
+    function test_onContractPrepare_ReturnsExpectedBytes() public {
+        CrossContext memory ctx = _mkContextSingle(bytes("tester"), AuthType.AuthMode.AUTH_MODE_CHANNEL);
+        bytes memory callInfo = hex"00";
+
+        bytes memory ret = mock.onContractPrepare(ctx, callInfo);
+
+        assertEq(ret, bytes("mock prepare succeed"));
+    }
 }

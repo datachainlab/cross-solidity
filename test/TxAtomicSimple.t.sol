@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -200,18 +200,23 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         );
     }
 
-    function test_handlePacket_RevertWhen_PayloadEmpty() public {
+    function test_handlePacket_ReturnsFailedWhenPayloadEmpty() public {
         HeaderField.Data[] memory fields;
         bytes memory packetDataBytes =
             PacketData.encode(PacketData.Data({header: Header.Data({fields: fields}), payload: bytes("")}));
         Packet memory p;
         p.data = packetDataBytes;
 
-        vm.expectRevert(PayloadDecodeFailed.selector);
-        harness.exposed_handlePacket(p);
+        bytes memory ack = harness.exposed_handlePacket(p);
+
+        assertEq(
+            uint256(_decodeAckStatus(ack)),
+            uint256(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED),
+            "ACK should be FAILED when payload is empty"
+        );
     }
 
-    function test_handlePacket_RevertWhen_TypeURLUnexpected() public {
+    function test_handlePacket_ReturnsFailedWhenTypeURLUnexpected() public {
         bytes memory bogus = Any.encode(Any.Data({type_url: "/not.expected", value: hex"01"}));
         HeaderField.Data[] memory fields;
         bytes memory packetDataBytes =
@@ -219,8 +224,13 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         Packet memory p;
         p.data = packetDataBytes;
 
-        vm.expectRevert(UnexpectedTypeURL.selector);
-        harness.exposed_handlePacket(p);
+        bytes memory ack = harness.exposed_handlePacket(p);
+
+        assertEq(
+            uint256(_decodeAckStatus(ack)),
+            uint256(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED),
+            "ACK should be FAILED when TypeURL is unexpected"
+        );
     }
 
     function test_handleTimeout_RevertOn_NotImplemented() public {

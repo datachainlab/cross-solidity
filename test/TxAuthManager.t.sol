@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings
+// solhint-disable one-contract-per-file, func-name-mixedcase, gas-small-strings, function-max-lines
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
@@ -7,6 +7,7 @@ import {ICrossError} from "../src/core/ICrossError.sol";
 import "../src/core/TxAuthManager.sol";
 import {Account as AuthAccount, TxAuthState, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract MockValidVerifier is IAuthExtensionVerifier {
     function verify(bytes32, AuthAccount.Data calldata) external view override returns (bool) {
@@ -88,6 +89,7 @@ contract TxAuthManagerTest is Test, ICrossError {
 
         // 3. Deploy Harness
         harness = new TxAuthManagerHarness();
+        harness.initialize(typeUrls, verifiers);
 
         // 4. Setup Auth Types
         GoogleProtobufAny.Data memory emptyAny = GoogleProtobufAny.Data({type_url: "", value: ""});
@@ -122,7 +124,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         extSignerNotFound = AuthAccount.Data({id: bytes("extSignerNotFound"), auth_type: extAuthTypeNotFound});
     }
 
-    function test_constructor_SucceedsWithEmptyArrays() public {
+    function test_initialize_SucceedsWithEmptyArrays() public {
         string[] memory typeUrls = new string[](0);
         IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](0);
 
@@ -131,7 +133,7 @@ contract TxAuthManagerTest is Test, ICrossError {
         assertTrue(address(localHarness) != address(0), "Harness should deploy");
     }
 
-    function test_constructor_SucceedsAndEmitsEvents() public {
+    function test_initialize_SucceedsAndEmitsEvents() public {
         string[] memory typeUrls = new string[](2);
         typeUrls[0] = URL_VALID;
         typeUrls[1] = URL_INVALID;
@@ -143,10 +145,25 @@ contract TxAuthManagerTest is Test, ICrossError {
         verifiers[1] = verifier2;
 
         TxAuthManagerHarness localHarness = new TxAuthManagerHarness();
+        localHarness.initialize(typeUrls, verifiers);
         assertTrue(address(localHarness) != address(0), "Harness should deploy");
     }
 
-    function test_constructor_RevertWhen_ArrayLengthMismatch() public {
+    function test_initialize_RevertWhen_AlreadyInitialized() public {
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = URL_VALID;
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = new MockValidVerifier();
+
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness();
+        localHarness.initialize(typeUrls, verifiers);
+
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        localHarness.initialize(typeUrls, verifiers);
+    }
+
+    function test_initialize_RevertWhen_ArrayLengthMismatch() public {
         string[] memory typeUrls = new string[](1);
         typeUrls[0] = URL_VALID;
 
@@ -154,30 +171,36 @@ contract TxAuthManagerTest is Test, ICrossError {
         verifiers[0] = new MockValidVerifier();
         verifiers[1] = new MockValidVerifier();
 
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness();
+
         vm.expectRevert(ArrayLengthMismatch.selector);
-        new TxAuthManagerHarness();
+        localHarness.initialize(typeUrls, verifiers);
     }
 
-    function test_constructor_RevertWhen_EmptyTypeUrl() public {
+    function test_initialize_RevertWhen_EmptyTypeUrl() public {
         string[] memory typeUrls = new string[](1);
         typeUrls[0] = "";
 
         IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
         verifiers[0] = new MockValidVerifier();
 
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness();
+
         vm.expectRevert(EmptyTypeUrl.selector);
-        new TxAuthManagerHarness();
+        localHarness.initialize(typeUrls, verifiers);
     }
 
-    function test_constructor_RevertWhen_ZeroAddressVerifier() public {
+    function test_initialize_RevertWhen_ZeroAddressVerifier() public {
         string[] memory typeUrls = new string[](1);
         typeUrls[0] = URL_VALID;
 
         IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
         verifiers[0] = IAuthExtensionVerifier(address(0)); // Zero address
 
+        TxAuthManagerHarness localHarness = new TxAuthManagerHarness();
+
         vm.expectRevert(ZeroAddressVerifier.selector);
-        new TxAuthManagerHarness();
+        localHarness.initialize(typeUrls, verifiers);
     }
 
     function test_initAuthState_Succeeds() public {
