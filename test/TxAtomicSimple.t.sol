@@ -204,7 +204,9 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     bytes32 private constant TX_ID = keccak256("test-tx");
 
-    event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret);
+    event OnContractCommitImmediately(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
+    event OnCommit(bytes indexed txID, uint8 indexed txIndex);
+    event OnAbort(bytes indexed txID, uint8 indexed txIndex);
 
     function setUp() public {
         mockHandler = new MockIBCHandler();
@@ -336,7 +338,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         Packet memory packet = _createPacket(TX_ID, hex"c0ffee", "port-1", "channel-1");
 
         vm.expectEmit(address(harness));
-        emit OnContractCall(abi.encodePacked(TX_ID), 1, true, hex"01");
+        emit OnContractCommitImmediately(abi.encodePacked(TX_ID), 1, true, hex"01");
 
         bytes memory ack = harness.exposed_handlePacket(packet);
 
@@ -356,7 +358,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         Packet memory packet = _createPacket(TX_ID, hex"00", "port-1", "channel-1");
 
         vm.expectEmit(address(harness));
-        emit OnContractCall(abi.encodePacked(TX_ID), 1, false, "");
+        emit OnContractCommitImmediately(abi.encodePacked(TX_ID), 1, false, "");
 
         bytes memory ack = harness.exposed_handlePacket(packet);
 
@@ -549,11 +551,14 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     // --- _handleAcknowledgement Tests ---
 
-    function test_handleAck_Commit_Success() public {
+    function test_handleAck_CommitSuccess() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
+
+        vm.expectEmit(address(harness));
+        emit OnCommit(abi.encodePacked(TX_ID), 0);
 
         harness.exposed_handleAcknowledgement(p, ack);
 
@@ -565,11 +570,14 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         assertEq(mockModule.onAbortCallCount(), 0, "onAbort should not be called");
     }
 
-    function test_handleAck_Abort_Failure() public {
+    function test_handleAck_CommitFailure() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
+
+        vm.expectEmit(address(harness));
+        emit OnAbort(abi.encodePacked(TX_ID), 0);
 
         harness.exposed_handleAcknowledgement(p, ack);
 

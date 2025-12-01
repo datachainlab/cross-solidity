@@ -47,7 +47,9 @@ abstract contract TxAtomicSimple is
     uint8 private constant TX_INDEX_COORDINATOR = 0;
     uint8 private constant TX_INDEX_PARTICIPANT = 1;
 
-    event OnContractCall(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
+    event OnContractCommitImmediately(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
+    event OnCommit(bytes indexed txID, uint8 indexed txIndex);
+    event OnAbort(bytes indexed txID, uint8 indexed txIndex);
 
     function _runTx(bytes32 txID, MsgInitiateTx.Data storage msg_) internal virtual override {
         if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE) {
@@ -262,11 +264,11 @@ abstract contract TxAtomicSimple is
         ) returns (bytes memory ret) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK;
             // slither-disable-next-line reentrancy-events
-            emit OnContractCall(pdc.tx_id, TX_INDEX_PARTICIPANT, true, ret);
+            emit OnContractCommitImmediately(pdc.tx_id, TX_INDEX_PARTICIPANT, true, ret);
         } catch (bytes memory) {
             ack.status = PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED;
             // slither-disable-next-line reentrancy-events
-            emit OnContractCall(pdc.tx_id, TX_INDEX_PARTICIPANT, false, new bytes(0));
+            emit OnContractCommitImmediately(pdc.tx_id, TX_INDEX_PARTICIPANT, false, new bytes(0));
         }
 
         return packPacketAcknowledgementCall(ack);
@@ -428,10 +430,14 @@ abstract contract TxAtomicSimple is
             // Commit
             module.onCommit(ctx);
             txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_COMMIT;
+            // slither-disable-next-line reentrancy-events
+            emit OnCommit(abi.encodePacked(txID), TX_INDEX_COORDINATOR);
         } else {
             // Abort
             module.onAbort(ctx);
             txState.status = ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_ABORT;
+            // slither-disable-next-line reentrancy-events
+            emit OnAbort(abi.encodePacked(txID), TX_INDEX_COORDINATOR);
         }
     }
 
