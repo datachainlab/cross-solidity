@@ -411,7 +411,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     // --- _runTx (Simple Protocol) Tests ---
 
-    function test_runTx_Simple_SucceedsAndSendsPacket() public {
+    function test_runTx_SucceedsAndSendsPacket() public {
         MsgInitiateTx.Data memory msg_ = _createValidSimpleMsg();
 
         harness.exposed_runTx(TX_ID, msg_);
@@ -423,7 +423,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         assertEq(mockModule.onContractPrepareCallCount(), 1, "onContractPrepare should be called once");
     }
 
-    function test_runTx_Simple_RevertWhen_SignerLenMismatch() public {
+    function test_runTx_RevertWhen_SignerLenMismatch() public {
         MsgInitiateTx.Data memory msg_ = _createValidSimpleMsg();
         // Add 3rd transaction
         ContractTransaction.Data[] memory txs = new ContractTransaction.Data[](3);
@@ -436,7 +436,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         harness.exposed_runTx(TX_ID, msg_);
     }
 
-    function test_runTx_Simple_RevertWhen_Tx0NotLocal() public {
+    function test_runTx_RevertWhen_Tx0NotLocal() public {
         MsgInitiateTx.Data memory msg_ = _createValidSimpleMsg();
         // Set port/channel for tx0 (should be empty for coordinator)
         msg_.contract_transactions[0].cross_chain_channel.value =
@@ -446,7 +446,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         harness.exposed_runTx(TX_ID, msg_);
     }
 
-    function test_runTx_Simple_PrepareFailed() public {
+    function test_runTx_PrepareFailed() public {
         MsgInitiateTx.Data memory msg_ = _createValidSimpleMsg();
         mockModule.setPrepareResult(false);
 
