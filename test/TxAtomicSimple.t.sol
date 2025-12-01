@@ -551,7 +551,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     // --- _handleAcknowledgement Tests ---
 
-    function test_handleAck_CommitSuccess() public {
+    function test_handleAck_Success() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
@@ -570,7 +570,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         assertEq(mockModule.onAbortCallCount(), 0, "onAbort should not be called");
     }
 
-    function test_handleAck_CommitFailure() public {
+    function test_handleAck_Failure() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
