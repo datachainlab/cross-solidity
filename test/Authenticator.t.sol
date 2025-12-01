@@ -8,8 +8,8 @@ import {TxManagerBase} from "../src/core/TxManagerBase.sol";
 import {TxAuthManagerBase} from "../src/core/TxAuthManagerBase.sol";
 
 import {MsgInitiateTx} from "../src/proto/cross/core/initiator/Initiator.sol";
-import {IAuthenticator} from "../src/core/IAuthenticator.sol";
 import {ICrossError} from "../src/core/ICrossError.sol";
+import {ICrossEvent} from "../src/core/ICrossEvent.sol";
 import {
     Account as AuthAccount,
     AuthType,
@@ -156,7 +156,7 @@ contract AuthenticatorHarness is Authenticator, MockTxAuthManager, MockTxManager
     }
 }
 
-contract AuthenticatorTest is Test, ICrossError {
+contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
     AuthenticatorHarness private harness;
     MsgSignTx.Data private baseMsg;
     bytes32 private txID;
@@ -213,7 +213,7 @@ contract AuthenticatorTest is Test, ICrossError {
         harness.setSignReturns(true);
 
         vm.expectEmit(true, true, false, true, address(harness));
-        emit IAuthenticator.TxSigned(address(this), txID, AuthType.AuthMode.AUTH_MODE_LOCAL);
+        emit TxSigned(address(this), txID, AuthType.AuthMode.AUTH_MODE_LOCAL);
 
         MsgSignTxResponse.Data memory resp = harness.signTx(baseMsg);
 
@@ -260,7 +260,7 @@ contract AuthenticatorTest is Test, ICrossError {
     function test_extSignTx_SucceedsAsPending() public {
         harness.setSignReturns(false);
         vm.expectEmit(address(harness));
-        emit IAuthenticator.TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+        emit TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
 
@@ -273,7 +273,7 @@ contract AuthenticatorTest is Test, ICrossError {
         harness.setSignReturns(true);
 
         vm.expectEmit(address(harness));
-        emit IAuthenticator.TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
+        emit TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
 

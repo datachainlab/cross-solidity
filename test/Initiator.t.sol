@@ -6,7 +6,7 @@ import "forge-std/src/Test.sol";
 import "../src/core/Initiator.sol";
 import {TxManagerBase} from "../src/core/TxManagerBase.sol";
 import {TxAuthManagerBase} from "../src/core/TxAuthManagerBase.sol";
-import {IInitiator} from "../src/core/IInitiator.sol";
+import {ICrossEvent} from "../src/core/ICrossEvent.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {
@@ -109,7 +109,7 @@ contract InitiatorHarness is Initiator, MockTxAuthManager, MockTxManager {
     }
 }
 
-contract InitiatorTest is Test {
+contract InitiatorTest is Test, ICrossEvent {
     InitiatorHarness private harness;
     MsgInitiateTx.Data private baseMsg;
     AuthAccount.Data private signerA;
@@ -166,7 +166,7 @@ contract InitiatorTest is Test {
         harness.setSignReturns(false);
 
         vm.expectEmit(true, false, false, true, address(harness));
-        emit IInitiator.TxInitiated(abi.encodePacked(txIDHash), address(this));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this));
 
         MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
 
@@ -188,7 +188,7 @@ contract InitiatorTest is Test {
         harness.setSignReturns(true);
 
         vm.expectEmit(true, false, false, true, address(harness));
-        emit IInitiator.TxInitiated(abi.encodePacked(txIDHash), address(this));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this));
 
         MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
 

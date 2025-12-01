@@ -7,6 +7,7 @@ import "forge-std/src/Test.sol";
 import "../src/core/TxAtomicSimple.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/ICrossError.sol";
+import "../src/core/ICrossEvent.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Height} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Client.sol";
@@ -197,16 +198,12 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
     }
 }
 
-contract TxAtomicSimpleTest is Test, ICrossError {
+contract TxAtomicSimpleTest is Test, ICrossError, ICrossEvent {
     TxAtomicSimpleHarness private harness;
     MockIBCHandler private mockHandler;
     MockModule private mockModule;
 
     bytes32 private constant TX_ID = keccak256("test-tx");
-
-    event OnContractCommitImmediately(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
-    event OnCommit(bytes indexed txID, uint8 indexed txIndex);
-    event OnAbort(bytes indexed txID, uint8 indexed txIndex);
 
     function setUp() public {
         mockHandler = new MockIBCHandler();

@@ -5,6 +5,7 @@ import {IInitiator} from "./IInitiator.sol";
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
 import {ICrossError} from "./ICrossError.sol";
+import {ICrossEvent} from "./ICrossEvent.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
@@ -14,7 +15,7 @@ import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, ReentrancyGuard, ICrossError {
+abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, ReentrancyGuard, ICrossError, ICrossEvent {
     bytes32 public immutable CHAIN_ID_HASH;
 
     constructor() {

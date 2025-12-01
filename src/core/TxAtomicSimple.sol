@@ -12,6 +12,7 @@ import "./IContractModule.sol";
 import "./IBCKeeper.sol";
 import {TxRunnerBase} from "./TxRunnerBase.sol";
 import {ICrossError} from "./ICrossError.sol";
+import {ICrossEvent} from "./ICrossEvent.sol";
 
 import {
     PacketData,
@@ -37,7 +38,8 @@ abstract contract TxAtomicSimple is
     PacketHandler,
     TxRunnerBase,
     ContractRegistry,
-    ICrossError
+    ICrossError,
+    ICrossEvent
 {
     function __initTxAtomicSimple(IIBCHandler handler_, IContractModule module) internal virtual onlyInitializing {
         __initIBCKeeper(handler_);
@@ -46,10 +48,6 @@ abstract contract TxAtomicSimple is
 
     uint8 private constant TX_INDEX_COORDINATOR = 0;
     uint8 private constant TX_INDEX_PARTICIPANT = 1;
-
-    event OnContractCommitImmediately(bytes indexed txID, uint8 indexed txIndex, bool indexed success, bytes ret);
-    event OnCommit(bytes indexed txID, uint8 indexed txIndex);
-    event OnAbort(bytes indexed txID, uint8 indexed txIndex);
 
     function _runTx(bytes32 txID, MsgInitiateTx.Data storage msg_) internal virtual override {
         if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE) {
