@@ -15,11 +15,19 @@ import "./IBCKeeper.sol";
 
 import {Initiator} from "./Initiator.sol";
 import {Authenticator} from "./Authenticator.sol";
+import {Coordinator} from "./Coordinator.sol";
 import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
 import {IContractModule} from "./IContractModule.sol";
 import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 
-abstract contract CrossModule is AccessControl, IIBCModule, Initiator, Authenticator, DelegatedLogicHandler {
+abstract contract CrossModule is
+    AccessControl,
+    IIBCModule,
+    Initiator,
+    Authenticator,
+    Coordinator,
+    DelegatedLogicHandler
+{
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
     constructor(

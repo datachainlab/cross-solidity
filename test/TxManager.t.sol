@@ -12,11 +12,12 @@ import {
     Link,
     ReturnValue
 } from "../src/proto/cross/core/initiator/Initiator.sol";
+import {ICrossError} from "../src/core/ICrossError.sol";
 import {Account as AuthAccount, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
+import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
-import {ICrossError} from "../src/core/ICrossError.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {IContractModule} from "../src/core/IContractModule.sol";
@@ -81,9 +82,14 @@ contract TxManagerHarness is TxManager {
         Packet memory p;
         return getModule(p);
     }
+
+    function setCoordinatorState(bytes32 txID, CoordinatorState.Data calldata data) public {
+        CrossStore.CoordStorage storage s = _getCoordStorage();
+        s.states[txID] = data;
+    }
 }
 
-contract TxManagerTest is Test {
+contract TxManagerTest is Test, ICrossError {
     TxManagerHarness private harness;
     bytes32 private txID = keccak256("test_tx_id");
     MsgInitiateTx.Data private txMsg;
@@ -282,7 +288,7 @@ contract TxManagerTest is Test {
 
     function test_createTx_RevertWhen_TxAlreadyExists() public {
         harness.createTx(txID, txMsg); // First time
-        vm.expectRevert(abi.encodeWithSelector(ICrossError.TxAlreadyExists.selector, txID));
+        vm.expectRevert(abi.encodeWithSelector(TxAlreadyExists.selector, txID));
         harness.createTx(txID, txMsg); // Second time
     }
 
@@ -331,5 +337,23 @@ contract TxManagerTest is Test {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
+    }
+
+    function test_getCoordinatorState_ReturnsCorrectState() public {
+        CoordinatorState.Data memory expected;
+        expected.commit_protocol = Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE;
+        expected.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+
+        harness.setCoordinatorState(txID, expected);
+
+        CoordinatorState.Data memory actual = harness.getCoordinatorState(txID);
+
+        assertEq(uint256(actual.commit_protocol), uint256(expected.commit_protocol), "Commit protocol mismatch");
+        assertEq(uint256(actual.phase), uint256(expected.phase), "Phase mismatch");
+    }
+
+    function test_getCoordinatorState_RevertsIfNotFound() public {
+        vm.expectRevert(abi.encodeWithSelector(CoordinatorStateNotFound.selector, txID));
+        harness.getCoordinatorState(txID);
     }
 }
