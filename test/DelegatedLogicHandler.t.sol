@@ -15,6 +15,7 @@ import {
 import {Account as AuthAccount, AuthType, TxAuthState} from "../src/proto/cross/core/auth/Auth.sol";
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
+import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 import {Height} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Client.sol";
@@ -28,6 +29,7 @@ contract MockStore {
     struct TxStorage {
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) status;
         mapping(bytes32 => uint64) nonce;
+        mapping(bytes32 => CoordinatorState.Data) coordStates;
         uint256 handlePacketCount;
         uint256 handleAckCount;
         uint256 handleTimeoutCount;
@@ -110,6 +112,10 @@ contract MockTxManager is ITxManager, MockStore {
         return true;
     }
 
+    function getCoordinatorState(bytes32 txID) external view override returns (CoordinatorState.Data memory) {
+        return txStorage.coordStates[txID];
+    }
+
     function handlePacket(Packet calldata) external override returns (bytes memory) {
         ++txStorage.handlePacketCount;
         return hex"1234";
@@ -185,6 +191,10 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
         return _isTxRecorded(txID);
     }
 
+    function exposed_getCoordinatorState(bytes32 txID) public returns (CoordinatorState.Data memory) {
+        return _getCoordinatorState(txID);
+    }
+
     function exposed_handlePacket(Packet calldata packet) public returns (bytes memory) {
         return _handlePacket(packet);
     }
@@ -209,7 +219,7 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
         return val;
     }
 
-    function revert(string calldata reason) external pure {
+    function triggerRevert(string calldata reason) external pure {
         revert(reason);
     }
 
@@ -221,6 +231,10 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
 
     function stateChange(uint256 val) external {
         internalState = val;
+    }
+
+    function setCoordState(bytes32 txID, CoordinatorState.Data calldata data) external {
+        txStorage.coordStates[txID] = data;
     }
 
     function readAuth_callCount(bytes32 txID) public view returns (uint256) {
@@ -380,6 +394,19 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
         assertEq(harness.readTx_handleTimeoutCount(), 1, "handleTimeout call count mismatch");
     }
 
+    function test_getCoordinatorState_DelegatesToTxManager() public {
+        CoordinatorState.Data memory expected;
+        expected.commit_protocol = Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE;
+        expected.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+        harness.setCoordState(txID, expected);
+
+        vm.expectCall(address(mockTx), abi.encodeWithSelector(ITxManager.getCoordinatorState.selector, txID));
+        CoordinatorState.Data memory actual = harness.exposed_getCoordinatorState(txID);
+
+        assertEq(uint256(actual.commit_protocol), uint256(expected.commit_protocol), "Commit protocol mismatch");
+        assertEq(uint256(actual.phase), uint256(expected.phase), "Phase mismatch");
+    }
+
     function test_delegateWithData_SucceedsAndReturnsData() public {
         MockSuccessContract successMock = new MockSuccessContract();
 
@@ -423,7 +450,7 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
 
     function test_staticCallSelf_RevertsIf_TargetReverts() public {
         string memory reason = "StaticCallError";
-        bytes memory callData = abi.encodeWithSelector(harness.revert.selector, reason);
+        bytes memory callData = abi.encodeWithSelector(harness.triggerRevert.selector, reason);
 
         vm.expectRevert(bytes(reason));
         harness.exposed_staticCallSelf(callData);
@@ -460,5 +487,11 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
         // Test: __isTxRecorded
         vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
         harness.__isTxRecorded(txID);
+    }
+
+    function test_getCoordinatorState_RevertIf_CalledExternally() public {
+        // Test: __getCoordinatorState
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedCaller.selector, address(this)));
+        harness.__getCoordinatorState(txID);
     }
 }

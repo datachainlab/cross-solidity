@@ -16,6 +16,7 @@ import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-
 
 import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account, TxAuthState} from "../proto/cross/core/auth/Auth.sol";
+import {CoordinatorState} from "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, PacketHandler, ICrossError {
     address public immutable TX_AUTH_MANAGER;
@@ -134,6 +135,24 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, Pac
 
     function _handleTimeout(Packet calldata packet) internal virtual override {
         _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.handleTimeout.selector, packet));
+    }
+
+    function _getCoordinatorState(bytes32 txID) internal view virtual override returns (CoordinatorState.Data memory) {
+        bytes memory ret = _staticCallSelf(abi.encodeWithSelector(this.__getCoordinatorState.selector, txID));
+        return abi.decode(ret, (CoordinatorState.Data));
+    }
+
+    /**
+     * @dev Internal function called via staticcall to read state via delegatecall.
+     * * NOTE: Since this function is called via `address(this).staticcall`,
+     * the `msg.sender` inside the delegated implementation (TxManager)
+     * will be THIS contract address, NOT the original caller.
+     * Do not rely on `msg.sender` for access control in the implementation logic.
+     */
+    function __getCoordinatorState(bytes32 txID) external onlySelf returns (CoordinatorState.Data memory) {
+        bytes memory ret =
+            _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.getCoordinatorState.selector, txID));
+        return abi.decode(ret, (CoordinatorState.Data));
     }
 
     function _delegateWithData(address impl, bytes memory data) internal returns (bytes memory) {

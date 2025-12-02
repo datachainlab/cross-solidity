@@ -20,6 +20,7 @@ import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/pr
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 import {ChannelInfo} from "../src/proto/cross/core/xcc/XCC.sol";
+import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 contract MockTxManager is TxManagerBase {
     mapping(bytes32 => bool) public txExists;
@@ -41,6 +42,19 @@ contract MockTxManager is TxManagerBase {
 
     function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         return txExists[txID];
+    }
+
+    function _getCoordinatorState(
+        bytes32 /*txID*/
+    )
+        internal
+        view
+        virtual
+        override
+        returns (CoordinatorState.Data memory)
+    {
+        CoordinatorState.Data memory dummy;
+        return dummy;
     }
 
     function setTxExists(bytes32 txID, bool exists) public {

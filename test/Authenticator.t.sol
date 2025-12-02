@@ -22,6 +22,7 @@ import {
     GoogleProtobufAny
 } from "../src/proto/cross/core/auth/Auth.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
+import {CoordinatorState} from "../src/proto/cross/core/atomic/simple/AtomicSimple.sol";
 
 contract MockTxManager is TxManagerBase {
     bytes32 public lastRunTxID;
@@ -52,6 +53,19 @@ contract MockTxManager is TxManagerBase {
         returns (bool)
     {
         return false;
+    }
+
+    function _getCoordinatorState(
+        bytes32 /*txID*/
+    )
+        internal
+        view
+        virtual
+        override
+        returns (CoordinatorState.Data memory)
+    {
+        CoordinatorState.Data memory dummy;
+        return dummy;
     }
 }
 

@@ -10,7 +10,8 @@ import {TxAtomicSimple} from "./TxAtomicSimple.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
-import {PacketAcknowledgementCall} from "../proto/cross/core/atomic/simple/AtomicSimple.sol";
+import {PacketAcknowledgementCall, CoordinatorState} from "../proto/cross/core/atomic/simple/AtomicSimple.sol";
+import {Tx} from "../proto/cross/core/tx/Tx.sol";
 
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
@@ -40,6 +41,10 @@ contract TxManager is
 
     function isTxRecorded(bytes32 txID) external view override returns (bool) {
         return _isTxRecorded(txID);
+    }
+
+    function getCoordinatorState(bytes32 txID) external view returns (CoordinatorState.Data memory) {
+        return _getCoordinatorState(txID);
     }
 
     function handlePacket(Packet calldata packet) external returns (bytes memory acknowledgement) {
@@ -74,6 +79,14 @@ contract TxManager is
     function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         CrossStore.TxStorage storage t = _getTxStorage();
         return t.txStatus[txID] != MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_UNKNOWN;
+    }
+
+    function _getCoordinatorState(bytes32 txID) internal view override returns (CoordinatorState.Data memory) {
+        CrossStore.CoordStorage storage s = _getCoordStorage();
+        if (s.states[txID].commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
+            revert CoordinatorStateNotFound(txID);
+        }
+        return s.states[txID];
     }
 
     function _deepStoreMsg(CrossStore.TxStorage storage t, bytes32 txID, MsgInitiateTx.Data calldata src) private {
