@@ -21,7 +21,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
 
     // txID => PendingTx
     mapping(bytes32 => PendingTx) public pendingTxs;
-    address public crossModule;
+    address public immutable crossModule;
 
     modifier onlyCrossModule() {
         if (msg.sender != crossModule) revert ERC20ModuleUnauthorized();
