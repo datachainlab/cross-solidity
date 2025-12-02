@@ -7,14 +7,12 @@ import {CrossContext} from "../core/IContractModule.sol";
 
 abstract contract ERC20Module is ERC20, ContractModuleBase {
     error ERC20ModuleInvalidCallInfo();
-    error ERC20ModuleSignerRequired();
-    error ERC20ModuleInvalidSignerId();
     error ERC20ModuleTransferFromFailed();
     error ERC20ModuleTxAlreadyPending();
     error ERC20ModuleUnauthorized();
 
     struct PendingTx {
-        address sender;
+        address from;
         address to;
         uint256 amount;
     }
@@ -32,29 +30,32 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         CROSS_MODULE = _crossModule;
     }
 
-    function decodeCallInfo(bytes calldata callInfo) public pure virtual returns (address to, uint256 amount) {
-        if (callInfo.length != 64) revert ERC20ModuleInvalidCallInfo();
-        return abi.decode(callInfo, (address, uint256));
+    function decodeCallInfo(bytes calldata callInfo)
+        public
+        pure
+        virtual
+        returns (address from, address to, uint256 amount)
+    {
+        if (callInfo.length != 96) revert ERC20ModuleInvalidCallInfo();
+        return abi.decode(callInfo, (address, address, uint256));
     }
 
-    function _onContractCommitImmediately(CrossContext calldata context, bytes calldata callInfo)
+    function _onContractCommitImmediately(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata callInfo
+    )
         internal
         virtual
         override
         onlyCrossModule
         returns (bytes memory)
     {
-        (address to, uint256 amount) = decodeCallInfo(callInfo);
-
-        if (context.signers.length == 0) revert ERC20ModuleSignerRequired();
-
-        bytes memory signerId = context.signers[0].id;
-        if (signerId.length != 20) revert ERC20ModuleInvalidSignerId();
-        address sender = address(bytes20(signerId));
+        (address from, address to, uint256 amount) = decodeCallInfo(callInfo);
 
         // Directly transfer tokens from sender to recipient
         // NOTE: The sender must have approved the caller (e.g., CrossModule) to spend the tokens.
-        bool success = transferFrom(sender, to, amount);
+        bool success = transferFrom(from, to, amount);
         if (!success) revert ERC20ModuleTransferFromFailed();
 
         return "";
@@ -68,24 +69,16 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         returns (bytes memory)
     {
         bytes32 txID = abi.decode(context.txID, (bytes32));
-        if (pendingTxs[txID].sender != address(0)) revert ERC20ModuleTxAlreadyPending();
+        if (pendingTxs[txID].from != address(0)) revert ERC20ModuleTxAlreadyPending();
 
-        (address to, uint256 amount) = decodeCallInfo(callInfo);
-
-        if (context.signers.length == 0) revert ERC20ModuleSignerRequired();
-
-        bytes memory signerId = context.signers[0].id;
-
-        if (signerId.length != 20) revert ERC20ModuleInvalidSignerId();
-
-        address sender = address(bytes20(signerId));
+        (address from, address to, uint256 amount) = decodeCallInfo(callInfo);
 
         // Lock tokens by transferring from the sender to this contract
         // NOTE: The sender must have approved the caller (e.g., CrossModule) to spend the tokens.
-        bool success = transferFrom(sender, address(this), amount);
+        bool success = transferFrom(from, address(this), amount);
         if (!success) revert ERC20ModuleTransferFromFailed();
 
-        pendingTxs[txID] = PendingTx({sender: sender, to: to, amount: amount});
+        pendingTxs[txID] = PendingTx({from: from, to: to, amount: amount});
 
         return "";
     }
@@ -94,7 +87,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         bytes32 txID = abi.decode(context.txID, (bytes32));
         PendingTx memory pending = pendingTxs[txID];
 
-        if (pending.sender != address(0)) {
+        if (pending.from != address(0)) {
             delete pendingTxs[txID];
             // Transfer locked tokens to the destination
             _transfer(address(this), pending.to, pending.amount);
@@ -105,10 +98,10 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         bytes32 txID = abi.decode(context.txID, (bytes32));
         PendingTx memory pending = pendingTxs[txID];
 
-        if (pending.sender != address(0)) {
+        if (pending.from != address(0)) {
             delete pendingTxs[txID];
             // Refund tokens to the sender
-            _transfer(address(this), pending.sender, pending.amount);
+            _transfer(address(this), pending.from, pending.amount);
         }
     }
 }

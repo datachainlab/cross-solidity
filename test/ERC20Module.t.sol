@@ -63,22 +63,23 @@ contract ERC20ModuleTest is Test {
         return CrossContext({txID: txID, txIndex: 0, signers: signers});
     }
 
-    function _createCallInfo(address _to, uint256 _amount) internal pure returns (bytes memory) {
-        return abi.encode(_to, _amount);
+    function _createCallInfo(address _from, address _to, uint256 _amount) internal pure returns (bytes memory) {
+        return abi.encode(_from, _to, _amount);
     }
 
     // --- Decode Tests ---
 
     function test_decodeCallInfo_Success() public view {
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
-        (address to, uint256 amount) = harness.decodeCallInfo(callInfo);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
+        (address from, address to, uint256 amount) = harness.decodeCallInfo(callInfo);
 
+        assertEq(from, sender);
         assertEq(to, receiver);
         assertEq(amount, AMOUNT);
     }
 
     function test_decodeCallInfo_RevertWhen_InvalidLength() public {
-        bytes memory invalidCallInfo = abi.encode(receiver);
+        bytes memory invalidCallInfo = abi.encode(receiver, AMOUNT);
 
         vm.expectRevert(ERC20Module.ERC20ModuleInvalidCallInfo.selector);
         harness.decodeCallInfo(invalidCallInfo);
@@ -88,7 +89,7 @@ contract ERC20ModuleTest is Test {
 
     function test_onContractCommitImmediately_Success() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         uint256 senderPreBalance = harness.balanceOf(sender);
         uint256 receiverPreBalance = harness.balanceOf(receiver);
@@ -105,7 +106,7 @@ contract ERC20ModuleTest is Test {
 
     function test_onContractCommitImmediately_RevertWhen_InsufficientAllowance() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         // Do not approve, so allowance is zero
         vm.expectRevert(
@@ -119,33 +120,9 @@ contract ERC20ModuleTest is Test {
         harness.onContractCommitImmediately(context, callInfo);
     }
 
-    function test_onContractCommitImmediately_RevertWhen_NoSigner() public {
-        CrossContext memory context = _createContext(address(0));
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
-
-        vm.expectRevert(ERC20Module.ERC20ModuleSignerRequired.selector);
-        harness.onContractCommitImmediately(context, callInfo);
-    }
-
-    function test_onContractCommitImmediately_RevertWhen_InvalidSignerId() public {
-        AuthAccount.Data[] memory signers = new AuthAccount.Data[](1);
-        signers[0] = AuthAccount.Data({
-            id: bytes("invalid_len"),
-            auth_type: AuthType.Data({
-                mode: AuthType.AuthMode.AUTH_MODE_LOCAL, option: GoogleProtobufAny.Data({type_url: "", value: ""})
-            })
-        });
-
-        CrossContext memory context = CrossContext({txID: txID, txIndex: 0, signers: signers});
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
-
-        vm.expectRevert(ERC20Module.ERC20ModuleInvalidSignerId.selector);
-        harness.onContractCommitImmediately(context, callInfo);
-    }
-
     function test_onContractCommitImmediately_RevertWhen_CalledByOthers() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         address unauthorized = makeAddr("unauthorized");
         vm.prank(unauthorized);
@@ -157,7 +134,7 @@ contract ERC20ModuleTest is Test {
 
     function test_onContractPrepare_Success() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         vm.prank(sender);
         harness.approve(address(this), AMOUNT);
@@ -167,15 +144,15 @@ contract ERC20ModuleTest is Test {
         assertEq(harness.balanceOf(sender), INITIAL_BALANCE - AMOUNT, "Sender balance should decrease");
         assertEq(harness.balanceOf(address(harness)), AMOUNT, "Module should hold locked tokens");
 
-        (address pendingSender, address pendingTo, uint256 pendingAmount) = harness.pendingTxs(TX_ID_RAW);
-        assertEq(pendingSender, sender);
+        (address pendingFrom, address pendingTo, uint256 pendingAmount) = harness.pendingTxs(TX_ID_RAW);
+        assertEq(pendingFrom, sender);
         assertEq(pendingTo, receiver);
         assertEq(pendingAmount, AMOUNT);
     }
 
     function test_onContractPrepare_RevertWhen_InsufficientAllowance() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         // Do not approve, so allowance is zero
         vm.expectRevert(
@@ -192,7 +169,7 @@ contract ERC20ModuleTest is Test {
     function test_onContractPrepare_RevertWhen_InsufficientBalance() public {
         uint256 tooMuchAmount = INITIAL_BALANCE + 1;
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, tooMuchAmount);
+        bytes memory callInfo = _createCallInfo(sender, receiver, tooMuchAmount);
 
         vm.prank(sender);
         harness.approve(address(this), tooMuchAmount);
@@ -208,25 +185,17 @@ contract ERC20ModuleTest is Test {
         harness.onContractPrepare(context, callInfo);
     }
 
-    function test_onContractPrepare_RevertWhen_NoSigner() public {
-        CrossContext memory context = _createContext(address(0));
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
-
-        vm.expectRevert(ERC20Module.ERC20ModuleSignerRequired.selector);
-        harness.onContractPrepare(context, callInfo);
-    }
-
     function test_onContractPrepare_RevertWhen_TxAlreadyPending() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         vm.prank(sender);
         harness.approve(address(this), AMOUNT * 2);
 
         harness.onContractPrepare(context, callInfo);
 
-        (address pendingSender,,) = harness.pendingTxs(TX_ID_RAW);
-        assertEq(pendingSender, sender);
+        (address pendingFrom,,) = harness.pendingTxs(TX_ID_RAW);
+        assertEq(pendingFrom, sender);
 
         vm.expectRevert(ERC20Module.ERC20ModuleTxAlreadyPending.selector);
         harness.onContractPrepare(context, callInfo);
@@ -234,7 +203,7 @@ contract ERC20ModuleTest is Test {
 
     function test_onContractPrepare_RevertWhen_CalledByOthers() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         address unauthorized = makeAddr("unauthorized");
         vm.prank(unauthorized);
@@ -246,7 +215,7 @@ contract ERC20ModuleTest is Test {
 
     function test_onCommit_Success() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         vm.prank(sender);
         harness.approve(address(this), AMOUNT);
@@ -261,8 +230,8 @@ contract ERC20ModuleTest is Test {
         assertEq(harness.balanceOf(receiver), AMOUNT, "Receiver should receive tokens");
         assertEq(harness.balanceOf(sender), INITIAL_BALANCE - AMOUNT, "Sender balance should decrease");
 
-        (address pendingSender,,) = harness.pendingTxs(TX_ID_RAW);
-        assertEq(pendingSender, address(0), "Pending state should be deleted");
+        (address pendingFrom,,) = harness.pendingTxs(TX_ID_RAW);
+        assertEq(pendingFrom, address(0), "Pending state should be deleted");
     }
 
     function test_onCommit_DoNothingWhenTxNotFound() public {
@@ -290,7 +259,7 @@ contract ERC20ModuleTest is Test {
 
     function test_onAbort_Success() public {
         CrossContext memory context = _createContext(sender);
-        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
 
         vm.prank(sender);
         harness.approve(address(this), AMOUNT);
@@ -307,8 +276,8 @@ contract ERC20ModuleTest is Test {
         assertEq(harness.balanceOf(sender), senderBalanceAfterLock + AMOUNT, "Sender should be refunded");
         assertEq(harness.balanceOf(receiver), 0, "Receiver should not receive tokens");
 
-        (address pendingSender,,) = harness.pendingTxs(TX_ID_RAW);
-        assertEq(pendingSender, address(0), "Pending state should be deleted");
+        (address pendingFrom,,) = harness.pendingTxs(TX_ID_RAW);
+        assertEq(pendingFrom, address(0), "Pending state should be deleted");
     }
 
     function test_onAbort_DoNothingWhenTxNotFound() public {
