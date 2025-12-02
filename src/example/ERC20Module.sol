@@ -21,15 +21,15 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
 
     // txID => PendingTx
     mapping(bytes32 => PendingTx) public pendingTxs;
-    address public immutable crossModule;
+    address public immutable CROSS_MODULE;
 
     modifier onlyCrossModule() {
-        if (msg.sender != crossModule) revert ERC20ModuleUnauthorized();
+        if (msg.sender != CROSS_MODULE) revert ERC20ModuleUnauthorized();
         _;
     }
 
     constructor(address _crossModule) {
-        crossModule = _crossModule;
+        CROSS_MODULE = _crossModule;
     }
 
     function decodeCallInfo(bytes calldata callInfo) public pure virtual returns (address to, uint256 amount) {
