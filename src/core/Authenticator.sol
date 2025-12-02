@@ -5,6 +5,7 @@ import {IAuthenticator} from "./IAuthenticator.sol";
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
 import {ICrossError} from "./ICrossError.sol";
+import {ICrossEvent} from "./ICrossEvent.sol";
 
 import {
     AuthType,
@@ -19,7 +20,7 @@ import {
 } from "../proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 
-abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerBase, ICrossError {
+abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerBase, ICrossError, ICrossEvent {
     function signTx(MsgSignTx.Data calldata msg_) external override returns (MsgSignTxResponse.Data memory) {
         bytes32 txID = _decodeTxID(msg_.txID);
 

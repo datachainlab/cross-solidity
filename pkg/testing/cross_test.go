@@ -66,7 +66,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		))
 
 		// 3. check if a fired event matches expected one
-		event, err := suite.chain.findEventOnContractCall(ctx, txID)
+		event, err := suite.chain.findEventOnContractCommitImmediately(ctx, txID)
 		suite.Require().NoError(err)
 		suite.Require().True(event.Success)
 		suite.Require().Equal(event.Ret, successMsg)
@@ -94,7 +94,7 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		))
 
 		// 3. check if a fired event matches expected one
-		event, err := suite.chain.findEventOnContractCall(ctx, txID)
+		event, err := suite.chain.findEventOnContractCommitImmediately(ctx, txID)
 		suite.Require().NoError(err)
 		suite.Require().False(event.Success)
 		suite.Require().Empty(event.Ret)

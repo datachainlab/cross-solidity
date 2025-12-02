@@ -7,6 +7,7 @@ import "forge-std/src/Test.sol";
 import "../src/core/TxAtomicSimple.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/ICrossError.sol";
+import "../src/core/ICrossEvent.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Height} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/Client.sol";
@@ -197,14 +198,12 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
     }
 }
 
-contract TxAtomicSimpleTest is Test, ICrossError {
+contract TxAtomicSimpleTest is Test, ICrossError, ICrossEvent {
     TxAtomicSimpleHarness private harness;
     MockIBCHandler private mockHandler;
     MockModule private mockModule;
 
     bytes32 private constant TX_ID = keccak256("test-tx");
-
-    event OnContractCall(bytes indexed txId, uint8 indexed txIndex, bool indexed success, bytes ret);
 
     function setUp() public {
         mockHandler = new MockIBCHandler();
@@ -336,7 +335,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         Packet memory packet = _createPacket(TX_ID, hex"c0ffee", "port-1", "channel-1");
 
         vm.expectEmit(address(harness));
-        emit OnContractCall(abi.encodePacked(TX_ID), 1, true, hex"01");
+        emit OnContractCommitImmediately(abi.encodePacked(TX_ID), 1, true, hex"01");
 
         bytes memory ack = harness.exposed_handlePacket(packet);
 
@@ -356,7 +355,7 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         Packet memory packet = _createPacket(TX_ID, hex"00", "port-1", "channel-1");
 
         vm.expectEmit(address(harness));
-        emit OnContractCall(abi.encodePacked(TX_ID), 1, false, "");
+        emit OnContractCommitImmediately(abi.encodePacked(TX_ID), 1, false, "");
 
         bytes memory ack = harness.exposed_handlePacket(packet);
 
@@ -549,11 +548,14 @@ contract TxAtomicSimpleTest is Test, ICrossError {
 
     // --- _handleAcknowledgement Tests ---
 
-    function test_handleAck_Commit_Success() public {
+    function test_handleAck_Success() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
+
+        vm.expectEmit(address(harness));
+        emit OnCommit(abi.encodePacked(TX_ID), 0);
 
         harness.exposed_handleAcknowledgement(p, ack);
 
@@ -565,11 +567,14 @@ contract TxAtomicSimpleTest is Test, ICrossError {
         assertEq(mockModule.onAbortCallCount(), 0, "onAbort should not be called");
     }
 
-    function test_handleAck_Abort_Failure() public {
+    function test_handleAck_Failure() public {
         _setupCoordStateForAck(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE);
 
         Packet memory p = _createPacket(TX_ID, "", "port-1", "channel-1");
         bytes memory ack = _createAck(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
+
+        vm.expectEmit(address(harness));
+        emit OnAbort(abi.encodePacked(TX_ID), 0);
 
         harness.exposed_handleAcknowledgement(p, ack);
 
