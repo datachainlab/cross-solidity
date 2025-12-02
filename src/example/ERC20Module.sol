@@ -11,6 +11,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
     error ERC20ModuleInvalidSignerId();
     error ERC20ModuleTransferFromFailed();
     error ERC20ModuleTxAlreadyPending();
+    error ERC20ModuleUnauthorized();
 
     struct PendingTx {
         address sender;
@@ -20,6 +21,16 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
 
     // txID => PendingTx
     mapping(bytes32 => PendingTx) public pendingTxs;
+    address public crossModule;
+
+    modifier onlyCrossModule() {
+        if (msg.sender != crossModule) revert ERC20ModuleUnauthorized();
+        _;
+    }
+
+    constructor(address _crossModule) {
+        crossModule = _crossModule;
+    }
 
     function decodeCallInfo(bytes calldata callInfo) public pure virtual returns (address to, uint256 amount) {
         if (callInfo.length != 64) revert ERC20ModuleInvalidCallInfo();
@@ -30,6 +41,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         internal
         virtual
         override
+        onlyCrossModule
         returns (bytes memory)
     {
         (address to, uint256 amount) = decodeCallInfo(callInfo);
@@ -52,6 +64,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         internal
         virtual
         override
+        onlyCrossModule
         returns (bytes memory)
     {
         bytes32 txID = abi.decode(context.txID, (bytes32));
@@ -77,7 +90,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         return "";
     }
 
-    function onCommit(CrossContext calldata context) external virtual override {
+    function onCommit(CrossContext calldata context) external virtual override onlyCrossModule {
         bytes32 txID = abi.decode(context.txID, (bytes32));
         PendingTx memory pending = pendingTxs[txID];
 
@@ -88,7 +101,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         }
     }
 
-    function onAbort(CrossContext calldata context) external virtual override {
+    function onAbort(CrossContext calldata context) external virtual override onlyCrossModule {
         bytes32 txID = abi.decode(context.txID, (bytes32));
         PendingTx memory pending = pendingTxs[txID];
 

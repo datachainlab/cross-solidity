@@ -5,12 +5,13 @@ pragma solidity ^0.8.20;
 import "forge-std/src/Test.sol";
 import {ERC20Module} from "../src/example/ERC20Module.sol";
 import {CrossContext} from "../src/core/IContractModule.sol";
-import {Account as AuthAccount, AuthType, GoogleProtobufAny} from "../src/proto/cross/core/auth/Auth.sol";
+import {Account as AuthAccount, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
+import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 contract ERC20ModuleHarness is ERC20Module {
-    constructor() ERC20("Test Token", "TST") {}
+    constructor(address _crossModule) ERC20Module(_crossModule) ERC20("Test Token", "TST") {}
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
@@ -33,10 +34,11 @@ contract ERC20ModuleTest is Test {
     uint256 private constant INITIAL_BALANCE = 1000 ether;
 
     function setUp() public {
-        harness = new ERC20ModuleHarness();
         sender = makeAddr("sender");
         receiver = makeAddr("receiver");
         txID = abi.encode(TX_ID_RAW);
+
+        harness = new ERC20ModuleHarness(address(this));
 
         harness.mint(sender, INITIAL_BALANCE);
     }
@@ -141,6 +143,16 @@ contract ERC20ModuleTest is Test {
         harness.onContractCommitImmediately(context, callInfo);
     }
 
+    function test_onContractCommitImmediately_RevertWhen_CalledByOthers() public {
+        CrossContext memory context = _createContext(sender);
+        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+
+        address unauthorized = makeAddr("unauthorized");
+        vm.prank(unauthorized);
+        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        harness.onContractCommitImmediately(context, callInfo);
+    }
+
     // --- Prepare Tests ---
 
     function test_onContractPrepare_Success() public {
@@ -220,6 +232,16 @@ contract ERC20ModuleTest is Test {
         harness.onContractPrepare(context, callInfo);
     }
 
+    function test_onContractPrepare_RevertWhen_CalledByOthers() public {
+        CrossContext memory context = _createContext(sender);
+        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+
+        address unauthorized = makeAddr("unauthorized");
+        vm.prank(unauthorized);
+        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        harness.onContractPrepare(context, callInfo);
+    }
+
     // --- Commit Tests ---
 
     function test_onCommit_Success() public {
@@ -243,7 +265,7 @@ contract ERC20ModuleTest is Test {
         assertEq(pendingSender, address(0), "Pending state should be deleted");
     }
 
-    function test_onCommit_DoNothingWhen_TxNotFound() public {
+    function test_onCommit_DoNothingWhenTxNotFound() public {
         bytes32 unknownTxIdRaw = keccak256("unknown");
         CrossContext memory context =
             CrossContext({txID: abi.encode(unknownTxIdRaw), txIndex: 0, signers: new AuthAccount.Data[](0)});
@@ -253,6 +275,15 @@ contract ERC20ModuleTest is Test {
         assertEq(harness.balanceOf(address(harness)), 0);
         assertEq(harness.balanceOf(sender), INITIAL_BALANCE);
         assertEq(harness.balanceOf(receiver), 0);
+    }
+
+    function test_onCommit_RevertWhen_CalledByOthers() public {
+        CrossContext memory context = _createContext(sender);
+
+        address unauthorized = makeAddr("unauthorized");
+        vm.prank(unauthorized);
+        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        harness.onCommit(context);
     }
 
     // --- Abort Tests ---
@@ -280,7 +311,7 @@ contract ERC20ModuleTest is Test {
         assertEq(pendingSender, address(0), "Pending state should be deleted");
     }
 
-    function test_onAbort_DoNothingWhen_TxNotFound() public {
+    function test_onAbort_DoNothingWhenTxNotFound() public {
         bytes32 unknownTxIdRaw = keccak256("unknown");
         CrossContext memory context =
             CrossContext({txID: abi.encode(unknownTxIdRaw), txIndex: 0, signers: new AuthAccount.Data[](0)});
@@ -290,5 +321,14 @@ contract ERC20ModuleTest is Test {
         assertEq(harness.balanceOf(address(harness)), 0);
         assertEq(harness.balanceOf(sender), INITIAL_BALANCE);
         assertEq(harness.balanceOf(receiver), 0);
+    }
+
+    function test_onAbort_RevertWhen_CalledByOthers() public {
+        CrossContext memory context = _createContext(sender);
+
+        address unauthorized = makeAddr("unauthorized");
+        vm.prank(unauthorized);
+        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        harness.onAbort(context);
     }
 }
