@@ -10,6 +10,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
     error ERC20ModuleSignerRequired();
     error ERC20ModuleInvalidSignerId();
     error ERC20ModuleTransferFromFailed();
+    error ERC20ModuleTxAlreadyPending();
 
     struct PendingTx {
         address sender;
@@ -53,6 +54,9 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         override
         returns (bytes memory)
     {
+        bytes32 txID = abi.decode(context.txID, (bytes32));
+        if (pendingTxs[txID].sender != address(0)) revert ERC20ModuleTxAlreadyPending();
+
         (address to, uint256 amount) = decodeCallInfo(callInfo);
 
         if (context.signers.length == 0) revert ERC20ModuleSignerRequired();
@@ -68,7 +72,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         bool success = transferFrom(sender, address(this), amount);
         if (!success) revert ERC20ModuleTransferFromFailed();
 
-        pendingTxs[abi.decode(context.txID, (bytes32))] = PendingTx({sender: sender, to: to, amount: amount});
+        pendingTxs[txID] = PendingTx({sender: sender, to: to, amount: amount});
 
         return "";
     }

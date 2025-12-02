@@ -204,6 +204,22 @@ contract ERC20ModuleTest is Test {
         harness.onContractPrepare(context, callInfo);
     }
 
+    function test_onContractPrepare_RevertWhen_TxAlreadyPending() public {
+        CrossContext memory context = _createContext(sender);
+        bytes memory callInfo = _createCallInfo(receiver, AMOUNT);
+
+        vm.prank(sender);
+        harness.approve(address(this), AMOUNT * 2);
+
+        harness.onContractPrepare(context, callInfo);
+
+        (address pendingSender,,) = harness.pendingTxs(TX_ID_RAW);
+        assertEq(pendingSender, sender);
+
+        vm.expectRevert(ERC20Module.ERC20ModuleTxAlreadyPending.selector);
+        harness.onContractPrepare(context, callInfo);
+    }
+
     // --- Commit Tests ---
 
     function test_onCommit_Success() public {
