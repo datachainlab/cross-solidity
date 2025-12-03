@@ -3,7 +3,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
-import {ERC20Module} from "../src/example/ERC20Module.sol";
+import {ERC20TransferModule} from "../src/example/ERC20TransferModule.sol";
 import {CrossContext} from "../src/core/IContractModule.sol";
 import {Account as AuthAccount, AuthType} from "../src/proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
@@ -18,8 +18,8 @@ contract MockERC20 is ERC20 {
     }
 }
 
-contract ERC20ModuleHarness is ERC20Module {
-    constructor(address _crossModule, address _token) ERC20Module(_crossModule, _token) {}
+contract ERC20TransferModuleHarness is ERC20TransferModule {
+    constructor(address _crossModule, address _token) ERC20TransferModule(_crossModule, _token) {}
 
     function _authorize(CrossContext calldata, bytes calldata) internal pure override {
         // allow all for testing
@@ -27,7 +27,7 @@ contract ERC20ModuleHarness is ERC20Module {
 }
 
 contract ERC20ModuleTest is Test {
-    ERC20ModuleHarness private harness;
+    ERC20TransferModuleHarness private harness;
     MockERC20 private token;
 
     address private sender;
@@ -45,7 +45,7 @@ contract ERC20ModuleTest is Test {
 
         token = new MockERC20();
 
-        harness = new ERC20ModuleHarness(address(this), address(token));
+        harness = new ERC20TransferModuleHarness(address(this), address(token));
 
         token.mint(sender, INITIAL_BALANCE);
     }
@@ -88,7 +88,7 @@ contract ERC20ModuleTest is Test {
     function test_decodeCallInfo_RevertWhen_InvalidLength() public {
         bytes memory invalidCallInfo = abi.encode(receiver, AMOUNT);
 
-        vm.expectRevert(ERC20Module.ERC20ModuleInvalidCallInfo.selector);
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleInvalidCallInfo.selector);
         harness.decodeCallInfo(invalidCallInfo);
     }
 
@@ -132,7 +132,7 @@ contract ERC20ModuleTest is Test {
 
         address unauthorized = makeAddr("unauthorized");
         vm.prank(unauthorized);
-        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleUnauthorized.selector);
         harness.onContractCommitImmediately(context, callInfo);
     }
 
@@ -202,7 +202,7 @@ contract ERC20ModuleTest is Test {
         (address pendingFrom,,) = harness.pendingTxs(TX_ID_RAW);
         assertEq(pendingFrom, sender);
 
-        vm.expectRevert(ERC20Module.ERC20ModuleTxAlreadyPending.selector);
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleTxAlreadyPending.selector);
         harness.onContractPrepare(context, callInfo);
     }
 
@@ -212,7 +212,7 @@ contract ERC20ModuleTest is Test {
 
         address unauthorized = makeAddr("unauthorized");
         vm.prank(unauthorized);
-        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleUnauthorized.selector);
         harness.onContractPrepare(context, callInfo);
     }
 
@@ -256,7 +256,7 @@ contract ERC20ModuleTest is Test {
 
         address unauthorized = makeAddr("unauthorized");
         vm.prank(unauthorized);
-        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleUnauthorized.selector);
         harness.onCommit(context);
     }
 
@@ -302,7 +302,7 @@ contract ERC20ModuleTest is Test {
 
         address unauthorized = makeAddr("unauthorized");
         vm.prank(unauthorized);
-        vm.expectRevert(ERC20Module.ERC20ModuleUnauthorized.selector);
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleUnauthorized.selector);
         harness.onAbort(context);
     }
 }

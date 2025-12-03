@@ -6,12 +6,12 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ContractModuleBase} from "../core/ContractModuleBase.sol";
 import {CrossContext} from "../core/IContractModule.sol";
 
-abstract contract ERC20Module is ContractModuleBase {
+abstract contract ERC20TransferModule is ContractModuleBase {
     using SafeERC20 for IERC20;
 
-    error ERC20ModuleInvalidCallInfo();
-    error ERC20ModuleTxAlreadyPending();
-    error ERC20ModuleUnauthorized();
+    error ERC20TransferModuleInvalidCallInfo();
+    error ERC20TransferModuleTxAlreadyPending();
+    error ERC20TransferModuleUnauthorized();
 
     struct PendingTx {
         address from;
@@ -26,7 +26,7 @@ abstract contract ERC20Module is ContractModuleBase {
     IERC20 public immutable TOKEN;
 
     modifier onlyCrossModule() {
-        if (msg.sender != CROSS_MODULE) revert ERC20ModuleUnauthorized();
+        if (msg.sender != CROSS_MODULE) revert ERC20TransferModuleUnauthorized();
         _;
     }
 
@@ -41,7 +41,7 @@ abstract contract ERC20Module is ContractModuleBase {
         virtual
         returns (address from, address to, uint256 amount)
     {
-        if (callInfo.length != 96) revert ERC20ModuleInvalidCallInfo();
+        if (callInfo.length != 96) revert ERC20TransferModuleInvalidCallInfo();
         return abi.decode(callInfo, (address, address, uint256));
     }
 
@@ -74,7 +74,7 @@ abstract contract ERC20Module is ContractModuleBase {
     {
         bytes32 txID = abi.decode(context.txID, (bytes32));
 
-        if (pendingTxs[txID].from != address(0)) revert ERC20ModuleTxAlreadyPending();
+        if (pendingTxs[txID].from != address(0)) revert ERC20TransferModuleTxAlreadyPending();
 
         (address from, address to, uint256 amount) = decodeCallInfo(callInfo);
 
