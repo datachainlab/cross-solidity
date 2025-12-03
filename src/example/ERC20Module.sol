@@ -58,6 +58,8 @@ abstract contract ERC20Module is ContractModuleBase {
     {
         (address from, address to, uint256 amount) = decodeCallInfo(callInfo);
 
+        // IMPORTANT: The implementing contract MUST ensure in `_authorize` that the `from` address corresponds to the authenticated signer.
+        // slither-disable-next-line arbitrary-send-erc20
         TOKEN.safeTransferFrom(from, to, amount);
 
         return "";
@@ -78,6 +80,8 @@ abstract contract ERC20Module is ContractModuleBase {
 
         pendingTxs[txID] = PendingTx({from: from, to: to, amount: amount});
 
+        // IMPORTANT: The implementing contract MUST ensure in `_authorize` that the `from` address corresponds to the authenticated signer.
+        // slither-disable-next-line arbitrary-send-erc20
         TOKEN.safeTransferFrom(from, address(this), amount);
 
         return "";
