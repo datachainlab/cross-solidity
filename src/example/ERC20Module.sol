@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ContractModuleBase} from "../core/ContractModuleBase.sol";
 import {CrossContext} from "../core/IContractModule.sol";
 
-abstract contract ERC20Module is ERC20, ContractModuleBase {
+abstract contract ERC20Module is ContractModuleBase {
+    using SafeERC20 for IERC20;
+
     error ERC20ModuleInvalidCallInfo();
-    error ERC20ModuleTransferFromFailed();
     error ERC20ModuleTxAlreadyPending();
     error ERC20ModuleUnauthorized();
 
@@ -19,15 +21,18 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
 
     // txID => PendingTx
     mapping(bytes32 => PendingTx) public pendingTxs;
+
     address public immutable CROSS_MODULE;
+    IERC20 public immutable TOKEN;
 
     modifier onlyCrossModule() {
         if (msg.sender != CROSS_MODULE) revert ERC20ModuleUnauthorized();
         _;
     }
 
-    constructor(address _crossModule) {
+    constructor(address _crossModule, address _token) {
         CROSS_MODULE = _crossModule;
+        TOKEN = IERC20(_token);
     }
 
     function decodeCallInfo(bytes calldata callInfo)
@@ -53,10 +58,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
     {
         (address from, address to, uint256 amount) = decodeCallInfo(callInfo);
 
-        // Directly transfer tokens from sender to recipient
-        // NOTE: The sender must have approved the caller (e.g., CrossModule) to spend the tokens.
-        bool success = transferFrom(from, to, amount);
-        if (!success) revert ERC20ModuleTransferFromFailed();
+        TOKEN.safeTransferFrom(from, to, amount);
 
         return "";
     }
@@ -69,16 +71,14 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         returns (bytes memory)
     {
         bytes32 txID = abi.decode(context.txID, (bytes32));
+
         if (pendingTxs[txID].from != address(0)) revert ERC20ModuleTxAlreadyPending();
 
         (address from, address to, uint256 amount) = decodeCallInfo(callInfo);
 
-        // Lock tokens by transferring from the sender to this contract
-        // NOTE: The sender must have approved the caller (e.g., CrossModule) to spend the tokens.
-        bool success = transferFrom(from, address(this), amount);
-        if (!success) revert ERC20ModuleTransferFromFailed();
-
         pendingTxs[txID] = PendingTx({from: from, to: to, amount: amount});
+
+        TOKEN.safeTransferFrom(from, address(this), amount);
 
         return "";
     }
@@ -90,7 +90,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         if (pending.from != address(0)) {
             delete pendingTxs[txID];
             // Transfer locked tokens to the destination
-            _transfer(address(this), pending.to, pending.amount);
+            TOKEN.safeTransfer(pending.to, pending.amount);
         }
     }
 
@@ -101,7 +101,7 @@ abstract contract ERC20Module is ERC20, ContractModuleBase {
         if (pending.from != address(0)) {
             delete pendingTxs[txID];
             // Refund tokens to the sender
-            _transfer(address(this), pending.from, pending.amount);
+            TOKEN.safeTransfer(pending.from, pending.amount);
         }
     }
 }
