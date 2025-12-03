@@ -16,10 +16,12 @@ interface IContractModule {
 
     // // onCommit is a callback function that is called at the commit(2pc) phase
     // It is expected that it commits the changes in the contract module
+    // IMPORTANT: This function MUST NOT revert.
     function onCommit(CrossContext calldata context) external;
 
     // onAbort is a callback function that is called at the commit(2pc) phase
     // It is expected that it aborts the changes in the contract module
+    // IMPORTANT: This function MUST NOT revert.
     function onAbort(CrossContext calldata context) external;
 }
 
