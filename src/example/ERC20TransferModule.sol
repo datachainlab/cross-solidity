@@ -33,7 +33,7 @@ abstract contract ERC20TransferModule is Initializable, ContractModuleBase {
         _;
     }
 
-    function initialize(address _crossModule, address _token) public initializer {
+    function initialize(address _crossModule, address _token) external initializer {
         crossModule = _crossModule;
         token = IERC20(_token);
     }
