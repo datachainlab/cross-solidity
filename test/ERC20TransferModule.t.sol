@@ -9,6 +9,7 @@ import {Account as AuthAccount, AuthType} from "../src/proto/cross/core/auth/Aut
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract MockERC20 is ERC20 {
     constructor() ERC20("Mock Token", "MCK") {}
@@ -19,8 +20,6 @@ contract MockERC20 is ERC20 {
 }
 
 contract ERC20TransferModuleHarness is ERC20TransferModule {
-    constructor(address _crossModule, address _token) ERC20TransferModule(_crossModule, _token) {}
-
     function _authorize(CrossContext calldata, bytes calldata) internal pure override {
         // allow all for testing
     }
@@ -45,7 +44,8 @@ contract ERC20ModuleTest is Test {
 
         token = new MockERC20();
 
-        harness = new ERC20TransferModuleHarness(address(this), address(token));
+        harness = new ERC20TransferModuleHarness();
+        harness.initialize(address(this), address(token));
 
         token.mint(sender, INITIAL_BALANCE);
     }
@@ -72,6 +72,27 @@ contract ERC20ModuleTest is Test {
 
     function _createCallInfo(address _from, address _to, uint256 _amount) internal pure returns (bytes memory) {
         return abi.encode(_from, _to, _amount);
+    }
+
+    // --- Initialization Tests ---
+
+    function test_initialize_Success() public {
+        ERC20TransferModuleHarness newHarness = new ERC20TransferModuleHarness();
+        address crossModule = makeAddr("newCrossModule");
+        address newToken = makeAddr("newToken");
+
+        assertEq(newHarness.crossModule(), address(0));
+        assertEq(address(newHarness.token()), address(0));
+
+        newHarness.initialize(crossModule, newToken);
+
+        assertEq(newHarness.crossModule(), crossModule);
+        assertEq(address(newHarness.token()), newToken);
+    }
+
+    function test_initialize_RevertWhen_AlreadyInitialized() public {
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        harness.initialize(address(this), address(token));
     }
 
     // --- Decode Tests ---
@@ -134,6 +155,15 @@ contract ERC20ModuleTest is Test {
         vm.prank(unauthorized);
         vm.expectRevert(ERC20TransferModule.ERC20TransferModuleUnauthorized.selector);
         harness.onContractCommitImmediately(context, callInfo);
+    }
+
+    function test_onContractCommitImmediately_RevertWhen_NotInitialized() public {
+        ERC20TransferModuleHarness uninitHarness = new ERC20TransferModuleHarness();
+        CrossContext memory context = _createContext(sender);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
+
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleNotInitialized.selector);
+        uninitHarness.onContractCommitImmediately(context, callInfo);
     }
 
     // --- Prepare Tests ---
@@ -216,6 +246,15 @@ contract ERC20ModuleTest is Test {
         harness.onContractPrepare(context, callInfo);
     }
 
+    function test_onContractPrepare_RevertWhen_NotInitialized() public {
+        ERC20TransferModuleHarness uninitHarness = new ERC20TransferModuleHarness();
+        CrossContext memory context = _createContext(sender);
+        bytes memory callInfo = _createCallInfo(sender, receiver, AMOUNT);
+
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleNotInitialized.selector);
+        uninitHarness.onContractPrepare(context, callInfo);
+    }
+
     // --- Commit Tests ---
 
     function test_onCommit_Success() public {
@@ -258,6 +297,14 @@ contract ERC20ModuleTest is Test {
         vm.prank(unauthorized);
         vm.expectRevert(ERC20TransferModule.ERC20TransferModuleUnauthorized.selector);
         harness.onCommit(context);
+    }
+
+    function test_onCommit_RevertWhen_NotInitialized() public {
+        ERC20TransferModuleHarness uninitHarness = new ERC20TransferModuleHarness();
+        CrossContext memory context = _createContext(sender);
+
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleNotInitialized.selector);
+        uninitHarness.onCommit(context);
     }
 
     // --- Abort Tests ---
@@ -304,5 +351,13 @@ contract ERC20ModuleTest is Test {
         vm.prank(unauthorized);
         vm.expectRevert(ERC20TransferModule.ERC20TransferModuleUnauthorized.selector);
         harness.onAbort(context);
+    }
+
+    function test_onAbort_RevertWhen_NotInitialized() public {
+        ERC20TransferModuleHarness uninitHarness = new ERC20TransferModuleHarness();
+        CrossContext memory context = _createContext(sender);
+
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleNotInitialized.selector);
+        uninitHarness.onAbort(context);
     }
 }
