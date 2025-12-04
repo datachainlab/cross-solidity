@@ -90,6 +90,19 @@ contract ERC20ModuleTest is Test {
         assertEq(address(newHarness.token()), newToken);
     }
 
+    function test_initialize_RevertWhen_InvalidAddress() public {
+        ERC20TransferModuleHarness newHarness = new ERC20TransferModuleHarness();
+        address validAddress = makeAddr("valid");
+
+        // 1. CrossModule is zero
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleInvalidAddress.selector);
+        newHarness.initialize(address(0), validAddress);
+
+        // 2. Token is zero
+        vm.expectRevert(ERC20TransferModule.ERC20TransferModuleInvalidAddress.selector);
+        newHarness.initialize(validAddress, address(0));
+    }
+
     function test_initialize_RevertWhen_AlreadyInitialized() public {
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         harness.initialize(address(this), address(token));

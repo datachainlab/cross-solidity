@@ -14,6 +14,7 @@ abstract contract ERC20TransferModule is Initializable, ContractModuleBase {
     error ERC20TransferModuleTxAlreadyPending();
     error ERC20TransferModuleUnauthorized();
     error ERC20TransferModuleNotInitialized();
+    error ERC20TransferModuleInvalidAddress();
 
     struct PendingTx {
         address from;
@@ -34,6 +35,9 @@ abstract contract ERC20TransferModule is Initializable, ContractModuleBase {
     }
 
     function initialize(address _crossModule, address _token) external initializer {
+        if (_crossModule == address(0) || _token == address(0)) {
+            revert ERC20TransferModuleInvalidAddress();
+        }
         crossModule = _crossModule;
         token = IERC20(_token);
     }
