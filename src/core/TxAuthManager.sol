@@ -149,6 +149,13 @@ contract TxAuthManager is Initializable, TxAuthManagerBase, CrossStore, ITxAuthM
     }
 
     function _accountKey(Account.Data memory a) internal pure returns (bytes32) {
+        if (a.auth_type.mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
+            return keccak256(abi.encode(
+                a.id, 
+                a.auth_type.mode, 
+                a.auth_type.option.type_url
+            ));
+        }
         return keccak256(abi.encode(a.id, a.auth_type));
     }
 }
