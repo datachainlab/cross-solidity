@@ -82,8 +82,8 @@ contract ERC20ModuleTest is Test {
         address crossModule = makeAddr("newCrossModule");
         address newToken = makeAddr("newToken");
 
-        assertEq(newHarness.crossModule(), address(0));
-        assertEq(address(newHarness.token()), address(0));
+        vm.expectEmit(address(newHarness));
+        emit ERC20TransferModule.ERC20TransferModuleInitialized(crossModule, newToken);
 
         newHarness.initialize(crossModule, newToken);
 

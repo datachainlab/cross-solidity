@@ -17,6 +17,8 @@ abstract contract ERC20TransferModule is Initializable, ContractModuleBase, Owna
     error ERC20TransferModuleNotInitialized();
     error ERC20TransferModuleInvalidAddress();
 
+    event ERC20TransferModuleInitialized(address indexed crossModule, address indexed token);
+
     struct PendingTx {
         address from;
         address to;
@@ -43,6 +45,8 @@ abstract contract ERC20TransferModule is Initializable, ContractModuleBase, Owna
         }
         crossModule = _crossModule;
         token = IERC20(_token);
+
+        emit ERC20TransferModuleInitialized(_crossModule, _token);
     }
 
     function decodeCallInfo(bytes calldata callInfo)
