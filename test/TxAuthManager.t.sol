@@ -389,6 +389,27 @@ contract TxAuthManagerTest is Test, ICrossError {
         assertEq(keyA, keyACopy, "Identical accounts should produce the same key");
     }
 
+    function test_accountKey_ExtensionModeIgnoresOptionValue() public {
+        bytes memory id = bytes("user1");
+        string memory typeUrl = URL_VALID;
+
+        GoogleProtobufAny.Data memory optionA = GoogleProtobufAny.Data({type_url: typeUrl, value: hex"aaaa"});
+        GoogleProtobufAny.Data memory optionB = GoogleProtobufAny.Data({type_url: typeUrl, value: hex"bbbb"});
+
+        AuthAccount.Data memory accA = AuthAccount.Data({
+            id: id, auth_type: AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_EXTENSION, option: optionA})
+        });
+
+        AuthAccount.Data memory accB = AuthAccount.Data({
+            id: id, auth_type: AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_EXTENSION, option: optionB})
+        });
+
+        bytes32 keyA = harness.exposed_accountKey(accA);
+        bytes32 keyB = harness.exposed_accountKey(accB);
+
+        assertEq(keyA, keyB, "Extension mode should ignore option.value in accountKey generation");
+    }
+
     function test_setStateFromRemainingList_HandlesDuplicatesAndReturnsRemains() public {
         AuthAccount.Data[] memory signers = new AuthAccount.Data[](3);
         signers[0] = signerA;
