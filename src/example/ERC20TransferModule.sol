@@ -3,15 +3,21 @@ pragma solidity ^0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ContractModuleBase} from "../core/ContractModuleBase.sol";
 import {CrossContext} from "../core/IContractModule.sol";
 
-abstract contract ERC20TransferModule is ContractModuleBase {
+abstract contract ERC20TransferModule is Initializable, ContractModuleBase, Ownable {
     using SafeERC20 for IERC20;
 
     error ERC20TransferModuleInvalidCallInfo();
     error ERC20TransferModuleTxAlreadyPending();
     error ERC20TransferModuleUnauthorized();
+    error ERC20TransferModuleNotInitialized();
+    error ERC20TransferModuleInvalidAddress();
+
+    event ERC20TransferModuleInitialized(address indexed crossModule, address indexed token);
 
     struct PendingTx {
         address from;
@@ -22,17 +28,25 @@ abstract contract ERC20TransferModule is ContractModuleBase {
     // txID => PendingTx
     mapping(bytes32 => PendingTx) public pendingTxs;
 
-    address public immutable CROSS_MODULE;
-    IERC20 public immutable TOKEN;
+    address public crossModule;
+    IERC20 public token;
+
+    constructor() Ownable(msg.sender) {}
 
     modifier onlyCrossModule() {
-        if (msg.sender != CROSS_MODULE) revert ERC20TransferModuleUnauthorized();
+        if (crossModule == address(0)) revert ERC20TransferModuleNotInitialized();
+        if (msg.sender != crossModule) revert ERC20TransferModuleUnauthorized();
         _;
     }
 
-    constructor(address _crossModule, address _token) {
-        CROSS_MODULE = _crossModule;
-        TOKEN = IERC20(_token);
+    function initialize(address _crossModule, address _token) external initializer onlyOwner {
+        if (_crossModule == address(0) || _token == address(0)) {
+            revert ERC20TransferModuleInvalidAddress();
+        }
+        crossModule = _crossModule;
+        token = IERC20(_token);
+
+        emit ERC20TransferModuleInitialized(_crossModule, _token);
     }
 
     function decodeCallInfo(bytes calldata callInfo)
@@ -60,7 +74,7 @@ abstract contract ERC20TransferModule is ContractModuleBase {
 
         // IMPORTANT: The implementing contract MUST ensure in `_authorize` that the `from` address corresponds to the authenticated signer.
         // slither-disable-next-line arbitrary-send-erc20
-        TOKEN.safeTransferFrom(from, to, amount);
+        token.safeTransferFrom(from, to, amount);
 
         return "";
     }
@@ -82,7 +96,7 @@ abstract contract ERC20TransferModule is ContractModuleBase {
 
         // IMPORTANT: The implementing contract MUST ensure in `_authorize` that the `from` address corresponds to the authenticated signer.
         // slither-disable-next-line arbitrary-send-erc20
-        TOKEN.safeTransferFrom(from, address(this), amount);
+        token.safeTransferFrom(from, address(this), amount);
 
         return "";
     }
@@ -94,7 +108,7 @@ abstract contract ERC20TransferModule is ContractModuleBase {
         if (pending.from != address(0)) {
             delete pendingTxs[txID];
             // Transfer locked tokens to the destination
-            TOKEN.safeTransfer(pending.to, pending.amount);
+            token.safeTransfer(pending.to, pending.amount);
         }
     }
 
@@ -105,7 +119,7 @@ abstract contract ERC20TransferModule is ContractModuleBase {
         if (pending.from != address(0)) {
             delete pendingTxs[txID];
             // Refund tokens to the sender
-            TOKEN.safeTransfer(pending.from, pending.amount);
+            token.safeTransfer(pending.from, pending.amount);
         }
     }
 }
