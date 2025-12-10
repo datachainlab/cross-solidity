@@ -10,6 +10,7 @@ import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/pr
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockERC20 is ERC20 {
     constructor() ERC20("Mock Token", "MCK") {}
@@ -81,8 +82,8 @@ contract ERC20ModuleTest is Test {
         address crossModule = makeAddr("newCrossModule");
         address newToken = makeAddr("newToken");
 
-        assertEq(newHarness.crossModule(), address(0));
-        assertEq(address(newHarness.token()), address(0));
+        vm.expectEmit(address(newHarness));
+        emit ERC20TransferModule.ERC20TransferModuleInitialized(crossModule, newToken);
 
         newHarness.initialize(crossModule, newToken);
 
@@ -106,6 +107,20 @@ contract ERC20ModuleTest is Test {
     function test_initialize_RevertWhen_AlreadyInitialized() public {
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         harness.initialize(address(this), address(token));
+    }
+
+    function test_initialize_RevertWhen_CallerIsNotOwner() public {
+        ERC20TransferModuleHarness newHarness = new ERC20TransferModuleHarness();
+
+        address attacker = makeAddr("attacker");
+        address crossModule = makeAddr("crossModule");
+        address newToken = makeAddr("newToken");
+
+        vm.prank(attacker);
+
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, attacker));
+
+        newHarness.initialize(crossModule, newToken);
     }
 
     // --- Decode Tests ---
