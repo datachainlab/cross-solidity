@@ -3,6 +3,8 @@ syntax = "proto3";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "cross/core/auth/Auth.proto";
+import "cross/core/tx/Tx.proto";
+import "cross/core/xcc/XCC.proto";
 
 message PacketData {
   option (gogoproto.goproto_getters) = false;
@@ -27,7 +29,7 @@ message HeaderField {
 }
 
 message PacketDataCall {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
 
   message ResolvedContractTransaction {
     option (gogoproto.equal) = false;
@@ -44,11 +46,11 @@ message PacketDataCall {
 }
 
 message PacketAcknowledgementCall {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
 
   enum CommitStatus {
     option (gogoproto.goproto_enum_prefix) = false;
-  
+
     COMMIT_STATUS_UNKNOWN = 0;
     COMMIT_STATUS_OK      = 1;
     COMMIT_STATUS_FAILED  = 2;
@@ -57,6 +59,65 @@ message PacketAcknowledgementCall {
   CommitStatus status = 1;
 }
 
-message ReturnValue {
-  bytes value = 1;
+message QueryCoordinatorStateRequest {
+  bytes tx_id  = 1 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxID"];
+}
+
+message QueryCoordinatorStateResponse {
+  CoordinatorState coodinator_state = 1 [(gogoproto.nullable) = false];
+}
+
+message CoordinatorState {
+  option (gogoproto.equal) = false;
+
+  Tx.CommitProtocol commit_protocol = 1;
+  repeated ChannelInfo channels = 2 [(gogoproto.nullable) = false];
+
+  enum CoordinatorPhase {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    COORDINATOR_PHASE_UNKNOWN = 0;
+    COORDINATOR_PHASE_PREPARE = 1;
+    COORDINATOR_PHASE_COMMIT  = 2;
+  }
+
+  CoordinatorPhase phase = 3;
+
+  enum CoordinatorDecision {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    COORDINATOR_DECISION_UNKNOWN = 0;
+    COORDINATOR_DECISION_COMMIT  = 1;
+    COORDINATOR_DECISION_ABORT   = 2;
+  }
+
+  CoordinatorDecision decision = 4;
+  repeated uint32 confirmed_txs = 5 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxIndex"];
+  repeated uint32 acks = 6 [(gogoproto.casttype) = "github.com/datachainlab/cross/x/core/types.TxIndex"];
+}
+
+message ContractTransactionState {
+  option (gogoproto.equal)           = false;
+
+  enum ContractTransactionStatus {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    CONTRACT_TRANSACTION_STATUS_UNKNOWN = 0;
+    CONTRACT_TRANSACTION_STATUS_PREPARE = 1;
+    CONTRACT_TRANSACTION_STATUS_COMMIT  = 2;
+    CONTRACT_TRANSACTION_STATUS_ABORT   = 3;
+  }
+
+  ContractTransactionStatus status = 1;
+
+  enum PrepareResult {
+    option (gogoproto.goproto_enum_prefix) = false;
+
+    PREPARE_RESULT_UNKNOWN = 0;
+    PREPARE_RESULT_OK      = 1;
+    PREPARE_RESULT_FAILED  = 2;
+  }
+  PrepareResult prepare_result = 2;
+
+  ChannelInfo coordinator_channel = 3 [(gogoproto.nullable) = false];
 }

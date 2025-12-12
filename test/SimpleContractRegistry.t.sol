@@ -6,11 +6,13 @@ import "forge-std/src/Test.sol";
 
 import "../src/core/SimpleContractRegistry.sol";
 import "../src/core/IContractModule.sol";
+import "../src/core/ICrossError.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract DummyModule is IContractModule {
     // do nothing implementation
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/
@@ -21,23 +23,33 @@ contract DummyModule is IContractModule {
     {
         return "";
     }
+    function onAbort(CrossContext calldata context) external override {}
+    function onCommit(CrossContext calldata context) external override {}
+
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        override
+        returns (bytes memory)
+    {
+        return "";
+    }
 }
 
 contract SimpleContractRegistryHarness is SimpleContractRegistry {
-    function exposed_registerModule(IContractModule m) external {
+    function exposed_registerModule(IContractModule m) external initializer {
         registerModule(m);
     }
 
     function exposed_getModule(Packet calldata p) external returns (IContractModule) {
         return getModule(p);
     }
-
-    function workaround_moduleAddr() external view returns (address) {
-        return address(contractModule);
-    }
 }
 
-contract SimpleContractRegistryTest is Test {
+contract SimpleContractRegistryTest is Test, ICrossError {
     DummyModule private dummy;
     SimpleContractRegistryHarness private registry;
 
@@ -49,7 +61,7 @@ contract SimpleContractRegistryTest is Test {
     }
 
     function test_get_RevertWhen_NotInitialized() public {
-        vm.expectRevert(SimpleContractRegistry.ModuleNotInitialized.selector);
+        vm.expectRevert(ModuleNotInitialized.selector);
         registry.exposed_getModule(_emptyPacket);
     }
 
@@ -60,7 +72,6 @@ contract SimpleContractRegistryTest is Test {
 
         IContractModule got = registry.exposed_getModule(_emptyPacket);
         assertEq(address(got), address(m));
-        assertEq(registry.workaround_moduleAddr(), address(m));
     }
 
     function test_register_RevertOn_SecondInitialization() public {
@@ -68,7 +79,7 @@ contract SimpleContractRegistryTest is Test {
 
         registry.exposed_registerModule(m);
 
-        vm.expectRevert(SimpleContractRegistry.ModuleAlreadyInitialized.selector);
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
         registry.exposed_registerModule(m);
     }
 

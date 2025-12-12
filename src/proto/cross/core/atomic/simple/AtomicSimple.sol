@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
-
 import "@hyperledger-labs/yui-ibc-solidity/contracts/proto/ProtoBufRuntime.sol";
 import "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import "../../auth/Auth.sol";
+import "../../tx/Tx.sol";
+import "../../xcc/XCC.sol";
 
 library PacketData {
     //struct definition
@@ -599,7 +600,6 @@ library Header {
         if (r.fields.length != 0) {
             for (i = 0; i < r.fields.length; i++) {
                 pointer += ProtoBufRuntime._encode_key(1, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
-
                 pointer += HeaderField._encode_nested(r.fields[i], pointer, bs);
             }
         }
@@ -1434,7 +1434,6 @@ library PacketDataCallResolvedContractTransaction {
         if (r.signers.length != 0) {
             for (i = 0; i < r.signers.length; i++) {
                 pointer += ProtoBufRuntime._encode_key(2, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
-
                 pointer += Account._encode_nested(r.signers[i], pointer, bs);
             }
         }
@@ -1449,7 +1448,6 @@ library PacketDataCallResolvedContractTransaction {
         if (r.objects.length != 0) {
             for (i = 0; i < r.objects.length; i++) {
                 pointer += ProtoBufRuntime._encode_key(5, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
-
                 pointer += GoogleProtobufAny._encode_nested(r.objects[i], pointer, bs);
             }
         }
@@ -1848,10 +1846,10 @@ library PacketAcknowledgementCall {
 }
 //library PacketAcknowledgementCall
 
-library ReturnValue {
+library QueryCoordinatorStateRequest {
     //struct definition
     struct Data {
-        bytes value;
+        bytes tx_id;
     }
 
     // Decoder section
@@ -1897,7 +1895,7 @@ library ReturnValue {
             (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
             pointer += bytesRead;
             if (fieldId == 1) {
-                pointer += _read_value(pointer, bs, r);
+                pointer += _read_tx_id(pointer, bs, r);
             } else {
                 pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
             }
@@ -1914,9 +1912,9 @@ library ReturnValue {
      * @param r The in-memory struct
      * @return The number of bytes decoded
      */
-    function _read_value(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+    function _read_tx_id(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
         (bytes memory x, uint256 sz) = ProtoBufRuntime._decode_bytes(p, bs);
-        r.value = x;
+        r.tx_id = x;
         return sz;
     }
 
@@ -1949,9 +1947,9 @@ library ReturnValue {
         uint256 offset = p;
         uint256 pointer = p;
 
-        if (r.value.length != 0) {
+        if (r.tx_id.length != 0) {
             pointer += ProtoBufRuntime._encode_key(1, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
-            pointer += ProtoBufRuntime._encode_bytes(r.value, pointer, bs);
+            pointer += ProtoBufRuntime._encode_bytes(r.tx_id, pointer, bs);
         }
         return pointer - offset;
     }
@@ -1992,13 +1990,13 @@ library ReturnValue {
      */
     function _estimate(Data memory r) internal pure returns (uint256) {
         uint256 e;
-        e += 1 + ProtoBufRuntime._sz_lendelim(r.value.length);
+        e += 1 + ProtoBufRuntime._sz_lendelim(r.tx_id.length);
         return e;
     }
     // empty checker
 
     function _empty(Data memory r) internal pure returns (bool) {
-        if (r.value.length != 0) {
+        if (r.tx_id.length != 0) {
             return false;
         }
 
@@ -2012,7 +2010,7 @@ library ReturnValue {
      * @param output The in-storage struct
      */
     function store(Data memory input, Data storage output) internal {
-        output.value = input.value;
+        output.tx_id = input.tx_id;
     }
 
     //utility functions
@@ -2037,4 +2035,1228 @@ library ReturnValue {
         }
     }
 }
-//library ReturnValue
+//library QueryCoordinatorStateRequest
+
+library QueryCoordinatorStateResponse {
+    //struct definition
+    struct Data {
+        CoordinatorState.Data coodinator_state;
+    }
+
+    // Decoder section
+
+    /**
+     * @dev The main decoder for memory
+     * @param bs The bytes array to be decoded
+     * @return The decoded struct
+     */
+    function decode(bytes memory bs) internal pure returns (Data memory) {
+        (Data memory x,) = _decode(32, bs, bs.length);
+        return x;
+    }
+
+    /**
+     * @dev The main decoder for storage
+     * @param self The in-storage struct
+     * @param bs The bytes array to be decoded
+     */
+    function decode(Data storage self, bytes memory bs) internal {
+        (Data memory x,) = _decode(32, bs, bs.length);
+        store(x, self);
+    }
+
+    // inner decoder
+
+    /**
+     * @dev The decoder for internal usage
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param sz The number of bytes expected
+     * @return The decoded struct
+     * @return The number of bytes decoded
+     */
+    function _decode(uint256 p, bytes memory bs, uint256 sz) internal pure returns (Data memory, uint256) {
+        Data memory r;
+        uint256 fieldId;
+        ProtoBufRuntime.WireType wireType;
+        uint256 bytesRead;
+        uint256 offset = p;
+        uint256 pointer = p;
+        while (pointer < offset + sz) {
+            (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
+            pointer += bytesRead;
+            if (fieldId == 1) {
+                pointer += _read_coodinator_state(pointer, bs, r);
+            } else {
+                pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
+            }
+        }
+        return (r, sz);
+    }
+
+    // field readers
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_coodinator_state(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (CoordinatorState.Data memory x, uint256 sz) = _decode_CoordinatorState(p, bs);
+        r.coodinator_state = x;
+        return sz;
+    }
+
+    // struct decoder
+    /**
+     * @dev The decoder for reading a inner struct field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The decoded inner-struct
+     * @return The number of bytes used to decode
+     */
+    function _decode_CoordinatorState(uint256 p, bytes memory bs)
+        internal
+        pure
+        returns (CoordinatorState.Data memory, uint256)
+    {
+        uint256 pointer = p;
+        (uint256 sz, uint256 bytesRead) = ProtoBufRuntime._decode_varint(pointer, bs);
+        pointer += bytesRead;
+        (CoordinatorState.Data memory r,) = CoordinatorState._decode(pointer, bs, sz);
+        return (r, sz + bytesRead);
+    }
+
+    // Encoder section
+
+    /**
+     * @dev The main encoder for memory
+     * @param r The struct to be encoded
+     * @return The encoded byte array
+     */
+    function encode(Data memory r) internal pure returns (bytes memory) {
+        bytes memory bs = new bytes(_estimate(r));
+        uint256 sz = _encode(r, 32, bs);
+        assembly {
+            mstore(bs, sz)
+        }
+        return bs;
+    }
+
+    // inner encoder
+
+    /**
+     * @dev The encoder for internal usage
+     * @param r The struct to be encoded
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The number of bytes encoded
+     */
+    function _encode(Data memory r, uint256 p, bytes memory bs) internal pure returns (uint256) {
+        uint256 offset = p;
+        uint256 pointer = p;
+
+        pointer += ProtoBufRuntime._encode_key(1, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
+        pointer += CoordinatorState._encode_nested(r.coodinator_state, pointer, bs);
+
+        return pointer - offset;
+    }
+
+    // nested encoder
+
+    /**
+     * @dev The encoder for inner struct
+     * @param r The struct to be encoded
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The number of bytes encoded
+     */
+    function _encode_nested(Data memory r, uint256 p, bytes memory bs) internal pure returns (uint256) {
+        /**
+         * First encoded `r` into a temporary array, and encode the actual size used.
+         * Then copy the temporary array into `bs`.
+         */
+        uint256 offset = p;
+        uint256 pointer = p;
+        bytes memory tmp = new bytes(_estimate(r));
+        uint256 tmpAddr = ProtoBufRuntime.getMemoryAddress(tmp);
+        uint256 bsAddr = ProtoBufRuntime.getMemoryAddress(bs);
+        uint256 size = _encode(r, 32, tmp);
+        pointer += ProtoBufRuntime._encode_varint(size, pointer, bs);
+        ProtoBufRuntime.copyBytes(tmpAddr + 32, bsAddr + pointer, size);
+        pointer += size;
+        delete tmp;
+        return pointer - offset;
+    }
+
+    // estimator
+
+    /**
+     * @dev The estimator for a struct
+     * @param r The struct to be encoded
+     * @return The number of bytes encoded in estimation
+     */
+    function _estimate(Data memory r) internal pure returns (uint256) {
+        uint256 e;
+        e += 1 + ProtoBufRuntime._sz_lendelim(CoordinatorState._estimate(r.coodinator_state));
+        return e;
+    }
+    // empty checker
+
+    function _empty(Data memory r) internal pure returns (bool) {
+        return true;
+    }
+
+    //store function
+    /**
+     * @dev Store in-memory struct to storage
+     * @param input The in-memory struct
+     * @param output The in-storage struct
+     */
+    function store(Data memory input, Data storage output) internal {
+        CoordinatorState.store(input.coodinator_state, output.coodinator_state);
+    }
+
+    //utility functions
+    /**
+     * @dev Return an empty struct
+     * @return r The empty struct
+     */
+    function nil() internal pure returns (Data memory r) {
+        assembly {
+            r := 0
+        }
+    }
+
+    /**
+     * @dev Test whether a struct is empty
+     * @param x The struct to be tested
+     * @return r True if it is empty
+     */
+    function isNil(Data memory x) internal pure returns (bool r) {
+        assembly {
+            r := iszero(x)
+        }
+    }
+}
+//library QueryCoordinatorStateResponse
+
+library CoordinatorState {
+    //enum definition
+    // Solidity enum definitions
+    enum CoordinatorPhase {
+        COORDINATOR_PHASE_UNKNOWN,
+        COORDINATOR_PHASE_PREPARE,
+        COORDINATOR_PHASE_COMMIT
+    }
+
+    // Solidity enum encoder
+    function encode_CoordinatorPhase(CoordinatorPhase x) internal pure returns (int32) {
+        if (x == CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN) {
+            return 0;
+        }
+
+        if (x == CoordinatorPhase.COORDINATOR_PHASE_PREPARE) {
+            return 1;
+        }
+
+        if (x == CoordinatorPhase.COORDINATOR_PHASE_COMMIT) {
+            return 2;
+        }
+        revert();
+    }
+
+    // Solidity enum decoder
+    function decode_CoordinatorPhase(int64 x) internal pure returns (CoordinatorPhase) {
+        if (x == 0) {
+            return CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN;
+        }
+
+        if (x == 1) {
+            return CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+        }
+
+        if (x == 2) {
+            return CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
+        }
+        revert();
+    }
+
+    /**
+     * @dev The estimator for an packed enum array
+     * @return The number of bytes encoded
+     */
+    function estimate_packed_repeated_CoordinatorPhase(CoordinatorPhase[] memory a) internal pure returns (uint256) {
+        uint256 e = 0;
+        for (uint256 i = 0; i < a.length; i++) {
+            e += ProtoBufRuntime._sz_enum(encode_CoordinatorPhase(a[i]));
+        }
+        return e;
+    }
+
+    // Solidity enum definitions
+    enum CoordinatorDecision {
+        COORDINATOR_DECISION_UNKNOWN,
+        COORDINATOR_DECISION_COMMIT,
+        COORDINATOR_DECISION_ABORT
+    }
+
+    // Solidity enum encoder
+    function encode_CoordinatorDecision(CoordinatorDecision x) internal pure returns (int32) {
+        if (x == CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN) {
+            return 0;
+        }
+
+        if (x == CoordinatorDecision.COORDINATOR_DECISION_COMMIT) {
+            return 1;
+        }
+
+        if (x == CoordinatorDecision.COORDINATOR_DECISION_ABORT) {
+            return 2;
+        }
+        revert();
+    }
+
+    // Solidity enum decoder
+    function decode_CoordinatorDecision(int64 x) internal pure returns (CoordinatorDecision) {
+        if (x == 0) {
+            return CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
+        }
+
+        if (x == 1) {
+            return CoordinatorDecision.COORDINATOR_DECISION_COMMIT;
+        }
+
+        if (x == 2) {
+            return CoordinatorDecision.COORDINATOR_DECISION_ABORT;
+        }
+        revert();
+    }
+
+    /**
+     * @dev The estimator for an packed enum array
+     * @return The number of bytes encoded
+     */
+    function estimate_packed_repeated_CoordinatorDecision(CoordinatorDecision[] memory a)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 e = 0;
+        for (uint256 i = 0; i < a.length; i++) {
+            e += ProtoBufRuntime._sz_enum(encode_CoordinatorDecision(a[i]));
+        }
+        return e;
+    }
+
+    //struct definition
+    struct Data {
+        Tx.CommitProtocol commit_protocol;
+        ChannelInfo.Data[] channels;
+        CoordinatorState.CoordinatorPhase phase;
+        CoordinatorState.CoordinatorDecision decision;
+        uint32[] confirmed_txs;
+        uint32[] acks;
+    }
+
+    // Decoder section
+
+    /**
+     * @dev The main decoder for memory
+     * @param bs The bytes array to be decoded
+     * @return The decoded struct
+     */
+    function decode(bytes memory bs) internal pure returns (Data memory) {
+        (Data memory x,) = _decode(32, bs, bs.length);
+        return x;
+    }
+
+    /**
+     * @dev The main decoder for storage
+     * @param self The in-storage struct
+     * @param bs The bytes array to be decoded
+     */
+    function decode(Data storage self, bytes memory bs) internal {
+        (Data memory x,) = _decode(32, bs, bs.length);
+        store(x, self);
+    }
+
+    // inner decoder
+
+    /**
+     * @dev The decoder for internal usage
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param sz The number of bytes expected
+     * @return The decoded struct
+     * @return The number of bytes decoded
+     */
+    function _decode(uint256 p, bytes memory bs, uint256 sz) internal pure returns (Data memory, uint256) {
+        Data memory r;
+        uint256[7] memory counters;
+        uint256 fieldId;
+        ProtoBufRuntime.WireType wireType;
+        uint256 bytesRead;
+        uint256 offset = p;
+        uint256 pointer = p;
+        while (pointer < offset + sz) {
+            (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
+            pointer += bytesRead;
+            if (fieldId == 1) {
+                pointer += _read_commit_protocol(pointer, bs, r);
+            } else if (fieldId == 2) {
+                pointer += _read_unpacked_repeated_channels(pointer, bs, nil(), counters);
+            } else if (fieldId == 3) {
+                pointer += _read_phase(pointer, bs, r);
+            } else if (fieldId == 4) {
+                pointer += _read_decision(pointer, bs, r);
+            } else if (fieldId == 5) {
+                if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
+                    pointer += _read_packed_repeated_confirmed_txs(pointer, bs, r);
+                } else {
+                    pointer += _read_unpacked_repeated_confirmed_txs(pointer, bs, nil(), counters);
+                }
+            } else if (fieldId == 6) {
+                if (wireType == ProtoBufRuntime.WireType.LengthDelim) {
+                    pointer += _read_packed_repeated_acks(pointer, bs, r);
+                } else {
+                    pointer += _read_unpacked_repeated_acks(pointer, bs, nil(), counters);
+                }
+            } else {
+                pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
+            }
+        }
+        pointer = offset;
+        if (counters[2] > 0) {
+            require(r.channels.length == 0);
+            r.channels = new ChannelInfo.Data[](counters[2]);
+        }
+        if (counters[5] > 0) {
+            require(r.confirmed_txs.length == 0);
+            r.confirmed_txs = new uint32[](counters[5]);
+        }
+        if (counters[6] > 0) {
+            require(r.acks.length == 0);
+            r.acks = new uint32[](counters[6]);
+        }
+
+        while (pointer < offset + sz) {
+            (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
+            pointer += bytesRead;
+            if (fieldId == 2) {
+                pointer += _read_unpacked_repeated_channels(pointer, bs, r, counters);
+            } else if (fieldId == 5 && wireType != ProtoBufRuntime.WireType.LengthDelim) {
+                pointer += _read_unpacked_repeated_confirmed_txs(pointer, bs, r, counters);
+            } else if (fieldId == 6 && wireType != ProtoBufRuntime.WireType.LengthDelim) {
+                pointer += _read_unpacked_repeated_acks(pointer, bs, r, counters);
+            } else {
+                pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
+            }
+        }
+        return (r, sz);
+    }
+
+    // field readers
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_commit_protocol(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (int64 tmp, uint256 sz) = ProtoBufRuntime._decode_enum(p, bs);
+        Tx.CommitProtocol x = Tx.decode_CommitProtocol(tmp);
+        r.commit_protocol = x;
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @param counters The counters for repeated fields
+     * @return The number of bytes decoded
+     */
+    function _read_unpacked_repeated_channels(uint256 p, bytes memory bs, Data memory r, uint256[7] memory counters)
+        internal
+        pure
+        returns (uint256)
+    {
+        /**
+         * if `r` is NULL, then only counting the number of fields.
+         */
+        (ChannelInfo.Data memory x, uint256 sz) = _decode_ChannelInfo(p, bs);
+        if (isNil(r)) {
+            counters[2] += 1;
+        } else {
+            r.channels[r.channels.length - counters[2]] = x;
+            counters[2] -= 1;
+        }
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_phase(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (int64 tmp, uint256 sz) = ProtoBufRuntime._decode_enum(p, bs);
+        CoordinatorState.CoordinatorPhase x = decode_CoordinatorPhase(tmp);
+        r.phase = x;
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_decision(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (int64 tmp, uint256 sz) = ProtoBufRuntime._decode_enum(p, bs);
+        CoordinatorState.CoordinatorDecision x = decode_CoordinatorDecision(tmp);
+        r.decision = x;
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @param counters The counters for repeated fields
+     * @return The number of bytes decoded
+     */
+    function _read_unpacked_repeated_confirmed_txs(
+        uint256 p,
+        bytes memory bs,
+        Data memory r,
+        uint256[7] memory counters
+    ) internal pure returns (uint256) {
+        /**
+         * if `r` is NULL, then only counting the number of fields.
+         */
+        (uint32 x, uint256 sz) = ProtoBufRuntime._decode_uint32(p, bs);
+        if (isNil(r)) {
+            counters[5] += 1;
+        } else {
+            r.confirmed_txs[r.confirmed_txs.length - counters[5]] = x;
+            counters[5] -= 1;
+        }
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_packed_repeated_confirmed_txs(uint256 p, bytes memory bs, Data memory r)
+        internal
+        pure
+        returns (uint256)
+    {
+        (uint256 len, uint256 size) = ProtoBufRuntime._decode_varint(p, bs);
+        p += size;
+        uint256 count = ProtoBufRuntime._count_packed_repeated_varint(p, len, bs);
+        r.confirmed_txs = new uint32[](count);
+        for (uint256 i = 0; i < count; i++) {
+            (uint32 x, uint256 sz) = ProtoBufRuntime._decode_uint32(p, bs);
+            p += sz;
+            r.confirmed_txs[i] = x;
+        }
+        return size + len;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @param counters The counters for repeated fields
+     * @return The number of bytes decoded
+     */
+    function _read_unpacked_repeated_acks(uint256 p, bytes memory bs, Data memory r, uint256[7] memory counters)
+        internal
+        pure
+        returns (uint256)
+    {
+        /**
+         * if `r` is NULL, then only counting the number of fields.
+         */
+        (uint32 x, uint256 sz) = ProtoBufRuntime._decode_uint32(p, bs);
+        if (isNil(r)) {
+            counters[6] += 1;
+        } else {
+            r.acks[r.acks.length - counters[6]] = x;
+            counters[6] -= 1;
+        }
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_packed_repeated_acks(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (uint256 len, uint256 size) = ProtoBufRuntime._decode_varint(p, bs);
+        p += size;
+        uint256 count = ProtoBufRuntime._count_packed_repeated_varint(p, len, bs);
+        r.acks = new uint32[](count);
+        for (uint256 i = 0; i < count; i++) {
+            (uint32 x, uint256 sz) = ProtoBufRuntime._decode_uint32(p, bs);
+            p += sz;
+            r.acks[i] = x;
+        }
+        return size + len;
+    }
+
+    // struct decoder
+    /**
+     * @dev The decoder for reading a inner struct field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The decoded inner-struct
+     * @return The number of bytes used to decode
+     */
+    function _decode_ChannelInfo(uint256 p, bytes memory bs) internal pure returns (ChannelInfo.Data memory, uint256) {
+        uint256 pointer = p;
+        (uint256 sz, uint256 bytesRead) = ProtoBufRuntime._decode_varint(pointer, bs);
+        pointer += bytesRead;
+        (ChannelInfo.Data memory r,) = ChannelInfo._decode(pointer, bs, sz);
+        return (r, sz + bytesRead);
+    }
+
+    // Encoder section
+
+    /**
+     * @dev The main encoder for memory
+     * @param r The struct to be encoded
+     * @return The encoded byte array
+     */
+    function encode(Data memory r) internal pure returns (bytes memory) {
+        bytes memory bs = new bytes(_estimate(r));
+        uint256 sz = _encode(r, 32, bs);
+        assembly {
+            mstore(bs, sz)
+        }
+        return bs;
+    }
+
+    // inner encoder
+
+    /**
+     * @dev The encoder for internal usage
+     * @param r The struct to be encoded
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The number of bytes encoded
+     */
+    function _encode(Data memory r, uint256 p, bytes memory bs) internal pure returns (uint256) {
+        uint256 offset = p;
+        uint256 pointer = p;
+        uint256 i;
+        if (uint256(r.commit_protocol) != 0) {
+            pointer += ProtoBufRuntime._encode_key(1, ProtoBufRuntime.WireType.Varint, pointer, bs);
+            int32 _enum_commit_protocol = Tx.encode_CommitProtocol(r.commit_protocol);
+            pointer += ProtoBufRuntime._encode_enum(_enum_commit_protocol, pointer, bs);
+        }
+        if (r.channels.length != 0) {
+            for (i = 0; i < r.channels.length; i++) {
+                pointer += ProtoBufRuntime._encode_key(2, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
+                pointer += ChannelInfo._encode_nested(r.channels[i], pointer, bs);
+            }
+        }
+        if (uint256(r.phase) != 0) {
+            pointer += ProtoBufRuntime._encode_key(3, ProtoBufRuntime.WireType.Varint, pointer, bs);
+            int32 _enum_phase = encode_CoordinatorPhase(r.phase);
+            pointer += ProtoBufRuntime._encode_enum(_enum_phase, pointer, bs);
+        }
+        if (uint256(r.decision) != 0) {
+            pointer += ProtoBufRuntime._encode_key(4, ProtoBufRuntime.WireType.Varint, pointer, bs);
+            int32 _enum_decision = encode_CoordinatorDecision(r.decision);
+            pointer += ProtoBufRuntime._encode_enum(_enum_decision, pointer, bs);
+        }
+        if (r.confirmed_txs.length != 0) {
+            pointer += ProtoBufRuntime._encode_key(5, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
+            pointer += ProtoBufRuntime._encode_varint(
+                ProtoBufRuntime._estimate_packed_repeated_uint32(r.confirmed_txs), pointer, bs
+            );
+            for (i = 0; i < r.confirmed_txs.length; i++) {
+                pointer += ProtoBufRuntime._encode_uint32(r.confirmed_txs[i], pointer, bs);
+            }
+        }
+        if (r.acks.length != 0) {
+            pointer += ProtoBufRuntime._encode_key(6, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
+            pointer += ProtoBufRuntime._encode_varint(
+                ProtoBufRuntime._estimate_packed_repeated_uint32(r.acks), pointer, bs
+            );
+            for (i = 0; i < r.acks.length; i++) {
+                pointer += ProtoBufRuntime._encode_uint32(r.acks[i], pointer, bs);
+            }
+        }
+        return pointer - offset;
+    }
+
+    // nested encoder
+
+    /**
+     * @dev The encoder for inner struct
+     * @param r The struct to be encoded
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The number of bytes encoded
+     */
+    function _encode_nested(Data memory r, uint256 p, bytes memory bs) internal pure returns (uint256) {
+        /**
+         * First encoded `r` into a temporary array, and encode the actual size used.
+         * Then copy the temporary array into `bs`.
+         */
+        uint256 offset = p;
+        uint256 pointer = p;
+        bytes memory tmp = new bytes(_estimate(r));
+        uint256 tmpAddr = ProtoBufRuntime.getMemoryAddress(tmp);
+        uint256 bsAddr = ProtoBufRuntime.getMemoryAddress(bs);
+        uint256 size = _encode(r, 32, tmp);
+        pointer += ProtoBufRuntime._encode_varint(size, pointer, bs);
+        ProtoBufRuntime.copyBytes(tmpAddr + 32, bsAddr + pointer, size);
+        pointer += size;
+        delete tmp;
+        return pointer - offset;
+    }
+
+    // estimator
+
+    /**
+     * @dev The estimator for a struct
+     * @param r The struct to be encoded
+     * @return The number of bytes encoded in estimation
+     */
+    function _estimate(Data memory r) internal pure returns (uint256) {
+        uint256 e;
+        uint256 i;
+        e += 1 + ProtoBufRuntime._sz_enum(Tx.encode_CommitProtocol(r.commit_protocol));
+        for (i = 0; i < r.channels.length; i++) {
+            e += 1 + ProtoBufRuntime._sz_lendelim(ChannelInfo._estimate(r.channels[i]));
+        }
+        e += 1 + ProtoBufRuntime._sz_enum(encode_CoordinatorPhase(r.phase));
+        e += 1 + ProtoBufRuntime._sz_enum(encode_CoordinatorDecision(r.decision));
+        e += 1 + ProtoBufRuntime._sz_lendelim(ProtoBufRuntime._estimate_packed_repeated_uint32(r.confirmed_txs));
+        e += 1 + ProtoBufRuntime._sz_lendelim(ProtoBufRuntime._estimate_packed_repeated_uint32(r.acks));
+        return e;
+    }
+    // empty checker
+
+    function _empty(Data memory r) internal pure returns (bool) {
+        if (uint256(r.commit_protocol) != 0) {
+            return false;
+        }
+
+        if (r.channels.length != 0) {
+            return false;
+        }
+
+        if (uint256(r.phase) != 0) {
+            return false;
+        }
+
+        if (uint256(r.decision) != 0) {
+            return false;
+        }
+
+        if (r.confirmed_txs.length != 0) {
+            return false;
+        }
+
+        if (r.acks.length != 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    //store function
+    /**
+     * @dev Store in-memory struct to storage
+     * @param input The in-memory struct
+     * @param output The in-storage struct
+     */
+    function store(Data memory input, Data storage output) internal {
+        output.commit_protocol = input.commit_protocol;
+
+        for (uint256 i2 = 0; i2 < input.channels.length; i2++) {
+            output.channels.push(input.channels[i2]);
+        }
+
+        output.phase = input.phase;
+        output.decision = input.decision;
+        output.confirmed_txs = input.confirmed_txs;
+        output.acks = input.acks;
+    }
+
+    //array helpers for Channels
+    /**
+     * @dev Add value to an array
+     * @param self The in-memory struct
+     * @param value The value to add
+     */
+    function addChannels(Data memory self, ChannelInfo.Data memory value) internal pure {
+        /**
+         * First resize the array. Then add the new element to the end.
+         */
+        ChannelInfo.Data[] memory tmp = new ChannelInfo.Data[](self.channels.length + 1);
+        for (uint256 i = 0; i < self.channels.length; i++) {
+            tmp[i] = self.channels[i];
+        }
+        tmp[self.channels.length] = value;
+        self.channels = tmp;
+    }
+
+    //array helpers for ConfirmedTxs
+    /**
+     * @dev Add value to an array
+     * @param self The in-memory struct
+     * @param value The value to add
+     */
+    function addConfirmedTxs(Data memory self, uint32 value) internal pure {
+        /**
+         * First resize the array. Then add the new element to the end.
+         */
+        uint32[] memory tmp = new uint32[](self.confirmed_txs.length + 1);
+        for (uint256 i = 0; i < self.confirmed_txs.length; i++) {
+            tmp[i] = self.confirmed_txs[i];
+        }
+        tmp[self.confirmed_txs.length] = value;
+        self.confirmed_txs = tmp;
+    }
+
+    //array helpers for Acks
+    /**
+     * @dev Add value to an array
+     * @param self The in-memory struct
+     * @param value The value to add
+     */
+    function addAcks(Data memory self, uint32 value) internal pure {
+        /**
+         * First resize the array. Then add the new element to the end.
+         */
+        uint32[] memory tmp = new uint32[](self.acks.length + 1);
+        for (uint256 i = 0; i < self.acks.length; i++) {
+            tmp[i] = self.acks[i];
+        }
+        tmp[self.acks.length] = value;
+        self.acks = tmp;
+    }
+
+    //utility functions
+    /**
+     * @dev Return an empty struct
+     * @return r The empty struct
+     */
+    function nil() internal pure returns (Data memory r) {
+        assembly {
+            r := 0
+        }
+    }
+
+    /**
+     * @dev Test whether a struct is empty
+     * @param x The struct to be tested
+     * @return r True if it is empty
+     */
+    function isNil(Data memory x) internal pure returns (bool r) {
+        assembly {
+            r := iszero(x)
+        }
+    }
+}
+//library CoordinatorState
+
+library ContractTransactionState {
+    //enum definition
+    // Solidity enum definitions
+    enum ContractTransactionStatus {
+        CONTRACT_TRANSACTION_STATUS_UNKNOWN,
+        CONTRACT_TRANSACTION_STATUS_PREPARE,
+        CONTRACT_TRANSACTION_STATUS_COMMIT,
+        CONTRACT_TRANSACTION_STATUS_ABORT
+    }
+
+    // Solidity enum encoder
+    function encode_ContractTransactionStatus(ContractTransactionStatus x) internal pure returns (int32) {
+        if (x == ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_UNKNOWN) {
+            return 0;
+        }
+
+        if (x == ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_PREPARE) {
+            return 1;
+        }
+
+        if (x == ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_COMMIT) {
+            return 2;
+        }
+
+        if (x == ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_ABORT) {
+            return 3;
+        }
+        revert();
+    }
+
+    // Solidity enum decoder
+    function decode_ContractTransactionStatus(int64 x) internal pure returns (ContractTransactionStatus) {
+        if (x == 0) {
+            return ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_UNKNOWN;
+        }
+
+        if (x == 1) {
+            return ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_PREPARE;
+        }
+
+        if (x == 2) {
+            return ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_COMMIT;
+        }
+
+        if (x == 3) {
+            return ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_ABORT;
+        }
+        revert();
+    }
+
+    /**
+     * @dev The estimator for an packed enum array
+     * @return The number of bytes encoded
+     */
+    function estimate_packed_repeated_ContractTransactionStatus(ContractTransactionStatus[] memory a)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 e = 0;
+        for (uint256 i = 0; i < a.length; i++) {
+            e += ProtoBufRuntime._sz_enum(encode_ContractTransactionStatus(a[i]));
+        }
+        return e;
+    }
+
+    // Solidity enum definitions
+    enum PrepareResult {
+        PREPARE_RESULT_UNKNOWN,
+        PREPARE_RESULT_OK,
+        PREPARE_RESULT_FAILED
+    }
+
+    // Solidity enum encoder
+    function encode_PrepareResult(PrepareResult x) internal pure returns (int32) {
+        if (x == PrepareResult.PREPARE_RESULT_UNKNOWN) {
+            return 0;
+        }
+
+        if (x == PrepareResult.PREPARE_RESULT_OK) {
+            return 1;
+        }
+
+        if (x == PrepareResult.PREPARE_RESULT_FAILED) {
+            return 2;
+        }
+        revert();
+    }
+
+    // Solidity enum decoder
+    function decode_PrepareResult(int64 x) internal pure returns (PrepareResult) {
+        if (x == 0) {
+            return PrepareResult.PREPARE_RESULT_UNKNOWN;
+        }
+
+        if (x == 1) {
+            return PrepareResult.PREPARE_RESULT_OK;
+        }
+
+        if (x == 2) {
+            return PrepareResult.PREPARE_RESULT_FAILED;
+        }
+        revert();
+    }
+
+    /**
+     * @dev The estimator for an packed enum array
+     * @return The number of bytes encoded
+     */
+    function estimate_packed_repeated_PrepareResult(PrepareResult[] memory a) internal pure returns (uint256) {
+        uint256 e = 0;
+        for (uint256 i = 0; i < a.length; i++) {
+            e += ProtoBufRuntime._sz_enum(encode_PrepareResult(a[i]));
+        }
+        return e;
+    }
+
+    //struct definition
+    struct Data {
+        ContractTransactionState.ContractTransactionStatus status;
+        ContractTransactionState.PrepareResult prepare_result;
+        ChannelInfo.Data coordinator_channel;
+    }
+
+    // Decoder section
+
+    /**
+     * @dev The main decoder for memory
+     * @param bs The bytes array to be decoded
+     * @return The decoded struct
+     */
+    function decode(bytes memory bs) internal pure returns (Data memory) {
+        (Data memory x,) = _decode(32, bs, bs.length);
+        return x;
+    }
+
+    /**
+     * @dev The main decoder for storage
+     * @param self The in-storage struct
+     * @param bs The bytes array to be decoded
+     */
+    function decode(Data storage self, bytes memory bs) internal {
+        (Data memory x,) = _decode(32, bs, bs.length);
+        store(x, self);
+    }
+
+    // inner decoder
+
+    /**
+     * @dev The decoder for internal usage
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param sz The number of bytes expected
+     * @return The decoded struct
+     * @return The number of bytes decoded
+     */
+    function _decode(uint256 p, bytes memory bs, uint256 sz) internal pure returns (Data memory, uint256) {
+        Data memory r;
+        uint256 fieldId;
+        ProtoBufRuntime.WireType wireType;
+        uint256 bytesRead;
+        uint256 offset = p;
+        uint256 pointer = p;
+        while (pointer < offset + sz) {
+            (fieldId, wireType, bytesRead) = ProtoBufRuntime._decode_key(pointer, bs);
+            pointer += bytesRead;
+            if (fieldId == 1) {
+                pointer += _read_status(pointer, bs, r);
+            } else if (fieldId == 2) {
+                pointer += _read_prepare_result(pointer, bs, r);
+            } else if (fieldId == 3) {
+                pointer += _read_coordinator_channel(pointer, bs, r);
+            } else {
+                pointer += ProtoBufRuntime._skip_field_decode(wireType, pointer, bs);
+            }
+        }
+        return (r, sz);
+    }
+
+    // field readers
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_status(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (int64 tmp, uint256 sz) = ProtoBufRuntime._decode_enum(p, bs);
+        ContractTransactionState.ContractTransactionStatus x = decode_ContractTransactionStatus(tmp);
+        r.status = x;
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_prepare_result(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (int64 tmp, uint256 sz) = ProtoBufRuntime._decode_enum(p, bs);
+        ContractTransactionState.PrepareResult x = decode_PrepareResult(tmp);
+        r.prepare_result = x;
+        return sz;
+    }
+
+    /**
+     * @dev The decoder for reading a field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @param r The in-memory struct
+     * @return The number of bytes decoded
+     */
+    function _read_coordinator_channel(uint256 p, bytes memory bs, Data memory r) internal pure returns (uint256) {
+        (ChannelInfo.Data memory x, uint256 sz) = _decode_ChannelInfo(p, bs);
+        r.coordinator_channel = x;
+        return sz;
+    }
+
+    // struct decoder
+    /**
+     * @dev The decoder for reading a inner struct field
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The decoded inner-struct
+     * @return The number of bytes used to decode
+     */
+    function _decode_ChannelInfo(uint256 p, bytes memory bs) internal pure returns (ChannelInfo.Data memory, uint256) {
+        uint256 pointer = p;
+        (uint256 sz, uint256 bytesRead) = ProtoBufRuntime._decode_varint(pointer, bs);
+        pointer += bytesRead;
+        (ChannelInfo.Data memory r,) = ChannelInfo._decode(pointer, bs, sz);
+        return (r, sz + bytesRead);
+    }
+
+    // Encoder section
+
+    /**
+     * @dev The main encoder for memory
+     * @param r The struct to be encoded
+     * @return The encoded byte array
+     */
+    function encode(Data memory r) internal pure returns (bytes memory) {
+        bytes memory bs = new bytes(_estimate(r));
+        uint256 sz = _encode(r, 32, bs);
+        assembly {
+            mstore(bs, sz)
+        }
+        return bs;
+    }
+
+    // inner encoder
+
+    /**
+     * @dev The encoder for internal usage
+     * @param r The struct to be encoded
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The number of bytes encoded
+     */
+    function _encode(Data memory r, uint256 p, bytes memory bs) internal pure returns (uint256) {
+        uint256 offset = p;
+        uint256 pointer = p;
+
+        if (uint256(r.status) != 0) {
+            pointer += ProtoBufRuntime._encode_key(1, ProtoBufRuntime.WireType.Varint, pointer, bs);
+            int32 _enum_status = encode_ContractTransactionStatus(r.status);
+            pointer += ProtoBufRuntime._encode_enum(_enum_status, pointer, bs);
+        }
+        if (uint256(r.prepare_result) != 0) {
+            pointer += ProtoBufRuntime._encode_key(2, ProtoBufRuntime.WireType.Varint, pointer, bs);
+            int32 _enum_prepare_result = encode_PrepareResult(r.prepare_result);
+            pointer += ProtoBufRuntime._encode_enum(_enum_prepare_result, pointer, bs);
+        }
+
+        pointer += ProtoBufRuntime._encode_key(3, ProtoBufRuntime.WireType.LengthDelim, pointer, bs);
+        pointer += ChannelInfo._encode_nested(r.coordinator_channel, pointer, bs);
+
+        return pointer - offset;
+    }
+
+    // nested encoder
+
+    /**
+     * @dev The encoder for inner struct
+     * @param r The struct to be encoded
+     * @param p The offset of bytes array to start decode
+     * @param bs The bytes array to be decoded
+     * @return The number of bytes encoded
+     */
+    function _encode_nested(Data memory r, uint256 p, bytes memory bs) internal pure returns (uint256) {
+        /**
+         * First encoded `r` into a temporary array, and encode the actual size used.
+         * Then copy the temporary array into `bs`.
+         */
+        uint256 offset = p;
+        uint256 pointer = p;
+        bytes memory tmp = new bytes(_estimate(r));
+        uint256 tmpAddr = ProtoBufRuntime.getMemoryAddress(tmp);
+        uint256 bsAddr = ProtoBufRuntime.getMemoryAddress(bs);
+        uint256 size = _encode(r, 32, tmp);
+        pointer += ProtoBufRuntime._encode_varint(size, pointer, bs);
+        ProtoBufRuntime.copyBytes(tmpAddr + 32, bsAddr + pointer, size);
+        pointer += size;
+        delete tmp;
+        return pointer - offset;
+    }
+
+    // estimator
+
+    /**
+     * @dev The estimator for a struct
+     * @param r The struct to be encoded
+     * @return The number of bytes encoded in estimation
+     */
+    function _estimate(Data memory r) internal pure returns (uint256) {
+        uint256 e;
+        e += 1 + ProtoBufRuntime._sz_enum(encode_ContractTransactionStatus(r.status));
+        e += 1 + ProtoBufRuntime._sz_enum(encode_PrepareResult(r.prepare_result));
+        e += 1 + ProtoBufRuntime._sz_lendelim(ChannelInfo._estimate(r.coordinator_channel));
+        return e;
+    }
+    // empty checker
+
+    function _empty(Data memory r) internal pure returns (bool) {
+        if (uint256(r.status) != 0) {
+            return false;
+        }
+
+        if (uint256(r.prepare_result) != 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    //store function
+    /**
+     * @dev Store in-memory struct to storage
+     * @param input The in-memory struct
+     * @param output The in-storage struct
+     */
+    function store(Data memory input, Data storage output) internal {
+        output.status = input.status;
+        output.prepare_result = input.prepare_result;
+        ChannelInfo.store(input.coordinator_channel, output.coordinator_channel);
+    }
+
+    //utility functions
+    /**
+     * @dev Return an empty struct
+     * @return r The empty struct
+     */
+    function nil() internal pure returns (Data memory r) {
+        assembly {
+            r := 0
+        }
+    }
+
+    /**
+     * @dev Test whether a struct is empty
+     * @param x The struct to be tested
+     * @return r True if it is empty
+     */
+    function isNil(Data memory x) internal pure returns (bool r) {
+        assembly {
+            r := iszero(x)
+        }
+    }
+}
+//library ContractTransactionState
