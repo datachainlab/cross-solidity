@@ -1,0 +1,109 @@
+name: Gas Snapshot Diff Report
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'foundry.toml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gas-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '25'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch .gas-snapshot from Base Branch
+        run: |
+          BASE_BRANCH="origin/${{ github.base_ref }}"
+          echo "Fetching snapshot from $BASE_BRANCH..."
+          
+          if git show "$BASE_BRANCH:.gas-snapshot" > .gas-snapshot 2>/dev/null; then
+            echo "Successfully fetched .gas-snapshot from base branch."
+          else
+            echo "⚠️ .gas-snapshot not found in base branch."
+            exit 0
+          fi
+
+      - name: Run Snapshot Diff
+        id: run_diff
+        shell: bash
+        run: |
+          npm run snapshot:diff | \
+          sed 's/\x1b\[[0-9;]*m//g' | \
+          grep -v "^>" | \
+          grep -vE "^\[PASS\]|^Ran |^Suite result" | \
+          grep -v "gas: 0 (0.000%)" | \
+          grep -v "compilation skipped" | \
+          sed '/^$/d' | \
+          sed -E 's/\(gas: ([0-9])/(gas: +\1/g' > gas_diff.txt
+          
+          cat gas_diff.txt
+
+      - name: Comment Gas Diff on PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const diffOutput = fs.readFileSync('gas_diff.txt', 'utf8');
+
+            if (diffOutput.trim() === '') {
+              console.log("No gas changes detected.");
+              return;
+            }
+
+            const body = `### ⛽ Gas Usage Changes
+            
+            Comparison against \`${{ github.base_ref }}\` branch:
+            
+            <details>
+            <summary>Click to view gas diff</summary>
+            
+            \`\`\`diff
+            ${diffOutput}
+            \`\`\`
+            
+            </details>
+            
+            *Calculated by Foundry Gas Snapshot Action*`;
+
+            const { owner, repo, number } = context.issue;
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: number,
+            });
+
+            const botComment = comments.data.find(c => c.body.includes('### ⛽ Gas Usage Changes'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: number,
+                body: body
+              });
+            }
