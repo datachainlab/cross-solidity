@@ -49,6 +49,7 @@ jobs:
           grep -v "^>" | \
           grep -vE "^\[PASS\]|^Ran |^Suite result" | \
           grep -v "gas: 0 (0.000%)" | \
+          grep -v "compilation skipped" | \
           sed '/^$/d' | \
           sed -E 's/\(gas: ([0-9])/(gas: +\1/g' > gas_diff.txt
           
