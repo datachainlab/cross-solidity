@@ -1,0 +1,37 @@
+name: Update Gas Snapshot on Push
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'foundry.toml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '25'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Snapshot
+        run: npm run snapshot
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(gas): update .gas-snapshot [skip ci]"
+          file_pattern: .gas-snapshot
