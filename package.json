@@ -11,7 +11,7 @@
     "fmt:sol": "forge fmt",
     "coverage:sol": "forge coverage --report lcov --ir-minimum",
     "snapshot": "forge snapshot",
-    "snapshot:diff": "forge snapshot --diff"
+    "snapshot:diff": "forge snapshot --diff --diff-sort absolute-desc"
   },
   "dependencies": {
     "@hyperledger-labs/yui-ibc-solidity": "git+https://github.com/hyperledger-labs/yui-ibc-solidity.git#v0.3.40",
