@@ -1,7 +1,9 @@
-name: Update Gas Snapshot on Push
+name: Update Gas Snapshot on Merge
 
 on:
   push:
+    branches:
+      - develop # ToDo: change develop to main when main branch is ready
     paths:
       - 'src/**'
       - 'test/**'
@@ -17,7 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,3 +37,4 @@ jobs:
         with:
           commit_message: "chore(gas): update .gas-snapshot [skip ci]"
           file_pattern: .gas-snapshot
+          branch: ${{ github.ref }}
