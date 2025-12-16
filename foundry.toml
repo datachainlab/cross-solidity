@@ -2,7 +2,7 @@
 solc_version = "0.8.30"
 libs = ["lib", "node_modules"]
 optimizer = true
-optimizer_runs = 199
+optimizer_runs = 198
 evm_version = "london"
 fs_permissions = [
   { access = "read-write", path = "./deployments.toml" }

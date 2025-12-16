@@ -28,73 +28,102 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Fetch .gas-snapshot from Base Branch
+      - name: Fetch Base Snapshot
         run: |
           BASE_BRANCH="origin/${{ github.base_ref }}"
-          echo "Fetching snapshot from $BASE_BRANCH..."
+          git fetch origin ${{ github.base_ref }} --depth=1 || true
           
-          if git show "$BASE_BRANCH:.gas-snapshot" > .gas-snapshot 2>/dev/null; then
-            echo "Successfully fetched .gas-snapshot from base branch."
+          if git show "$BASE_BRANCH:.gas-snapshot" > .gas-snapshot.base 2>/dev/null; then
+            echo "✅ Base snapshot found."
           else
-            echo "⚠️ .gas-snapshot not found in base branch."
+            echo "⚠️ Base snapshot not found."
             exit 0
           fi
 
-      - name: Run Snapshot Diff
-        id: run_diff
-        run: |
-          npm run snapshot:diff | sed 's/\x1b\[[0-9;]*m//g' | grep -v "^>" > gas_diff.txt
-          cat gas_diff.txt
+      - name: Generate Current Snapshot
+        run: npm run snapshot
 
-      - name: Comment Gas Diff on PR
+      - name: Compare and Comment
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const diffOutput = fs.readFileSync('gas_diff.txt', 'utf8');
 
-            if (diffOutput.trim() === '') {
-              console.log("No gas changes detected.");
+            function parseSnapshot(content) {
+              const lines = content.split('\n');
+              const data = {};
+              const regex = /(.*)\s+\((\d+)\)/; // 例: "Test:method() (12345)"
+              
+              for (const line of lines) {
+                const match = line.match(regex);
+                if (match) {
+                  data[match[1].trim()] = parseInt(match[2]);
+                }
+              }
+              return data;
+            }
+
+            let baseData = {};
+            let currentData = {};
+            
+            try { baseData = parseSnapshot(fs.readFileSync('.gas-snapshot.base', 'utf8')); } catch (e) {}
+            try { currentData = parseSnapshot(fs.readFileSync('.gas-snapshot', 'utf8')); } catch (e) {}
+
+            let rows = [];
+            
+            for (const [testName, currentGas] of Object.entries(currentData)) {
+              const baseGas = baseData[testName];
+              
+              if (baseGas === undefined) {
+                rows.push({ name: testName, base: '-', current: currentGas, diff: 0, type: 'NEW' });
+                continue;
+              }
+
+              if (baseGas !== currentGas) {
+                const diff = currentGas - baseGas;
+                rows.push({ name: testName, base: baseGas, current: currentGas, diff: diff, type: 'MOD' });
+              }
+            }
+
+            if (rows.length === 0) {
+              console.log("No gas changes.");
               return;
             }
 
-            const body = `### ⛽ Gas Usage Changes
+            rows.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+            let markdownTable = `### ⛽ Gas Usage Changes
             
-            Comparison against \`${{ github.base_ref }}\` branch:
+            Comparison against \`${{ github.base_ref }}\`:
             
-            <details>
-            <summary>Click to view gas diff</summary>
-            
-            \`\`\`diff
-            ${diffOutput}
-            \`\`\`
-            
-            </details>
-            
-            *Calculated by Foundry Gas Snapshot Action*`;
+            | Test Name | Before | After | Diff | Status |
+            | :--- | :---: | :---: | :---: | :---: |
+            `;
+
+            for (const row of rows) {
+              const diffSign = row.diff > 0 ? '+' : '';
+              const diffStr = row.type === 'NEW' ? '-' : `${diffSign}${row.diff}`;
+              const icon = row.diff > 0 ? '❌' : (row.diff < 0 ? '✅' : '🆕');
+              
+              markdownTable += `| \`${row.name}\` | ${row.base} | ${row.current} | **${diffStr}** | ${icon} |\n`;
+            }
+
+            markdownTable += `\n*Calculated by Foundry Gas Snapshot Action*`;
 
             const { owner, repo, number } = context.issue;
             const comments = await github.rest.issues.listComments({
-              owner,
-              repo,
-              issue_number: number,
+              owner, repo, issue_number: number,
             });
 
             const botComment = comments.data.find(c => c.body.includes('### ⛽ Gas Usage Changes'));
 
             if (botComment) {
               await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: botComment.id,
-                body: body
+                owner, repo, comment_id: botComment.id, body: markdownTable
               });
             } else {
               await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: number,
-                body: body
+                owner, repo, issue_number: number, body: markdownTable
               });
             }
