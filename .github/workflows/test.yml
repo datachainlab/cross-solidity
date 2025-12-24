@@ -22,7 +22,7 @@ jobs:
     - name: Resolve dependencies
       run: npm install
 
-    - name: Setup ganache-cli
+    - name: Setup chain & Deploy contracts
       run: NO_GEN_CODE=1 ./script/setup.sh development
 
     - name: Test
