@@ -129,7 +129,7 @@ SampleExtensionVerifierTest:test_verify_RevertsWhen_OptionDataIsMalformed() (gas
 SampleExtensionVerifierTest:test_verify_RevertsWhen_SignatureIsIncorrect() (gas: 44779)
 SampleExtensionVerifierTest:test_verify_RevertsWhen_SignatureIsInvalidLength() (gas: 39974)
 SampleExtensionVerifierTest:test_verify_SucceedsWhenSignatureIsValid() (gas: 35372)
-SimpleContractRegistryTest:testFuzz_register_ThenGetReturnsSameAddress(address) (runs: 257, μ: 76328, ~: 76328)
+SimpleContractRegistryTest:testFuzz_register_ThenGetReturnsSameAddress(address) (runs: 256, μ: 76328, ~: 76328)
 SimpleContractRegistryTest:test_get_RevertWhen_NotInitialized() (gas: 31429)
 SimpleContractRegistryTest:test_register_RevertOn_SecondInitialization() (gas: 57822)
 SimpleContractRegistryTest:test_register_ThenGetReturnsSameAddress() (gas: 75584)
