@@ -26,7 +26,7 @@ contract ERC20TransferModuleHarness is ERC20TransferModule {
     }
 }
 
-contract ERC20TransferModuleTest is Test {
+contract ERC20ModuleTest is Test {
     ERC20TransferModuleHarness private harness;
     MockERC20 private token;
 
