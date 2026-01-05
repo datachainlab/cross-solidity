@@ -43,9 +43,9 @@ interface IContractModule {
 }
 ```
 
-- For the current simple-commit coordinator flow, the coordinator-side participant (A) uses `onContractPrepare` to execute and lock state changes, and later finalizes them with `onCommit` or `onAbort` based on the acknowledgement from the counterparty.
+- For the current simple-commit coordinator flow, the coordinator-side participant uses `onContractPrepare` to execute and lock state changes, and later finalizes them with `onCommit` or `onAbort` based on the acknowledgement from the counterparty.
 
-- The counterparty participant (B) executes the incoming call and finalizes immediately via `onContractCommitImmediately`.
+- The counterparty participant executes the incoming call and finalizes immediately via `onContractCommitImmediately`.
 
 - IMPORTANT: `onCommit` and `onAbort` MUST NOT revert.
 
