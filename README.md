@@ -8,10 +8,10 @@ This is a solidity implementation of [Cross Framework](https://github.com/datach
 Currently, it provides the following features:
 - the registry feature that allows developers to register their contracts
 - the coordinator feature of the simple commit protocol
-- the participant feature of the simple commit protocol
+- the participant feature
 - it's implemented on top of [yui-ibc-solidity](https://github.com/hyperledger-labs/yui-ibc-solidity)
 
-The two-phase commit will be provided in the future.
+The coordinator feature of the two-phase commit will be provided in the future.
 
 ## Demo
 
@@ -19,21 +19,35 @@ For an ERC20 atomic swap demo, please refer to [ethereum-cross-demo](https://git
 
 ## Contract module development
 
-A developer who develops contract using Cross Framework need to implement IContractModule, which is defined in [IContractModule.sol](./src/core/IContractModule.sol).
-
-```
 // IContractModule defines the expected interface of a contract module on Cross Framework
+```solidity
 interface IContractModule {
-    // onContractCall is a callback function that is called at the commit(simple-commit) phase
-    function onContractCall(CrossContext calldata context, bytes calldata callInfo) external returns (bytes memory);
+    // onContractCommitImmediately is a callback function that is called on the participant chain to execute the transaction logic immediately
+    // This function is intended to be used only in the simple-commit protocol
+    function onContractCommitImmediately(CrossContext calldata context, bytes calldata callInfo)
+        external
+        returns (bytes memory);
+
+    // onContractPrepare is a callback function that is called at the prepare(2pc) phase
+    function onContractPrepare(CrossContext calldata context, bytes calldata callInfo) external returns (bytes memory);
+
+    // onCommit is a callback function that is called at the commit(2pc) phase
+    // It is expected that it commits the changes in the contract module
+    // IMPORTANT: This function MUST NOT revert.
+    function onCommit(CrossContext calldata context) external;
+
+    // onAbort is a callback function that is called at the commit(2pc) phase
+    // It is expected that it aborts the changes in the contract module
+    // IMPORTANT: This function MUST NOT revert.
+    function onAbort(CrossContext calldata context) external;
 }
 ```
 
-- Currently, only one function `onContractCall` is defined, which implements the process of a transaction called via the cross-chain transaction.
+- For the current simple-commit coordinator flow, the coordinator-side participant (A) uses `onContractPrepare` to execute and lock state changes, and later finalizes them with `onCommit` or `onAbort` based on the acknowledgement from the counterparty.
 
-- The return value of `onContractCall` is emitted as an Event `OnContractCall` with the transaction info.
+- The counterparty participant (B) executes the incoming call and finalizes immediately via `onContractCommitImmediately`.
 
-- If it gets an unexpected call, the developer need to perform `revert` in the contract. This will request the coordinator to abort the transaction.
+- IMPORTANT: `onCommit` and `onAbort` MUST NOT revert.
 
 ## How to deploy a contract module
 
