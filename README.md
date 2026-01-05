@@ -8,7 +8,7 @@ This is a solidity implementation of [Cross Framework](https://github.com/datach
 Currently, it provides the following features:
 - the registry feature that allows developers to register their contracts
 - the coordinator feature of the simple commit protocol
-- the participant feature
+- the participant features for the simple-commit and two-phase commit protocols
 - it's implemented on top of [yui-ibc-solidity](https://github.com/hyperledger-labs/yui-ibc-solidity)
 
 The coordinator feature of the two-phase commit will be provided in the future.
