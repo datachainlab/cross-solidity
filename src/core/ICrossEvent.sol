@@ -9,4 +9,5 @@ interface ICrossEvent {
     event OnAbort(bytes indexed txID, uint8 indexed txIndex);
     event TxSigned(address indexed signer, bytes32 indexed txID, AuthType.AuthMode method);
     event TxInitiated(bytes txID, address indexed proposer);
+    event TxExecuted(bytes txID, address indexed proposer);
 }

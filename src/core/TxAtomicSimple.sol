@@ -49,7 +49,7 @@ abstract contract TxAtomicSimple is
     uint8 private constant TX_INDEX_COORDINATOR = 0;
     uint8 private constant TX_INDEX_PARTICIPANT = 1;
 
-    function _runTx(bytes32 txID, MsgInitiateTx.Data storage msg_) internal virtual override {
+    function _runTx(bytes32 txID, MsgInitiateTx.Data calldata msg_) internal virtual override {
         if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE) {
             _runSimpleProtocol(txID, msg_);
         } else if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_TPC) {
@@ -59,7 +59,7 @@ abstract contract TxAtomicSimple is
         }
     }
 
-    function _runSimpleProtocol(bytes32 txID, MsgInitiateTx.Data storage msg_) internal {
+    function _runSimpleProtocol(bytes32 txID, MsgInitiateTx.Data calldata msg_) internal {
         CoordStorage storage coordStorage = _getCoordStorage();
         TxStorage storage txStorage = _getTxStorage();
 
@@ -82,8 +82,8 @@ abstract contract TxAtomicSimple is
 
         // --- 2. Setup Transaction & XCC ---
 
-        ContractTransaction.Data storage tx0 = msg_.contract_transactions[TX_INDEX_COORDINATOR];
-        ContractTransaction.Data storage tx1 = msg_.contract_transactions[TX_INDEX_PARTICIPANT];
+        ContractTransaction.Data calldata tx0 = msg_.contract_transactions[TX_INDEX_COORDINATOR];
+        ContractTransaction.Data calldata tx1 = msg_.contract_transactions[TX_INDEX_PARTICIPANT];
 
         // Simple protocol does not support links
         if (tx0.links.length > 0 || tx1.links.length > 0) {
@@ -418,11 +418,10 @@ abstract contract TxAtomicSimple is
             revert ModuleNotInitialized();
         }
 
-        MsgInitiateTx.Data storage msg_ = txStorage.txMsg[txID];
-        ContractTransaction.Data storage coordTx = msg_.contract_transactions[TX_INDEX_COORDINATOR];
+        Account.Data[] storage txCoordSigners = txStorage.txCoordSigners[txID];
 
         CrossContext memory ctx =
-            CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: coordTx.signers});
+            CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: txCoordSigners});
 
         if (isCommittable) {
             // Commit

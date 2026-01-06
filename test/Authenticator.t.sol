@@ -38,7 +38,8 @@ contract MockTxManager is TxManagerBase {
         override
     {}
 
-    function _runTxIfCompleted(bytes32 txID) internal virtual override {
+    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {
+        bytes32 txID = sha256(MsgInitiateTx.encode(msg_));
         lastRunTxID = txID;
         ++runTxCount;
     }

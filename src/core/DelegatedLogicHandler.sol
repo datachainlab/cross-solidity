@@ -100,8 +100,8 @@ abstract contract DelegatedLogicHandler is TxAuthManagerBase, TxManagerBase, Pac
         _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.createTx.selector, txID, src));
     }
 
-    function _runTxIfCompleted(bytes32 txID) internal virtual override {
-        _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.runTxIfCompleted.selector, txID));
+    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {
+        _delegateWithData(TX_MANAGER, abi.encodeWithSelector(ITxManager.runTxIfCompleted.selector, msg_));
     }
 
     function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {

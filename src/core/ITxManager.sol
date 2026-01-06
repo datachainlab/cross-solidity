@@ -10,7 +10,7 @@ import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-
 interface ITxManager {
     function initialize(IIBCHandler handler, IContractModule module) external;
     function createTx(bytes32 txID, MsgInitiateTx.Data calldata src) external;
-    function runTxIfCompleted(bytes32 txID) external;
+    function runTxIfCompleted(MsgInitiateTx.Data calldata msg_) external;
     function isTxRecorded(bytes32 txID) external view returns (bool);
     function getCoordinatorState(bytes32 txID) external view returns (CoordinatorState.Data memory);
     function handlePacket(Packet calldata packet) external returns (bytes memory acknowledgement);

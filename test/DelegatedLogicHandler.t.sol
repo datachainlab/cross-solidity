@@ -96,7 +96,8 @@ contract MockTxManager is ITxManager, MockStore {
         txStorage.nonce[txID] = src.nonce;
     }
 
-    function runTxIfCompleted(bytes32 txID) external override {
+    function runTxIfCompleted(MsgInitiateTx.Data calldata msg_) external override {
+        bytes32 txID = sha256(MsgInitiateTx.encode(msg_));
         txStorage.status[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
         txStorage.nonce[txID] = 1;
     }
@@ -183,8 +184,8 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
         _createTx(txID, src);
     }
 
-    function exposed_runTxIfCompleted(bytes32 txID) public {
-        _runTxIfCompleted(txID);
+    function exposed_runTxIfCompleted(MsgInitiateTx.Data calldata msg_) public {
+        _runTxIfCompleted(msg_);
     }
 
     function exposed_isTxRecorded(bytes32 txID) public returns (bool) {
@@ -357,7 +358,7 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
     }
 
     function test_runTxIfCompleted_DelegatesToTxManager() public {
-        harness.exposed_runTxIfCompleted(txID);
+        harness.exposed_runTxIfCompleted(txMsg);
 
         assertEq(
             uint256(harness.readTx_status(txID)),

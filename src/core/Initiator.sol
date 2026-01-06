@@ -58,7 +58,6 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
         emit TxInitiated(txID, msg.sender);
 
         if (completed) {
-            _runTxIfCompleted(txIDHash);
             return MsgInitiateTxResponse.Data({
                 txID: txID, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED
             });

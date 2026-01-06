@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import "forge-std/src/Test.sol";
 import "../src/core/Coordinator.sol";
 import "../src/core/TxManagerBase.sol";
+import "../src/core/TxAuthManagerBase.sol";
 import {ICrossError} from "../src/core/ICrossError.sol";
 import {
     QueryCoordinatorStateRequest,
@@ -31,14 +32,38 @@ contract MockTxManager is TxManagerBase, ICrossError {
     }
 
     function _createTx(bytes32, MsgInitiateTx.Data calldata) internal virtual override {}
-    function _runTxIfCompleted(bytes32) internal virtual override {}
+    function _runTxIfCompleted(MsgInitiateTx.Data calldata) internal virtual override {}
 
     function _isTxRecorded(bytes32) internal view virtual override returns (bool) {
         return false;
     }
 }
 
-contract CoordinatorHarness is Coordinator, MockTxManager {}
+contract MockTxAuthManager is TxAuthManagerBase {
+    mapping(bytes32 => bool) internal completedAuths;
+
+    function setCompletedAuth(bytes32 txID, bool completed) public {
+        completedAuths[txID] = completed;
+    }
+
+    function _initAuthState(bytes32, Account.Data[] memory) internal virtual override {}
+
+    function _sign(bytes32, Account.Data[] memory) internal virtual override returns (bool) {
+        return true;
+    }
+
+    function _getAuthState(bytes32) internal view virtual override returns (TxAuthState.Data memory) {
+        TxAuthState.Data memory state;
+        return state;
+    }
+    function _verifySignatures(bytes32, Account.Data[] calldata) internal virtual override {}
+
+    function _isCompletedAuth(bytes32 txID) internal view virtual override returns (bool) {
+        return completedAuths[txID];
+    }
+}
+
+contract CoordinatorHarness is Coordinator, MockTxManager, MockTxAuthManager {}
 
 contract CoordinatorTest is Test, ICrossError {
     CoordinatorHarness private harness;

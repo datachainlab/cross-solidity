@@ -30,7 +30,7 @@ abstract contract CrossStore {
     }
 
     struct TxStorage {
-        mapping(bytes32 => MsgInitiateTx.Data) txMsg;
+        mapping(bytes32 => Account.Data[]) txCoordSigners;
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) txStatus;
         mapping(bytes32 => mapping(uint256 => ContractTransactionState.Data)) states;
         IContractModule contractModule;
