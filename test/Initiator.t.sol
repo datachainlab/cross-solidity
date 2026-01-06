@@ -163,7 +163,7 @@ contract InitiatorTest is Test, ICrossEvent {
         harness.setSignReturns(false);
 
         vm.expectEmit(true, false, false, true, address(harness));
-        emit TxInitiated(abi.encodePacked(txIDHash), address(this));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this), baseMsg);
 
         MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
 
@@ -185,7 +185,7 @@ contract InitiatorTest is Test, ICrossEvent {
         harness.setSignReturns(true);
 
         vm.expectEmit(true, false, false, true, address(harness));
-        emit TxInitiated(abi.encodePacked(txIDHash), address(this));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this), baseMsg);
 
         MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
 
