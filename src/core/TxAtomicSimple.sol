@@ -126,24 +126,43 @@ abstract contract TxAtomicSimple is
         CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
         bool prepareOK = false;
 
-        // slither-disable-next-line reentrancy-no-eth
-        try module.onContractPrepare(
-            CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
-            tx0.call_info
-        ) returns (bytes memory callResult) {
-            // Verify return value if set
-            if (tx0.return_value.value.length > 0) {
-                if (keccak256(tx0.return_value.value) != keccak256(callResult)) {
-                    revert UnexpectedReturnValue();
-                }
+        // Use a block scope to avoid "Stack Too Deep" error by limiting the lifetime of temporary variables
+        {
+            Height.Data memory emptyHeight = Height.Data(0, 0);
+            Packet memory dummyPacket = Packet({
+                sequence: 0,
+                sourcePort: "",
+                sourceChannel: "",
+                destinationPort: "",
+                destinationChannel: "",
+                data: bytes(""),
+                timeoutHeight: emptyHeight,
+                timeoutTimestamp: 0
+            });
+
+            IContractModule module = getModule(dummyPacket);
+            if (address(module) == address(0)) {
+                revert ModuleNotInitialized();
             }
-            prepareOK = true;
-            phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
-            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
-        } catch {
-            prepareOK = false;
-            phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
-            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT;
+
+            // slither-disable-next-line reentrancy-no-eth
+            try module.onContractPrepare(
+                CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
+                tx0.call_info
+            ) returns (bytes memory callResult) {
+                if (tx0.return_value.value.length > 0) {
+                    if (keccak256(tx0.return_value.value) != keccak256(callResult)) {
+                        revert UnexpectedReturnValue();
+                    }
+                }
+                prepareOK = true;
+                phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+                decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
+            } catch {
+                prepareOK = false;
+                phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
+                decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT;
+            }
         }
 
         // --- 4. Send IBC Packet (only if prepareOK) ---
