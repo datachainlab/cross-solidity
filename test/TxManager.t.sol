@@ -91,7 +91,7 @@ contract TxManagerHarness is TxManager {
 
 contract TxManagerTest is Test, ICrossError {
     TxManagerHarness private harness;
-    bytes32 private txID = keccak256("test_tx_id");
+    bytes32 private txID;
     MsgInitiateTx.Data private txMsg;
 
     DummyIBCHandler private dummyHandler;
@@ -114,6 +114,8 @@ contract TxManagerTest is Test, ICrossError {
             signers: signers,
             contract_transactions: txs
         });
+
+        txID = sha256(MsgInitiateTx.encode(txMsg));
     }
 
     // --- initialize ---

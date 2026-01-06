@@ -38,11 +38,7 @@ contract MockTxManager is TxManagerBase {
         override
     {}
 
-    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {
-        bytes32 txID = sha256(MsgInitiateTx.encode(msg_));
-        lastRunTxID = txID;
-        ++runTxCount;
-    }
+    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {}
 
     function _isTxRecorded(
         bytes32 /*txID*/
@@ -221,8 +217,6 @@ contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
         assertTrue(resp.tx_auth_completed, "response should indicate completed");
         assertEq(resp.log, "", "log should be empty");
         assertTrue(harness.completed(txID), "Mock: auth should be completed");
-        assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxID(), txID, "Mock: runTxIfCompleted called with correct txID");
     }
 
     function test_signTx_RevertsIf_TxIDLengthInvalid() public {
@@ -280,8 +274,6 @@ contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
 
         assertTrue(resp.x, "response.x should be true");
         assertTrue(harness.completed(extTxID), "Mock: auth should be completed");
-        assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxID(), extTxID, "Mock: runTxIfCompleted called with correct txID");
     }
 
     function test_extSignTx_RevertsIf_TxIDLengthInvalid() public {

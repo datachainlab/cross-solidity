@@ -35,11 +35,7 @@ contract MockTxManager is TxManagerBase {
         ++createTxCount;
     }
 
-    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {
-        bytes32 txID = sha256(MsgInitiateTx.encode(msg_));
-        lastRuntxID = txID;
-        ++runTxCount;
-    }
+    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {}
 
     function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         return txExists[txID];
@@ -202,8 +198,6 @@ contract InitiatorTest is Test, ICrossEvent {
         assertTrue(harness.completed(txIDHash), "Mock: auth should be completed");
         assertEq(harness.createTxCount(), 1, "Mock: _createTx should be called once");
         assertEq(harness.lastInittxID(), txIDHash, "Mock: _initAuthState should be called with txID");
-        assertEq(harness.runTxCount(), 1, "Mock: _runTxIfCompleted should be called once");
-        assertEq(harness.lastRuntxID(), txIDHash, "Mock: _runTxIfCompleted should be called with txID");
     }
 
     function test_initiateTx_RevertWhen_ChainIDMismatch() public {

@@ -358,14 +358,17 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
     }
 
     function test_runTxIfCompleted_DelegatesToTxManager() public {
+        bytes32 expectedTxID = sha256(MsgInitiateTx.encode(txMsg));
+
         harness.exposed_runTxIfCompleted(txMsg);
 
         assertEq(
-            uint256(harness.readTx_status(txID)),
+            uint256(harness.readTx_status(expectedTxID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
-        assertEq(harness.readTx_nonce(txID), 1, "runTxIfCompleted call count mismatch");
+
+        assertEq(harness.readTx_nonce(expectedTxID), 1, "runTxIfCompleted call count mismatch");
     }
 
     function test_isTxRecorded_DelegatesToTxManager() public {
