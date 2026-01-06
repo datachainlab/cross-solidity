@@ -8,7 +8,7 @@ import {IContractModule} from "./IContractModule.sol";
 import {SimpleContractRegistry} from "./SimpleContractRegistry.sol";
 import {TxAtomicSimple} from "./TxAtomicSimple.sol";
 
-import {MsgInitiateTx, MsgInitiateTxResponse, ContractTransaction} from "../proto/cross/core/initiator/Initiator.sol";
+import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {PacketAcknowledgementCall, CoordinatorState} from "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 import {Tx} from "../proto/cross/core/tx/Tx.sol";

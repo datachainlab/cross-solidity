@@ -4,8 +4,6 @@ pragma solidity ^0.8.20;
 import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 import {CoordinatorState} from "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 
-import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
-
 abstract contract TxManagerBase {
     function _createTx(bytes32 txID, MsgInitiateTx.Data calldata src) internal virtual;
     function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual;
