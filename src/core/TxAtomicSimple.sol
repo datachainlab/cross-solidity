@@ -100,27 +100,6 @@ abstract contract TxAtomicSimple is
 
         // --- 3. Local Prepare (Coordinator) ---
 
-        // Dummy packet for getModule (local execution)
-        Height.Data memory emptyHeight = Height.Data(0, 0);
-        // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
-        // but it is not correct to force that assumption on the caller as well.
-        // We should generate a proper Packet instead of dummyPacket to support multiple modules.
-        Packet memory dummyPacket = Packet({
-            sequence: 0,
-            sourcePort: "",
-            sourceChannel: "",
-            destinationPort: "",
-            destinationChannel: "",
-            data: bytes(""),
-            timeoutHeight: emptyHeight,
-            timeoutTimestamp: 0
-        });
-
-        IContractModule module = getModule(dummyPacket);
-        if (address(module) == address(0)) {
-            revert ModuleNotInitialized();
-        }
-
         CoordinatorState.CoordinatorPhase phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN;
         CoordinatorState.CoordinatorDecision decision =
         CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
@@ -128,7 +107,11 @@ abstract contract TxAtomicSimple is
 
         // Use a block scope to avoid "Stack Too Deep" error by limiting the lifetime of temporary variables
         {
+            // Dummy packet for getModule (local execution)
             Height.Data memory emptyHeight = Height.Data(0, 0);
+            // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
+            // but it is not correct to force that assumption on the caller as well.
+            // We should generate a proper Packet instead of dummyPacket to support multiple modules.
             Packet memory dummyPacket = Packet({
                 sequence: 0,
                 sourcePort: "",
