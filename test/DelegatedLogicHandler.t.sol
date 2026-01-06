@@ -96,7 +96,7 @@ contract MockTxManager is ITxManager, MockStore {
         txStorage.nonce[txID] = src.nonce;
     }
 
-    function runTxIfCompleted(bytes32 txID, MsgInitiateTx.Data calldata msg_) external override {
+    function runTxIfCompleted(bytes32 txID, MsgInitiateTx.Data calldata) external override {
         txStorage.status[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
         txStorage.nonce[txID] = 1;
     }
