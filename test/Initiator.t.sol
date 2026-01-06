@@ -35,7 +35,7 @@ contract MockTxManager is TxManagerBase {
         ++createTxCount;
     }
 
-    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {}
+    function _runTxIfCompleted(bytes32 txID, MsgInitiateTx.Data calldata msg_) internal virtual override {}
 
     function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {
         return txExists[txID];

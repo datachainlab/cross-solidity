@@ -31,7 +31,7 @@ abstract contract Coordinator is ICoordinator, TxAuthManagerBase, TxManagerBase,
 
         if (!_isCompletedAuth(txIDHash)) revert AuthNotCompleted(txIDHash);
 
-        _runTxIfCompleted(msg_);
+        _runTxIfCompleted(txIDHash, msg_);
 
         emit TxExecuted(abi.encodePacked(txIDHash), msg.sender);
     }

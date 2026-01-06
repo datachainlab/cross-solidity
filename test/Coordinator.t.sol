@@ -42,7 +42,7 @@ contract MockTxManager is TxManagerBase, ICrossError {
 
     function _createTx(bytes32, MsgInitiateTx.Data calldata) internal virtual override {}
 
-    function _runTxIfCompleted(MsgInitiateTx.Data calldata) internal virtual override {
+    function _runTxIfCompleted(bytes32, MsgInitiateTx.Data calldata) internal virtual override {
         ++runCount;
     }
 

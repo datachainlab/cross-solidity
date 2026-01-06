@@ -35,8 +35,8 @@ contract TxManager is
         _createTx(txID, src);
     }
 
-    function runTxIfCompleted(MsgInitiateTx.Data calldata msg_) external override nonReentrant {
-        _runTxIfCompleted(msg_);
+    function runTxIfCompleted(bytes32 txID, MsgInitiateTx.Data calldata msg_) external override nonReentrant {
+        _runTxIfCompleted(txID, msg_);
     }
 
     function isTxRecorded(bytes32 txID) external view override returns (bool) {
@@ -72,13 +72,12 @@ contract TxManager is
         t.txStatus[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING;
     }
 
-    function _runTxIfCompleted(MsgInitiateTx.Data calldata msg_) internal virtual override {
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(msg_));
+    function _runTxIfCompleted(bytes32 txID, MsgInitiateTx.Data calldata msg_) internal virtual override {
         CrossStore.TxStorage storage t = _getTxStorage();
-        if (!_isTxRecorded(txIDHash)) return;
-        if (t.txStatus[txIDHash] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
-        t.txStatus[txIDHash] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
-        _runTx(txIDHash, msg_);
+        if (!_isTxRecorded(txID)) return;
+        if (t.txStatus[txID] == MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED) return;
+        t.txStatus[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
+        _runTx(txID, msg_);
     }
 
     function _isTxRecorded(bytes32 txID) internal view virtual override returns (bool) {

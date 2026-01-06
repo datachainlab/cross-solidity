@@ -271,7 +271,7 @@ contract TxManagerTest is Test, ICrossError {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING),
             "Status should be PENDING"
         );
-        harness.runTxIfCompleted(txMsg);
+        harness.runTxIfCompleted(txID, txMsg);
         assertEq(harness.runCount(), 1, "MockTxRunner should be called once");
         assertEq(harness.lastRunTxID(), txID, "MockTxRunner should be called with correct txID");
         assertEq(
@@ -282,7 +282,7 @@ contract TxManagerTest is Test, ICrossError {
     }
 
     function test_runTxIfCompleted_DoesNothingForUnknownTx() public {
-        harness.runTxIfCompleted(txMsg);
+        harness.runTxIfCompleted(txID, txMsg);
         assertEq(harness.runCount(), 0, "MockTxRunner should not be called");
         assertEq(
             uint256(harness.getTxStatus(txID)),
@@ -293,14 +293,14 @@ contract TxManagerTest is Test, ICrossError {
 
     function test_runTxIfCompleted_DoesNothingIfAlreadyVerified() public {
         harness.createTx(txID, txMsg);
-        harness.runTxIfCompleted(txMsg); // First run
+        harness.runTxIfCompleted(txID, txMsg); // First run
         assertEq(harness.runCount(), 1, "MockTxRunner should be called once");
         assertEq(
             uint256(harness.getTxStatus(txID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
-        harness.runTxIfCompleted(txMsg); // Second run
+        harness.runTxIfCompleted(txID, txMsg); // Second run
         assertEq(harness.runCount(), 1, "MockTxRunner should not be called again");
         assertEq(
             uint256(harness.getTxStatus(txID)),
