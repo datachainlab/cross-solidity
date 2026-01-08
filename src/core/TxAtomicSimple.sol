@@ -181,8 +181,8 @@ abstract contract TxAtomicSimple is
 
             bytes memory finalPacketData = PacketData.encode(pd);
 
-            // slither-disable-next-line unused-return reentrancy-no-eth
-            getIBCHandler()
+            // slither-disable-next-line reentrancy-no-eth
+            uint64 sequence = getIBCHandler()
                 .sendPacket(
                     ch1.port,
                     ch1.channel,
@@ -191,6 +191,7 @@ abstract contract TxAtomicSimple is
                     0,
                     finalPacketData
                 );
+            txStorage.txIdBySequence[sequence] = txID;
         }
 
         // --- 5. Save CoordinatorState ---
@@ -278,6 +279,9 @@ abstract contract TxAtomicSimple is
      * @dev Coordinator side: Handle ACK, update CoordinatorState, and execute Commit/Abort.
      */
     function _handleAcknowledgement(Packet calldata packet, bytes calldata acknowledgement) internal virtual override {
+        CoordStorage storage coordStorage = _getCoordStorage();
+        TxStorage storage txStorage = _getTxStorage();
+
         // --- 1. Decode Acknowledgement ---
 
         Acknowledgement.Data memory ackOuter = Acknowledgement.decode(acknowledgement);
@@ -297,27 +301,15 @@ abstract contract TxAtomicSimple is
 
         PacketAcknowledgementCall.Data memory ack = PacketAcknowledgementCall.decode(ackAny.value);
 
-        // --- 2. Recover txID from original Packet ---
+        // --- 2. Recover txID from packet sequence ---
 
-        PacketData.Data memory callPd = PacketData.decode(packet.data);
-        if (callPd.payload.length == 0) revert PayloadDecodeFailed();
+        bytes32 txID = txStorage.txIdBySequence[packet.sequence];
 
-        Any.Data memory callAny = Any.decode(callPd.payload);
-        // solhint-disable-next-line gas-small-strings
-        if (sha256(bytes(callAny.type_url)) != sha256(bytes("/cross.core.atomic.simple.PacketDataCall"))) {
-            revert UnexpectedTypeURL();
+        if (txID == bytes32(0)) {
+            revert TxIDNotFoundForSequence(packet.sequence);
         }
-        PacketDataCall.Data memory pdc = PacketDataCall.decode(callAny.value);
-
-        if (pdc.tx_id.length != 32) {
-            revert InvalidTxIDLength();
-        }
-        bytes32 txID = abi.decode(pdc.tx_id, (bytes32));
 
         // --- 3. Retrieve & Validate CoordinatorState ---
-
-        CoordStorage storage coordStorage = _getCoordStorage();
-        TxStorage storage txStorage = _getTxStorage();
 
         CoordinatorState.Data storage cs = coordStorage.states[txID];
         if (cs.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {

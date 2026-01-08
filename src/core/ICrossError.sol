@@ -10,6 +10,7 @@ interface ICrossError {
     error MessageTimeoutTimestamp(uint256 blockTimestamp, uint64 timeoutTimestamp);
     error TxIDAlreadyExists(bytes32 txIDHash);
     error TxIDNotFound(bytes32 txIDHash);
+    error TxIDNotFoundForSequence(uint64 sequence);
     error AuthStateAlreadyInitialized(bytes32 txID);
     error IDNotFound(bytes32 txID);
     error InvalidTxIDLength();
