@@ -33,7 +33,7 @@ abstract contract CrossStore {
         mapping(bytes32 => Account.Data[]) txCoordSigners;
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) txStatus;
         mapping(bytes32 => mapping(uint256 => ContractTransactionState.Data)) states;
-        mapping(uint64 => bytes32) txIdBySequence;
+        mapping(uint64 => bytes32) txIDBySequence;
         IContractModule contractModule;
         IIBCHandler ibcHandler;
     }

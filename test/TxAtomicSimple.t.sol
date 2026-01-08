@@ -179,8 +179,8 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
         _getTxStorage().states[txID][index] = state;
     }
 
-    function setTxIdBySequence(uint64 sequence, bytes32 txID) external {
-        _getTxStorage().txIdBySequence[sequence] = txID;
+    function setTxIDBySequence(uint64 sequence, bytes32 txID) external {
+        _getTxStorage().txIDBySequence[sequence] = txID;
     }
 
     function getCoordState(bytes32 txID) external view returns (CoordinatorState.Data memory) {
@@ -300,7 +300,7 @@ contract TxAtomicSimpleTest is Test, ICrossError, ICrossEvent {
     }
 
     function _setSequenceContext(uint64 sequence, bytes32 txId) internal {
-        harness.setTxIdBySequence(sequence, txId);
+        harness.setTxIDBySequence(sequence, txId);
     }
 
     function _setupCoordinatorState(bytes32 txId, CoordinatorState.CoordinatorPhase phase) internal {

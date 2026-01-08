@@ -191,7 +191,7 @@ abstract contract TxAtomicSimple is
                     0,
                     finalPacketData
                 );
-            txStorage.txIdBySequence[sequence] = txID;
+            txStorage.txIDBySequence[sequence] = txID;
         }
 
         // --- 5. Save CoordinatorState ---
@@ -303,7 +303,7 @@ abstract contract TxAtomicSimple is
 
         // --- 2. Recover txID from packet sequence ---
 
-        bytes32 txID = txStorage.txIdBySequence[packet.sequence];
+        bytes32 txID = txStorage.txIDBySequence[packet.sequence];
 
         if (txID == bytes32(0)) {
             revert TxIDNotFoundForSequence(packet.sequence);
