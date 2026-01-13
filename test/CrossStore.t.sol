@@ -33,12 +33,12 @@ contract CrossStoreHarness is CrossStore {
     //--- Coord Storage Accessors ---
     function writeCoord(bytes32 txID, CoordinatorState.CoordinatorPhase phase) public {
         CoordStorage storage s = _getCoordStorage();
-        s.states[txID].phase = phase;
+        s.compactStates[txID].phase = phase;
     }
 
     function readCoord(bytes32 txID) public view returns (CoordinatorState.CoordinatorPhase) {
         CoordStorage storage s = _getCoordStorage();
-        return s.states[txID].phase;
+        return s.compactStates[txID].phase;
     }
 }
 

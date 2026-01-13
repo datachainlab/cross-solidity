@@ -60,7 +60,6 @@ abstract contract TxAtomicSimple is
     }
 
     function _runSimpleProtocol(bytes32 txID, MsgInitiateTx.Data calldata msg_) internal {
-        CoordStorage storage coordStorage = _getCoordStorage();
         TxStorage storage txStorage = _getTxStorage();
 
         if (msg_.contract_transactions.length != 2) {
@@ -76,7 +75,7 @@ abstract contract TxAtomicSimple is
             revert MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
-        if (coordStorage.states[txID].commit_protocol != Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
+        if (_loadCoordinatorState(txID).commit_protocol != Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
             revert TxIDAlreadyExists(txID);
         }
 
@@ -220,7 +219,7 @@ abstract contract TxAtomicSimple is
             acks: acks
         });
 
-        coordStorage.states[txID] = newState;
+        _saveCoordinatorState(txID, newState);
 
         // --- 6. Save ContractTransactionState ---
 
@@ -316,10 +315,9 @@ abstract contract TxAtomicSimple is
 
         // --- 3. Retrieve & Validate CoordinatorState ---
 
-        CoordStorage storage coordStorage = _getCoordStorage();
         TxStorage storage txStorage = _getTxStorage();
 
-        CoordinatorState.Data storage cs = coordStorage.states[txID];
+        CoordinatorState.Data memory cs = _loadCoordinatorState(txID);
         if (cs.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
             revert CoordinatorStateNotFound(txID);
         }
@@ -355,7 +353,7 @@ abstract contract TxAtomicSimple is
 
         // Mark Participant prepare as confirmed
         if (!_containsUint32(cs.confirmed_txs, TX_INDEX_PARTICIPANT)) {
-            cs.confirmed_txs.push(TX_INDEX_PARTICIPANT);
+            _confirmParticipant(txID);
         }
 
         // --- 5. Determine Commit/Abort based on ACK ---
@@ -375,12 +373,16 @@ abstract contract TxAtomicSimple is
         cs.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
 
         // Set ACK flags
-        if (!_containsUint32(cs.acks, TX_INDEX_COORDINATOR)) {
-            cs.acks.push(TX_INDEX_COORDINATOR);
+        CoordinatorState.CoordinatorDecision decision;
+        if (ack.status == PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK) {
+            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_COMMIT;
+        } else {
+            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT;
         }
-        if (!_containsUint32(cs.acks, TX_INDEX_PARTICIPANT)) {
-            cs.acks.push(TX_INDEX_PARTICIPANT);
-        }
+
+        _completeSimpleProtocol(txID, CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT, decision);
+
+        cs = _loadCoordinatorState(txID);
 
         bool allPrepares =
             _containsUint32(cs.confirmed_txs, TX_INDEX_COORDINATOR)
@@ -452,7 +454,7 @@ abstract contract TxAtomicSimple is
 
     // --- Helpers ---
 
-    function _containsUint32(uint32[] storage arr, uint32 value) internal view returns (bool) {
+    function _containsUint32(uint32[] memory arr, uint32 value) internal view returns (bool) {
         for (uint256 i = 0; i < arr.length; ++i) {
             if (arr[i] == value) return true;
         }

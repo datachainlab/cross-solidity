@@ -172,7 +172,7 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
     }
 
     function setCoordinatorState(bytes32 txID, CoordinatorState.Data calldata state) external {
-        _getCoordStorage().states[txID] = state;
+        _saveCoordinatorState(txID, state);
     }
 
     function setContractTxState(bytes32 txID, uint8 index, ContractTransactionState.Data calldata state) external {
@@ -180,7 +180,7 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
     }
 
     function getCoordState(bytes32 txID) external view returns (CoordinatorState.Data memory) {
-        return _getCoordStorage().states[txID];
+        return _loadCoordinatorState(txID);
     }
 
     function getContractTxState(bytes32 txID, uint8 index)

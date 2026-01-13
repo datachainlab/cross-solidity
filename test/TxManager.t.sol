@@ -84,8 +84,7 @@ contract TxManagerHarness is TxManager {
     }
 
     function setCoordinatorState(bytes32 txID, CoordinatorState.Data calldata data) public {
-        CrossStore.CoordStorage storage s = _getCoordStorage();
-        s.states[txID] = data;
+        _saveCoordinatorState(txID, data);
     }
 }
 
