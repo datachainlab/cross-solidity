@@ -438,6 +438,8 @@ abstract contract TxAtomicSimple is
             // slither-disable-next-line reentrancy-events
             emit OnAbort(abi.encodePacked(txID), TX_INDEX_COORDINATOR);
         }
+        // gas optimization: clean up txCoordSigners storage
+        delete txStorage.txCoordSigners[txID];
     }
 
     function _handleTimeout(
