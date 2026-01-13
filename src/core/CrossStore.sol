@@ -69,17 +69,16 @@ abstract contract CrossStore {
         assembly { $.slot := COORD_STORAGE_LOCATION }
     }
 
-    function _loadCoordinatorState(bytes32 txID) internal view returns (CoordinatorState.Data memory) {
+    function _loadCoordinatorState(bytes32 txID) internal view returns (CoordinatorState.Data memory data) {
         CoordStorage storage $ = _getCoordStorage();
         CoordStateCompact storage compact = $.compactStates[txID];
 
-        CoordinatorState.Data memory data;
         data.commit_protocol = compact.commitProtocol;
         data.phase = compact.phase;
         data.decision = compact.decision;
 
         data.channels = new ChannelInfo.Data[](2);
-        data.channels[0] = ChannelInfo.Data("", ""); // Local
+        data.channels[0] = ChannelInfo.Data("", "");
         data.channels[1] = ChannelInfo.Data(compact.participantPort, compact.participantChannel);
 
         data.confirmed_txs = _maskToUint32Array(compact.confirmedMask);
