@@ -84,8 +84,27 @@ contract TxManagerHarness is TxManager {
     }
 
     function setCoordinatorState(bytes32 txID, CoordinatorState.Data calldata data) public {
-        CrossStore.CoordStorage storage s = _getCoordStorage();
-        s.states[txID] = data;
+        CoordStateCompact memory compact;
+        compact.commitProtocol = data.commit_protocol;
+        compact.phase = data.phase;
+        compact.decision = data.decision;
+
+        if (data.channels.length > 1) {
+            compact.participantPort = data.channels[1].port;
+            compact.participantChannel = data.channels[1].channel;
+        }
+
+        compact.confirmedMask = _toMask(data.confirmed_txs);
+        compact.ackMask = _toMask(data.acks);
+
+        _getCoordStorage().compactStates[txID] = compact;
+    }
+
+    function _toMask(uint32[] calldata arr) internal pure returns (uint8 mask) {
+        for (uint256 i = 0; i < arr.length; ++i) {
+            if (arr[i] == 0) mask |= 0x01;
+            if (arr[i] == 1) mask |= 0x02;
+        }
     }
 }
 
@@ -313,13 +332,37 @@ contract TxManagerTest is Test, ICrossError {
         CoordinatorState.Data memory expected;
         expected.commit_protocol = Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE;
         expected.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+        expected.decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
+
+        expected.channels = new ChannelInfo.Data[](2);
+        expected.channels[0] = ChannelInfo.Data("", "");
+        expected.channels[1] = ChannelInfo.Data("port-remote", "channel-remote");
+
+        expected.confirmed_txs = new uint32[](2);
+        expected.confirmed_txs[0] = 0;
+        expected.confirmed_txs[1] = 1;
+
+        expected.acks = new uint32[](1);
+        expected.acks[0] = 0;
 
         harness.setCoordinatorState(txID, expected);
 
         CoordinatorState.Data memory actual = harness.getCoordinatorState(txID);
 
-        assertEq(uint256(actual.commit_protocol), uint256(expected.commit_protocol), "Commit protocol mismatch");
+        assertEq(uint256(actual.commit_protocol), uint256(expected.commit_protocol), "Protocol mismatch");
         assertEq(uint256(actual.phase), uint256(expected.phase), "Phase mismatch");
+        assertEq(uint256(actual.decision), uint256(expected.decision), "Decision mismatch");
+
+        assertEq(actual.channels.length, 2, "Channels length mismatch");
+        assertEq(actual.channels[1].port, "port-remote", "Participant port mismatch");
+        assertEq(actual.channels[1].channel, "channel-remote", "Participant channel mismatch");
+
+        assertEq(actual.confirmed_txs.length, 2, "Confirmed count mismatch");
+        assertEq(actual.confirmed_txs[0], 0);
+        assertEq(actual.confirmed_txs[1], 1);
+
+        assertEq(actual.acks.length, 1, "Acks count mismatch");
+        assertEq(actual.acks[0], 0);
     }
 
     function test_getCoordinatorState_RevertsIfNotFound() public {

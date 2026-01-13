@@ -76,7 +76,7 @@ abstract contract TxAtomicSimple is
             revert MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
-        if (coordStorage.states[txID].commit_protocol != Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
+        if (coordStorage.compactStates[txID].commitProtocol != Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
             revert TxIDAlreadyExists(txID);
         }
 
@@ -195,32 +195,17 @@ abstract contract TxAtomicSimple is
 
         // --- 5. Save CoordinatorState ---
 
-        ChannelInfo.Data[] memory channels = new ChannelInfo.Data[](2);
-        channels[0] = ch0;
-        channels[1] = ch1;
-
-        uint32[] memory confirmedTxs = new uint32[](1);
-        confirmedTxs[0] = TX_INDEX_COORDINATOR;
-
-        uint32[] memory acks;
-        if (!prepareOK) {
-            acks = new uint32[](2);
-            acks[0] = TX_INDEX_COORDINATOR;
-            acks[1] = TX_INDEX_PARTICIPANT;
-        } else {
-            acks = new uint32[](0);
-        }
-
-        CoordinatorState.Data memory newState = CoordinatorState.Data({
-            commit_protocol: Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE,
-            channels: channels,
+        CoordStateCompact memory newCompactState = CoordStateCompact({
+            commitProtocol: Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE,
             phase: phase,
             decision: decision,
-            confirmed_txs: confirmedTxs,
-            acks: acks
+            participantPort: ch1.port,
+            participantChannel: ch1.channel,
+            confirmedMask: 0x01, // bit0=coord, bit1=participant
+            ackMask: prepareOK ? 0x00 : 0x03 // bit0=coord, bit1=participant
         });
 
-        coordStorage.states[txID] = newState;
+        coordStorage.compactStates[txID] = newCompactState;
 
         // --- 6. Save ContractTransactionState ---
 
@@ -315,12 +300,11 @@ abstract contract TxAtomicSimple is
         bytes32 txID = abi.decode(pdc.tx_id, (bytes32));
 
         // --- 3. Retrieve & Validate CoordinatorState ---
-
         CoordStorage storage coordStorage = _getCoordStorage();
         TxStorage storage txStorage = _getTxStorage();
 
-        CoordinatorState.Data storage cs = coordStorage.states[txID];
-        if (cs.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
+        CoordStateCompact storage cs = coordStorage.compactStates[txID];
+        if (cs.commitProtocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
             revert CoordinatorStateNotFound(txID);
         }
 
@@ -328,10 +312,8 @@ abstract contract TxAtomicSimple is
             revert CoordinatorPhaseNotPrepare();
         }
 
-        bool allPreparesAlreadyConfirmed =
-            _containsUint32(cs.confirmed_txs, TX_INDEX_COORDINATOR)
-            && _containsUint32(cs.confirmed_txs, TX_INDEX_PARTICIPANT);
-        if (allPreparesAlreadyConfirmed) {
+        // Bitwise Check: bit0=coord, bit1=participant. 0x03 means both are confirmed.
+        if ((cs.confirmedMask & 0x03) == 0x03) {
             revert AllTransactionsConfirmed();
         }
 
@@ -342,26 +324,19 @@ abstract contract TxAtomicSimple is
             revert ChannelNotFound();
         }
 
-        // Verify Participant channel matches
-        require(cs.channels.length == 2, "channels length must be 2");
-        ChannelInfo.Data memory expectedParticipantChannel = cs.channels[TX_INDEX_PARTICIPANT];
-
+        // Verify Participant channel matches directly from strings
         if (
-            keccak256(bytes(expectedParticipantChannel.port)) != keccak256(bytes(packet.sourcePort))
-                || keccak256(bytes(expectedParticipantChannel.channel)) != keccak256(bytes(packet.sourceChannel))
+            keccak256(bytes(cs.participantPort)) != keccak256(bytes(packet.sourcePort))
+                || keccak256(bytes(cs.participantChannel)) != keccak256(bytes(packet.sourceChannel))
         ) {
             revert UnexpectedSourceChannel();
         }
 
-        // Mark Participant prepare as confirmed
-        if (!_containsUint32(cs.confirmed_txs, TX_INDEX_PARTICIPANT)) {
-            cs.confirmed_txs.push(TX_INDEX_PARTICIPANT);
-        }
+        // Mark Participant prepare as confirmed (Set bit 1)
+        cs.confirmedMask |= 0x02;
 
         // --- 5. Determine Commit/Abort based on ACK ---
-
         bool isCommittable = false;
-
         if (ack.status == PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK) {
             cs.decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_COMMIT;
             isCommittable = true;
@@ -374,25 +349,15 @@ abstract contract TxAtomicSimple is
 
         cs.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
 
-        // Set ACK flags
-        if (!_containsUint32(cs.acks, TX_INDEX_COORDINATOR)) {
-            cs.acks.push(TX_INDEX_COORDINATOR);
-        }
-        if (!_containsUint32(cs.acks, TX_INDEX_PARTICIPANT)) {
-            cs.acks.push(TX_INDEX_PARTICIPANT);
-        }
+        // Set ACK flags for both (Simple protocol finishes both on this ACK)
+        cs.ackMask |= 0x03;
 
-        bool allPrepares =
-            _containsUint32(cs.confirmed_txs, TX_INDEX_COORDINATOR)
-            && _containsUint32(cs.confirmed_txs, TX_INDEX_PARTICIPANT);
-        bool allCommits =
-            _containsUint32(cs.acks, TX_INDEX_COORDINATOR) && _containsUint32(cs.acks, TX_INDEX_PARTICIPANT);
-        if (!allPrepares || !allCommits) {
+        // Inconsistency check using bitmask
+        if (cs.confirmedMask != 0x03 || cs.ackMask != 0x03) {
             revert CoordinatorStateInconsistent();
         }
 
         // --- 6. Execute Local Commit/Abort ---
-
         ContractTransactionState.Data storage txState = txStorage.states[txID][TX_INDEX_COORDINATOR];
 
         if (txState.status != ContractTransactionState.ContractTransactionStatus.CONTRACT_TRANSACTION_STATUS_PREPARE) {
@@ -451,13 +416,6 @@ abstract contract TxAtomicSimple is
     }
 
     // --- Helpers ---
-
-    function _containsUint32(uint32[] storage arr, uint32 value) internal view returns (bool) {
-        for (uint256 i = 0; i < arr.length; ++i) {
-            if (arr[i] == value) return true;
-        }
-        return false;
-    }
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack)
         internal

@@ -172,7 +172,20 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
     }
 
     function setCoordinatorState(bytes32 txID, CoordinatorState.Data calldata state) external {
-        _getCoordStorage().states[txID] = state;
+        CoordStateCompact memory compact;
+        compact.commitProtocol = state.commit_protocol;
+        compact.phase = state.phase;
+        compact.decision = state.decision;
+
+        if (state.channels.length > 1) {
+            compact.participantPort = state.channels[1].port;
+            compact.participantChannel = state.channels[1].channel;
+        }
+
+        compact.confirmedMask = _toMask(state.confirmed_txs);
+        compact.ackMask = _toMask(state.acks);
+
+        _getCoordStorage().compactStates[txID] = compact;
     }
 
     function setContractTxState(bytes32 txID, uint8 index, ContractTransactionState.Data calldata state) external {
@@ -180,7 +193,21 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
     }
 
     function getCoordState(bytes32 txID) external view returns (CoordinatorState.Data memory) {
-        return _getCoordStorage().states[txID];
+        CoordStateCompact storage compact = _getCoordStorage().compactStates[txID];
+
+        CoordinatorState.Data memory data;
+        data.commit_protocol = compact.commitProtocol;
+        data.phase = compact.phase;
+        data.decision = compact.decision;
+
+        data.channels = new ChannelInfo.Data[](2);
+        data.channels[0] = ChannelInfo.Data("", "");
+        data.channels[1] = ChannelInfo.Data(compact.participantPort, compact.participantChannel);
+
+        data.confirmed_txs = _fromMask(compact.confirmedMask);
+        data.acks = _fromMask(compact.ackMask);
+
+        return data;
     }
 
     function getContractTxState(bytes32 txID, uint8 index)
@@ -189,6 +216,27 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
         returns (ContractTransactionState.Data memory)
     {
         return _getTxStorage().states[txID][index];
+    }
+
+    function _toMask(uint32[] calldata arr) internal pure returns (uint8 mask) {
+        for (uint256 i = 0; i < arr.length; ++i) {
+            if (arr[i] == 0) mask |= 0x01;
+            if (arr[i] == 1) mask |= 0x02;
+        }
+    }
+
+    function _fromMask(uint8 mask) internal pure returns (uint32[] memory) {
+        uint256 count = 0;
+        if ((mask & 0x01) != 0) ++count;
+        if ((mask & 0x02) != 0) ++count;
+
+        uint32[] memory res = new uint32[](count);
+        uint256 idx = 0;
+        if ((mask & 0x01) != 0) res[idx] = 0;
+        ++idx;
+        if ((mask & 0x02) != 0) res[idx] = 1;
+        ++idx;
+        return res;
     }
 }
 
