@@ -127,10 +127,14 @@ abstract contract CrossStore {
 
         uint32[] memory arr = new uint32[](count);
         uint256 idx = 0;
-        if ((mask & 0x01) != 0) arr[idx] = 0;
-        ++idx;
-        if ((mask & 0x02) != 0) arr[idx] = 1;
-        ++idx;
+        if ((mask & 0x01) != 0) {
+            arr[idx] = 0;
+            ++idx;
+        }
+        if ((mask & 0x02) != 0) {
+            arr[idx] = 1;
+            ++idx;
+        }
         return arr;
     }
 
