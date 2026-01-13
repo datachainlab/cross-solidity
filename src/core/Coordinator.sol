@@ -6,6 +6,7 @@ import {TxManagerBase} from "./TxManagerBase.sol";
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {ICrossError} from "./ICrossError.sol";
 import {ICrossEvent} from "./ICrossEvent.sol";
+import {TxIdUtils} from "./TxIdUtils.sol";
 
 import {
     QueryCoordinatorStateRequest,
@@ -15,6 +16,8 @@ import {
 import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 
 abstract contract Coordinator is ICoordinator, TxAuthManagerBase, TxManagerBase, ICrossError, ICrossEvent {
+    using TxIdUtils for MsgInitiateTx.Data;
+
     function executeTx(MsgInitiateTx.Data calldata msg_) external override {
         uint64 rh = msg_.timeout_height.revision_height;
         if (rh != 0 && (block.number + 1 > uint256(rh))) {
@@ -25,15 +28,14 @@ abstract contract Coordinator is ICoordinator, TxAuthManagerBase, TxManagerBase,
             revert MessageTimeoutTimestamp(block.timestamp, msg_.timeout_timestamp);
         }
 
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(msg_));
+        bytes32 txID = msg_.computeTxId();
 
-        if (!_isTxRecorded(txIDHash)) revert TxIDNotFound(txIDHash);
+        if (!_isTxRecorded(txID)) revert TxIDNotFound(txID);
 
-        if (!_isCompletedAuth(txIDHash)) revert AuthNotCompleted(txIDHash);
+        if (!_isCompletedAuth(txID)) revert AuthNotCompleted(txID);
+        _runTxIfCompleted(txID, msg_);
 
-        _runTxIfCompleted(txIDHash, msg_);
-
-        emit TxExecuted(abi.encodePacked(txIDHash), msg.sender);
+        emit TxExecuted(abi.encodePacked(txID), msg.sender);
     }
 
     function coordinatorState(QueryCoordinatorStateRequest.Data calldata req)

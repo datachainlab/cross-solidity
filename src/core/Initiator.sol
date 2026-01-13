@@ -6,7 +6,7 @@ import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
 import {ICrossError} from "./ICrossError.sol";
 import {ICrossEvent} from "./ICrossEvent.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {TxIdUtils} from "./TxIdUtils.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
@@ -14,8 +14,11 @@ import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/pr
 import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, ReentrancyGuard, ICrossError, ICrossEvent {
+    using TxIdUtils for MsgInitiateTx.Data;
+
     bytes32 public immutable CHAIN_ID_HASH;
 
     constructor() {
@@ -43,27 +46,27 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
         }
 
         // generate txID
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(msg_));
-        bytes memory txID = abi.encodePacked(txIDHash);
-        if (_isTxRecorded(txIDHash)) revert TxIDAlreadyExists(txIDHash);
+        bytes32 txID = msg_.computeTxId();
+        if (_isTxRecorded(txID)) revert TxIDAlreadyExists(txID);
 
         // persist as PENDING
-        _createTx(txIDHash, msg_);
+        _createTx(txID, msg_);
 
         // auth init & sign
         Account.Data[] memory required = _getRequiredAccounts(msg_);
-        _initAuthState(txIDHash, required);
-        bool completed = _sign(txIDHash, msg_.signers);
+        _initAuthState(txID, required);
+        bool completed = _sign(txID, msg_.signers);
 
-        emit TxInitiated(txID, msg.sender, msg_);
+        bytes memory txIDBytes = abi.encodePacked(txID);
+        emit TxInitiated(txIDBytes, msg.sender, msg_);
 
         if (completed) {
             return MsgInitiateTxResponse.Data({
-                txID: txID, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED
+                txID: txIDBytes, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED
             });
         }
         return MsgInitiateTxResponse.Data({
-            txID: txID, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING
+            txID: txIDBytes, status: MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING
         });
     }
 
