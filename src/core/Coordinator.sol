@@ -6,7 +6,7 @@ import {TxManagerBase} from "./TxManagerBase.sol";
 import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {ICrossError} from "./ICrossError.sol";
 import {ICrossEvent} from "./ICrossEvent.sol";
-import {TxIdUtils} from "./TxIdUtils.sol";
+import {TxIDUtils} from "./TxIDUtils.sol";
 
 import {
     QueryCoordinatorStateRequest,
@@ -16,7 +16,7 @@ import {
 import {MsgInitiateTx} from "../proto/cross/core/initiator/Initiator.sol";
 
 abstract contract Coordinator is ICoordinator, TxAuthManagerBase, TxManagerBase, ICrossError, ICrossEvent {
-    using TxIdUtils for MsgInitiateTx.Data;
+    using TxIDUtils for MsgInitiateTx.Data;
 
     function executeTx(MsgInitiateTx.Data calldata msg_) external override {
         uint64 rh = msg_.timeout_height.revision_height;

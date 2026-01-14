@@ -6,7 +6,7 @@ import {TxAuthManagerBase} from "./TxAuthManagerBase.sol";
 import {TxManagerBase} from "./TxManagerBase.sol";
 import {ICrossError} from "./ICrossError.sol";
 import {ICrossEvent} from "./ICrossEvent.sol";
-import {TxIdUtils} from "./TxIdUtils.sol";
+import {TxIDUtils} from "./TxIDUtils.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
@@ -17,7 +17,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, ReentrancyGuard, ICrossError, ICrossEvent {
-    using TxIdUtils for MsgInitiateTx.Data;
+    using TxIDUtils for MsgInitiateTx.Data;
 
     bytes32 public immutable CHAIN_ID_HASH;
 

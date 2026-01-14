@@ -3,26 +3,26 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
-import "../src/core/TxIdUtils.sol";
+import {TxIDUtils} from "../src/core/TxIDUtils.sol";
 import {MsgInitiateTx, ContractTransaction, Link, ReturnValue} from "../src/proto/cross/core/initiator/Initiator.sol";
 import {GoogleProtobufAny as Any} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {AuthType, Account as AuthAccount} from "../src/proto/cross/core/auth/Auth.sol";
 import {IbcCoreClientV1Height} from "../src/proto/ibc/core/client/v1/client.sol";
 import {Tx} from "../src/proto/cross/core/tx/Tx.sol";
 
-contract TxIdUtilsHarness {
-    using TxIdUtils for MsgInitiateTx.Data;
+contract TxIDUtilsHarness {
+    using TxIDUtils for MsgInitiateTx.Data;
 
     function exposed_computeTxId(MsgInitiateTx.Data calldata msg_) external pure returns (bytes32) {
         return msg_.computeTxId();
     }
 }
 
-contract TxIdUtilsTest is Test {
-    TxIdUtilsHarness private harness;
+contract TxIDUtilsTest is Test {
+    TxIDUtilsHarness private harness;
 
     function setUp() public {
-        harness = new TxIdUtilsHarness();
+        harness = new TxIDUtilsHarness();
     }
 
     function test_computeTxId_SucceedsWithTypicalMsg() public view {
