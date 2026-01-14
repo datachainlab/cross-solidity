@@ -156,9 +156,7 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
     }
 
     function exposed_runTx(bytes32 txID, MsgInitiateTx.Data calldata msg_) external {
-        CrossStore.TxStorage storage t = _getTxStorage();
-        t.txMsg[txID] = msg_;
-        _runTx(txID, t.txMsg[txID]);
+        _runTx(txID, msg_);
     }
 
     function exposed_handlePacket(Packet calldata p) external returns (bytes memory) {
@@ -179,10 +177,6 @@ contract TxAtomicSimpleHarness is TxAtomicSimple, MockContractRegistry {
 
     function setContractTxState(bytes32 txID, uint8 index, ContractTransactionState.Data calldata state) external {
         _getTxStorage().states[txID][index] = state;
-    }
-
-    function setTxMsg(bytes32 txID, MsgInitiateTx.Data calldata msg_) external {
-        _getTxStorage().txMsg[txID] = msg_;
     }
 
     function getCoordState(bytes32 txID) external view returns (CoordinatorState.Data memory) {
@@ -325,8 +319,6 @@ contract TxAtomicSimpleTest is Test, ICrossError, ICrossEvent {
             coordinator_channel: channels[0]
         });
         harness.setContractTxState(TX_ID, 0, ts);
-
-        harness.setTxMsg(TX_ID, _createValidSimpleMsg());
     }
 
     // --- handlePacket ---

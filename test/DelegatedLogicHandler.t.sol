@@ -96,7 +96,7 @@ contract MockTxManager is ITxManager, MockStore {
         txStorage.nonce[txID] = src.nonce;
     }
 
-    function runTxIfCompleted(bytes32 txID) external override {
+    function runTxIfCompleted(bytes32 txID, MsgInitiateTx.Data calldata) external override {
         txStorage.status[txID] = MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED;
         txStorage.nonce[txID] = 1;
     }
@@ -183,8 +183,8 @@ contract DelegatedLogicHandlerHarness is DelegatedLogicHandler, MockStore {
         _createTx(txID, src);
     }
 
-    function exposed_runTxIfCompleted(bytes32 txID) public {
-        _runTxIfCompleted(txID);
+    function exposed_runTxIfCompleted(bytes32 txID, MsgInitiateTx.Data calldata msg_) public {
+        _runTxIfCompleted(txID, msg_);
     }
 
     function exposed_isTxRecorded(bytes32 txID) public returns (bool) {
@@ -357,14 +357,17 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
     }
 
     function test_runTxIfCompleted_DelegatesToTxManager() public {
-        harness.exposed_runTxIfCompleted(txID);
+        bytes32 expectedTxID = sha256(MsgInitiateTx.encode(txMsg));
+
+        harness.exposed_runTxIfCompleted(expectedTxID, txMsg);
 
         assertEq(
-            uint256(harness.readTx_status(txID)),
+            uint256(harness.readTx_status(expectedTxID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
-        assertEq(harness.readTx_nonce(txID), 1, "runTxIfCompleted call count mismatch");
+
+        assertEq(harness.readTx_nonce(expectedTxID), 1, "runTxIfCompleted call count mismatch");
     }
 
     function test_isTxRecorded_DelegatesToTxManager() public {

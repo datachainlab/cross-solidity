@@ -38,10 +38,7 @@ contract MockTxManager is TxManagerBase {
         override
     {}
 
-    function _runTxIfCompleted(bytes32 txID) internal virtual override {
-        lastRunTxID = txID;
-        ++runTxCount;
-    }
+    function _runTxIfCompleted(bytes32, MsgInitiateTx.Data calldata) internal virtual override {}
 
     function _isTxRecorded(
         bytes32 /*txID*/
@@ -212,7 +209,10 @@ contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
     function test_signTx_SucceedsAsCompletedAndEmitsEvent() public {
         harness.setSignReturns(true);
 
-        vm.expectEmit(true, true, false, true, address(harness));
+        vm.expectEmit(address(harness));
+        emit TxAuthCompleted(txID);
+
+        vm.expectEmit(address(harness));
         emit TxSigned(address(this), txID, AuthType.AuthMode.AUTH_MODE_LOCAL);
 
         MsgSignTxResponse.Data memory resp = harness.signTx(baseMsg);
@@ -220,8 +220,6 @@ contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
         assertTrue(resp.tx_auth_completed, "response should indicate completed");
         assertEq(resp.log, "", "log should be empty");
         assertTrue(harness.completed(txID), "Mock: auth should be completed");
-        assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxID(), txID, "Mock: runTxIfCompleted called with correct txID");
     }
 
     function test_signTx_RevertsIf_TxIDLengthInvalid() public {
@@ -273,14 +271,15 @@ contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
         harness.setSignReturns(true);
 
         vm.expectEmit(address(harness));
+        emit TxAuthCompleted(extTxID);
+
+        vm.expectEmit(address(harness));
         emit TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 
         MsgExtSignTxResponse.Data memory resp = harness.extSignTx(extMsg);
 
         assertTrue(resp.x, "response.x should be true");
         assertTrue(harness.completed(extTxID), "Mock: auth should be completed");
-        assertEq(harness.runTxCount(), 1, "Mock: runTxIfCompleted should be called once");
-        assertEq(harness.lastRunTxID(), extTxID, "Mock: runTxIfCompleted called with correct txID");
     }
 
     function test_extSignTx_RevertsIf_TxIDLengthInvalid() public {

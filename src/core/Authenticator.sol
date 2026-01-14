@@ -37,7 +37,7 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
 
         bool completed = _sign(txID, accounts);
         if (completed) {
-            _runTxIfCompleted(txID);
+            emit TxAuthCompleted(txID);
         }
 
         emit TxSigned(msg.sender, txID, AuthType.AuthMode.AUTH_MODE_LOCAL);
@@ -52,7 +52,7 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
 
         bool completed = _sign(txID, msg_.signers);
         if (completed) {
-            _runTxIfCompleted(txID);
+            emit TxAuthCompleted(txID);
         }
 
         emit TxSigned(msg.sender, txID, AuthType.AuthMode.AUTH_MODE_EXTENSION);

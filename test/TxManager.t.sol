@@ -47,12 +47,12 @@ contract TxManagerHarness is TxManager {
         return t.txStatus[txID];
     }
 
-    function getTxMsg(bytes32 txID) public view returns (MsgInitiateTx.Data memory) {
+    function getTxCoordSigners(bytes32 txID) public view returns (AuthAccount.Data[] memory) {
         CrossStore.TxStorage storage t = _getTxStorage();
-        return t.txMsg[txID];
+        return t.txCoordSigners[txID];
     }
 
-    function _runTx(bytes32 txID, MsgInitiateTx.Data storage) internal virtual override {
+    function _runTx(bytes32 txID, MsgInitiateTx.Data calldata) internal virtual override {
         ++runCount;
         lastRunTxID = txID;
     }
@@ -91,7 +91,7 @@ contract TxManagerHarness is TxManager {
 
 contract TxManagerTest is Test, ICrossError {
     TxManagerHarness private harness;
-    bytes32 private txID = keccak256("test_tx_id");
+    bytes32 private txID;
     MsgInitiateTx.Data private txMsg;
 
     DummyIBCHandler private dummyHandler;
@@ -114,6 +114,8 @@ contract TxManagerTest is Test, ICrossError {
             signers: signers,
             contract_transactions: txs
         });
+
+        txID = sha256(MsgInitiateTx.encode(txMsg));
     }
 
     // --- initialize ---
@@ -245,45 +247,13 @@ contract TxManagerTest is Test, ICrossError {
         );
 
         // --- 5. Verify deep copy by reading back from storage ---
-        MsgInitiateTx.Data memory storedMsg = harness.getTxMsg(deepCopytxID);
+        AuthAccount.Data[] memory txCoordSigners = harness.getTxCoordSigners(deepCopytxID);
 
-        // 5a. Verify top-level simple fields
-        assertEq(storedMsg.chain_id, "test-chain-deep", "chain_id mismatch");
-        assertEq(storedMsg.nonce, 99, "nonce mismatch");
+        assertEq(txCoordSigners.length, 1, "Nested signers length mismatch");
+        assertEq(txCoordSigners[0].id, signerA.id, "Nested signer id mismatch");
         assertEq(
-            uint256(storedMsg.commit_protocol),
-            uint256(Tx.CommitProtocol.COMMIT_PROTOCOL_TPC),
-            "commit_protocol mismatch"
+            uint256(txCoordSigners[0].auth_type.mode), uint256(localAuthType.mode), "Nested signer auth_type mismatch"
         );
-        assertEq(storedMsg.timeout_height.revision_number, 1, "timeout_height.revision_number mismatch");
-        assertEq(storedMsg.timeout_height.revision_height, 101, "timeout_height.revision_height mismatch");
-        assertEq(storedMsg.timeout_timestamp, 202, "timeout_timestamp mismatch");
-
-        // 5b. Verify top-level signers array
-        assertEq(storedMsg.signers.length, 1, "Top signers length mismatch");
-        assertEq(storedMsg.signers[0].id, signerA.id, "Top signer id mismatch");
-        assertEq(
-            uint256(storedMsg.signers[0].auth_type.mode), uint256(localAuthType.mode), "Top signer auth_type mismatch"
-        );
-
-        // 5c. Verify contract_transactions array (level 1 nesting)
-        assertEq(storedMsg.contract_transactions.length, 1, "Txs length mismatch");
-        ContractTransaction.Data memory storedTx = storedMsg.contract_transactions[0];
-        assertEq(storedTx.cross_chain_channel.type_url, "xcc_type", "Tx xcc.type_url mismatch");
-        assertEq(storedTx.cross_chain_channel.value, hex"01", "Tx xcc.value mismatch");
-        assertEq(storedTx.call_info, hex"C0FFEE", "Tx call_info mismatch");
-        assertEq(storedTx.return_value.value, bytes("RETURNVAL"), "Tx return_value mismatch");
-
-        // 5d. Verify nested signers array (level 2 nesting)
-        assertEq(storedTx.signers.length, 1, "Nested signers length mismatch");
-        assertEq(storedTx.signers[0].id, signerA.id, "Nested signer id mismatch");
-        assertEq(
-            uint256(storedTx.signers[0].auth_type.mode), uint256(localAuthType.mode), "Nested signer auth_type mismatch"
-        );
-
-        // 5e. Verify nested links array (level 2 nesting)
-        assertEq(storedTx.links.length, 1, "Links length mismatch");
-        assertEq(storedTx.links[0].src_index, 123, "Link src_index mismatch");
     }
 
     function test_createTx_RevertWhen_TxAlreadyExists() public {
@@ -301,7 +271,7 @@ contract TxManagerTest is Test, ICrossError {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING),
             "Status should be PENDING"
         );
-        harness.runTxIfCompleted(txID);
+        harness.runTxIfCompleted(txID, txMsg);
         assertEq(harness.runCount(), 1, "MockTxRunner should be called once");
         assertEq(harness.lastRunTxID(), txID, "MockTxRunner should be called with correct txID");
         assertEq(
@@ -312,7 +282,7 @@ contract TxManagerTest is Test, ICrossError {
     }
 
     function test_runTxIfCompleted_DoesNothingForUnknownTx() public {
-        harness.runTxIfCompleted(txID);
+        harness.runTxIfCompleted(txID, txMsg);
         assertEq(harness.runCount(), 0, "MockTxRunner should not be called");
         assertEq(
             uint256(harness.getTxStatus(txID)),
@@ -323,14 +293,14 @@ contract TxManagerTest is Test, ICrossError {
 
     function test_runTxIfCompleted_DoesNothingIfAlreadyVerified() public {
         harness.createTx(txID, txMsg);
-        harness.runTxIfCompleted(txID); // First run
+        harness.runTxIfCompleted(txID, txMsg); // First run
         assertEq(harness.runCount(), 1, "MockTxRunner should be called once");
         assertEq(
             uint256(harness.getTxStatus(txID)),
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
-        harness.runTxIfCompleted(txID); // Second run
+        harness.runTxIfCompleted(txID, txMsg); // Second run
         assertEq(harness.runCount(), 1, "MockTxRunner should not be called again");
         assertEq(
             uint256(harness.getTxStatus(txID)),

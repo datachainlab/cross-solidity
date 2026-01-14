@@ -49,7 +49,7 @@ abstract contract TxAtomicSimple is
     uint8 private constant TX_INDEX_COORDINATOR = 0;
     uint8 private constant TX_INDEX_PARTICIPANT = 1;
 
-    function _runTx(bytes32 txID, MsgInitiateTx.Data storage msg_) internal virtual override {
+    function _runTx(bytes32 txID, MsgInitiateTx.Data calldata msg_) internal virtual override {
         if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_SIMPLE) {
             _runSimpleProtocol(txID, msg_);
         } else if (msg_.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_TPC) {
@@ -59,7 +59,7 @@ abstract contract TxAtomicSimple is
         }
     }
 
-    function _runSimpleProtocol(bytes32 txID, MsgInitiateTx.Data storage msg_) internal {
+    function _runSimpleProtocol(bytes32 txID, MsgInitiateTx.Data calldata msg_) internal {
         CoordStorage storage coordStorage = _getCoordStorage();
         TxStorage storage txStorage = _getTxStorage();
 
@@ -82,8 +82,8 @@ abstract contract TxAtomicSimple is
 
         // --- 2. Setup Transaction & XCC ---
 
-        ContractTransaction.Data storage tx0 = msg_.contract_transactions[TX_INDEX_COORDINATOR];
-        ContractTransaction.Data storage tx1 = msg_.contract_transactions[TX_INDEX_PARTICIPANT];
+        ContractTransaction.Data calldata tx0 = msg_.contract_transactions[TX_INDEX_COORDINATOR];
+        ContractTransaction.Data calldata tx1 = msg_.contract_transactions[TX_INDEX_PARTICIPANT];
 
         // Simple protocol does not support links
         if (tx0.links.length > 0 || tx1.links.length > 0) {
@@ -100,50 +100,52 @@ abstract contract TxAtomicSimple is
 
         // --- 3. Local Prepare (Coordinator) ---
 
-        // Dummy packet for getModule (local execution)
-        Height.Data memory emptyHeight = Height.Data(0, 0);
-        // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
-        // but it is not correct to force that assumption on the caller as well.
-        // We should generate a proper Packet instead of dummyPacket to support multiple modules.
-        Packet memory dummyPacket = Packet({
-            sequence: 0,
-            sourcePort: "",
-            sourceChannel: "",
-            destinationPort: "",
-            destinationChannel: "",
-            data: bytes(""),
-            timeoutHeight: emptyHeight,
-            timeoutTimestamp: 0
-        });
-
-        IContractModule module = getModule(dummyPacket);
-        if (address(module) == address(0)) {
-            revert ModuleNotInitialized();
-        }
-
         CoordinatorState.CoordinatorPhase phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_UNKNOWN;
         CoordinatorState.CoordinatorDecision decision =
         CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
         bool prepareOK = false;
 
-        // slither-disable-next-line reentrancy-no-eth
-        try module.onContractPrepare(
-            CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
-            tx0.call_info
-        ) returns (bytes memory callResult) {
-            // Verify return value if set
-            if (tx0.return_value.value.length > 0) {
-                if (keccak256(tx0.return_value.value) != keccak256(callResult)) {
-                    revert UnexpectedReturnValue();
-                }
+        // Use a block scope to avoid "Stack Too Deep" error by limiting the lifetime of temporary variables
+        {
+            // Dummy packet for getModule (local execution)
+            Height.Data memory emptyHeight = Height.Data(0, 0);
+            // TODO: SimpleContractRegistry is designed to have only a single ContractModule,
+            // but it is not correct to force that assumption on the caller as well.
+            // We should generate a proper Packet instead of dummyPacket to support multiple modules.
+            Packet memory dummyPacket = Packet({
+                sequence: 0,
+                sourcePort: "",
+                sourceChannel: "",
+                destinationPort: "",
+                destinationChannel: "",
+                data: bytes(""),
+                timeoutHeight: emptyHeight,
+                timeoutTimestamp: 0
+            });
+
+            IContractModule module = getModule(dummyPacket);
+            if (address(module) == address(0)) {
+                revert ModuleNotInitialized();
             }
-            prepareOK = true;
-            phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
-            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
-        } catch {
-            prepareOK = false;
-            phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
-            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT;
+
+            // slither-disable-next-line reentrancy-no-eth
+            try module.onContractPrepare(
+                CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: tx0.signers}),
+                tx0.call_info
+            ) returns (bytes memory callResult) {
+                if (tx0.return_value.value.length > 0) {
+                    if (keccak256(tx0.return_value.value) != keccak256(callResult)) {
+                        revert UnexpectedReturnValue();
+                    }
+                }
+                prepareOK = true;
+                phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_PREPARE;
+                decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_UNKNOWN;
+            } catch {
+                prepareOK = false;
+                phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
+                decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT;
+            }
         }
 
         // --- 4. Send IBC Packet (only if prepareOK) ---
@@ -418,11 +420,10 @@ abstract contract TxAtomicSimple is
             revert ModuleNotInitialized();
         }
 
-        MsgInitiateTx.Data storage msg_ = txStorage.txMsg[txID];
-        ContractTransaction.Data storage coordTx = msg_.contract_transactions[TX_INDEX_COORDINATOR];
+        Account.Data[] storage txCoordSigners = txStorage.txCoordSigners[txID];
 
         CrossContext memory ctx =
-            CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: coordTx.signers});
+            CrossContext({txID: abi.encodePacked(txID), txIndex: TX_INDEX_COORDINATOR, signers: txCoordSigners});
 
         if (isCommittable) {
             // Commit
@@ -437,6 +438,8 @@ abstract contract TxAtomicSimple is
             // slither-disable-next-line reentrancy-events
             emit OnAbort(abi.encodePacked(txID), TX_INDEX_COORDINATOR);
         }
+        // gas optimization: clean up txCoordSigners storage
+        delete txStorage.txCoordSigners[txID];
     }
 
     function _handleTimeout(

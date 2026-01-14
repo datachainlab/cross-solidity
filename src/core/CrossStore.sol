@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
 import {IContractModule} from "./IContractModule.sol";
-import {MsgInitiateTx, MsgInitiateTxResponse} from "../proto/cross/core/initiator/Initiator.sol";
+import {MsgInitiateTxResponse} from "../proto/cross/core/initiator/Initiator.sol";
 import {Account} from "../proto/cross/core/auth/Auth.sol";
 import {CoordinatorState, ContractTransactionState} from "../proto/cross/core/atomic/simple/AtomicSimple.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
@@ -30,7 +30,7 @@ abstract contract CrossStore {
     }
 
     struct TxStorage {
-        mapping(bytes32 => MsgInitiateTx.Data) txMsg;
+        mapping(bytes32 => Account.Data[]) txCoordSigners;
         mapping(bytes32 => MsgInitiateTxResponse.InitiateTxStatus) txStatus;
         mapping(bytes32 => mapping(uint256 => ContractTransactionState.Data)) states;
         IContractModule contractModule;
