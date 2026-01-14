@@ -36,6 +36,9 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
         Account.Data[] memory accounts = _buildLocalAccounts(msg_.signers);
 
         bool completed = _sign(txID, accounts);
+        if (completed) {
+            emit TxAuthCompleted(txID);
+        }
 
         emit TxSigned(msg.sender, txID, AuthType.AuthMode.AUTH_MODE_LOCAL);
 
@@ -47,7 +50,10 @@ abstract contract Authenticator is IAuthenticator, TxAuthManagerBase, TxManagerB
 
         _verifySignatures(txID, msg_.signers);
 
-        _sign(txID, msg_.signers);
+        bool completed = _sign(txID, msg_.signers);
+        if (completed) {
+            emit TxAuthCompleted(txID);
+        }
 
         emit TxSigned(msg.sender, txID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
 

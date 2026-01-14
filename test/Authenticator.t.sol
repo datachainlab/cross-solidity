@@ -209,7 +209,10 @@ contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
     function test_signTx_SucceedsAsCompletedAndEmitsEvent() public {
         harness.setSignReturns(true);
 
-        vm.expectEmit(true, true, false, true, address(harness));
+        vm.expectEmit(address(harness));
+        emit TxAuthCompleted(txID);
+
+        vm.expectEmit(address(harness));
         emit TxSigned(address(this), txID, AuthType.AuthMode.AUTH_MODE_LOCAL);
 
         MsgSignTxResponse.Data memory resp = harness.signTx(baseMsg);
@@ -266,6 +269,9 @@ contract AuthenticatorTest is Test, ICrossError, ICrossEvent {
 
     function test_extSignTx_SucceedsAsCompletedAndEmitsEvent() public {
         harness.setSignReturns(true);
+
+        vm.expectEmit(address(harness));
+        emit TxAuthCompleted(extTxID);
 
         vm.expectEmit(address(harness));
         emit TxSigned(address(this), extTxID, AuthType.AuthMode.AUTH_MODE_EXTENSION);
