@@ -460,7 +460,7 @@ abstract contract TxAtomicSimple is
             return arr;
         }
         uint32[] memory newArr = new uint32[](arr.length + 1);
-        for (uint256 i = 0; i < arr.length; i++) {
+        for (uint256 i = 0; i < arr.length; ++i) {
             newArr[i] = arr[i];
         }
         newArr[arr.length] = val;
