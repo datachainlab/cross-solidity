@@ -50,18 +50,6 @@ contract CrossStoreHarness is CrossStore {
         _saveCoordinatorState(txID, data);
     }
 
-    function exposed_confirmParticipant(bytes32 txID) public {
-        _confirmParticipant(txID);
-    }
-
-    function exposed_completeSimpleProtocol(
-        bytes32 txID,
-        CoordinatorState.CoordinatorPhase phase,
-        CoordinatorState.CoordinatorDecision decision
-    ) public {
-        _completeSimpleProtocol(txID, phase, decision);
-    }
-
     function exposed_maskToUint32Array(uint8 mask) public pure returns (uint32[] memory) {
         return _maskToUint32Array(mask);
     }
@@ -267,33 +255,5 @@ contract CrossStoreTest is Test {
             confirmed_txs: new uint32[](0),
             acks: new uint32[](0)
         });
-    }
-
-    function test_confirmParticipant_UpdatesMask() public {
-        bytes32 txId = keccak256("tx.confirm");
-
-        test_SaveAndLoad_CoordinatorState();
-        txId = keccak256("tx.save.load");
-
-        harness.exposed_confirmParticipant(txId);
-
-        CoordinatorState.Data memory loaded = harness.exposed_loadCoordinatorState(txId);
-        assertEq(loaded.confirmed_txs.length, 2, "Should have 2 confirmed txs");
-        assertEq(loaded.confirmed_txs[1], 1, "Participant should be confirmed");
-    }
-
-    function test_completeSimpleProtocol_SetsCorrectValues() public {
-        bytes32 txId = keccak256("tx.complete");
-
-        harness.exposed_completeSimpleProtocol(
-            txId,
-            CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT,
-            CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_COMMIT
-        );
-
-        CoordinatorState.Data memory loaded = harness.exposed_loadCoordinatorState(txId);
-        assertEq(uint256(loaded.phase), uint256(CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT));
-        assertEq(uint256(loaded.decision), uint256(CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_COMMIT));
-        assertEq(loaded.acks.length, 2, "Both Coord and Participant should be in ACKs");
     }
 }

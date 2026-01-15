@@ -104,21 +104,6 @@ abstract contract CrossStore {
         compact.ackMask = _uint32ArrayToMask(data.acks);
     }
 
-    function _confirmParticipant(bytes32 txID) internal {
-        _getCoordStorage().compactStates[txID].confirmedMask |= 0x02;
-    }
-
-    function _completeSimpleProtocol(
-        bytes32 txID,
-        CoordinatorState.CoordinatorPhase phase,
-        CoordinatorState.CoordinatorDecision decision
-    ) internal {
-        CoordStateCompact storage compact = _getCoordStorage().compactStates[txID];
-        compact.phase = phase;
-        compact.decision = decision;
-        compact.ackMask |= 0x03;
-    }
-
     function _maskToUint32Array(uint8 mask) internal pure returns (uint32[] memory) {
         uint256 count = 0;
         if ((mask & 0x01) != 0) ++count;

@@ -352,9 +352,7 @@ abstract contract TxAtomicSimple is
         }
 
         // Mark Participant prepare as confirmed
-        if (!_containsUint32(cs.confirmed_txs, TX_INDEX_PARTICIPANT)) {
-            _confirmParticipant(txID);
-        }
+        cs.confirmed_txs = _addToUint32Array(cs.confirmed_txs, TX_INDEX_PARTICIPANT);
 
         // --- 5. Determine Commit/Abort based on ACK ---
 
@@ -373,16 +371,10 @@ abstract contract TxAtomicSimple is
         cs.phase = CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT;
 
         // Set ACK flags
-        CoordinatorState.CoordinatorDecision decision;
-        if (ack.status == PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK) {
-            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_COMMIT;
-        } else {
-            decision = CoordinatorState.CoordinatorDecision.COORDINATOR_DECISION_ABORT;
-        }
+        cs.acks = _addToUint32Array(cs.acks, TX_INDEX_COORDINATOR);
+        cs.acks = _addToUint32Array(cs.acks, TX_INDEX_PARTICIPANT);
 
-        _completeSimpleProtocol(txID, CoordinatorState.CoordinatorPhase.COORDINATOR_PHASE_COMMIT, decision);
-
-        cs = _loadCoordinatorState(txID);
+        _saveCoordinatorState(txID, cs);
 
         bool allPrepares =
             _containsUint32(cs.confirmed_txs, TX_INDEX_COORDINATOR)
@@ -461,6 +453,18 @@ abstract contract TxAtomicSimple is
             if (arr[i] == value) return true;
         }
         return false;
+    }
+
+    function _addToUint32Array(uint32[] memory arr, uint32 val) internal view returns (uint32[] memory) {
+        if (_containsUint32(arr, val)) {
+            return arr;
+        }
+        uint32[] memory newArr = new uint32[](arr.length + 1);
+        for (uint256 i = 0; i < arr.length; i++) {
+            newArr[i] = arr[i];
+        }
+        newArr[arr.length] = val;
+        return newArr;
     }
 
     function packPacketAcknowledgementCall(PacketAcknowledgementCall.Data memory ack)
