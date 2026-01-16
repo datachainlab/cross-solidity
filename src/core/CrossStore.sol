@@ -42,6 +42,10 @@ abstract contract CrossStore {
         mapping(bytes32 => CoordStateCompact) compactStates;
     }
 
+    /**
+     * @dev Compact version of CoordinatorState.Data optimized for 1:1 COMMIT_PROTOCOL_SIMPLE.
+     * Note: Extending to multi-participant 2PC will require a storage redesign.
+     */
     struct CoordStateCompact {
         Tx.CommitProtocol commitProtocol;
         CoordinatorState.CoordinatorPhase phase;
