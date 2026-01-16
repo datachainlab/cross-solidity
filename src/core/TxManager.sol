@@ -86,11 +86,11 @@ contract TxManager is
     }
 
     function _getCoordinatorState(bytes32 txID) internal view override returns (CoordinatorState.Data memory) {
-        CrossStore.CoordStorage storage s = _getCoordStorage();
-        if (s.states[txID].commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
+        CoordinatorState.Data memory state = _loadCoordinatorState(txID);
+        if (state.commit_protocol == Tx.CommitProtocol.COMMIT_PROTOCOL_UNKNOWN) {
             revert CoordinatorStateNotFound(txID);
         }
-        return s.states[txID];
+        return state;
     }
 
     function _storeCoordSigners(CrossStore.TxStorage storage t, bytes32 txID, Account.Data[] calldata signers) private {
