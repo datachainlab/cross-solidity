@@ -7,6 +7,7 @@ import "forge-std/src/Test.sol";
 import "../src/core/CrossSimpleModule.sol";
 import "../src/core/IContractModule.sol";
 import "../src/core/TxAtomicSimple.sol";
+import "../src/core/ICrossError.sol";
 import {IIBCHandler} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/IIBCHandler.sol";
 import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-channel/IIBCChannel.sol";
 
@@ -14,7 +15,7 @@ contract DummyHandler {}
 
 contract DummyModule is IContractModule {
     // do nothing implementation
-    function onContractCall(
+    function onContractCommitImmediately(
         CrossContext calldata,
         /*context*/
         bytes calldata /*callInfo*/
@@ -25,25 +26,50 @@ contract DummyModule is IContractModule {
     {
         return "";
     }
+
+    function onAbort(
+        CrossContext calldata /*context*/
+    )
+        external
+        override
+    {}
+    function onCommit(
+        CrossContext calldata /*context*/
+    )
+        external
+        override
+    {}
+
+    function onContractPrepare(
+        CrossContext calldata,
+        /*context*/
+        bytes calldata /*callInfo*/
+    )
+        external
+        override
+        returns (bytes memory)
+    {
+        return "";
+    }
 }
 
 contract CrossSimpleModuleHarness is CrossSimpleModule {
-    constructor(IIBCHandler h, IContractModule m, bool debugMode) CrossSimpleModule(h, m, debugMode) {}
-
-    function exposed_getModule(Packet calldata p) external returns (IContractModule) {
-        return getModule(p);
-    }
-
-    function exposed_registerModule(IContractModule m) external {
-        registerModule(m);
-    }
+    constructor(
+        IIBCHandler h,
+        address txAuthManager_,
+        address txManager_,
+        IContractModule module_,
+        string[] memory authTypeUrls_,
+        IAuthExtensionVerifier[] memory authVerifiers_,
+        bool debugMode
+    ) CrossSimpleModule(h, txAuthManager_, txManager_, module_, authTypeUrls_, authVerifiers_, debugMode) {}
 
     function workaround_hasIbcRole(address a) external view returns (bool) {
         return hasRole(IBC_ROLE, a);
     }
 }
 
-contract CrossSimpleModuleTest is Test {
+contract CrossSimpleModuleTest is Test, ICrossError {
     DummyHandler private handler;
     DummyModule private moduleImpl;
     Packet internal _emptyPacket;
@@ -53,46 +79,31 @@ contract CrossSimpleModuleTest is Test {
         moduleImpl = new DummyModule();
     }
 
-    function test_constructor_RegistersModuleAndGetReturnsSameAddress() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
-
-        IContractModule got = harness.exposed_getModule(_emptyPacket);
-        assertEq(address(got), address(moduleImpl), "must register");
-    }
-
     function test_constructor_GrantsIbcRoleWhenDebugModeTrue() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), true);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            address(0),
+            address(0),
+            moduleImpl,
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            true
+        );
 
         assertTrue(harness.workaround_hasIbcRole(address(this)), "role on debug");
     }
 
     function test_constructor_DoesNotGrantIbcRoleWhenDebugModeFalse() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
+        CrossSimpleModuleHarness harness = new CrossSimpleModuleHarness(
+            IIBCHandler(address(handler)),
+            address(0),
+            address(0),
+            moduleImpl,
+            new string[](0),
+            new IAuthExtensionVerifier[](0),
+            false
+        );
 
         assertFalse(harness.workaround_hasIbcRole(address(this)), "no role on debug");
-    }
-
-    function test_register_RevertOn_SecondInitialization() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
-
-        vm.expectRevert(SimpleContractRegistry.ModuleAlreadyInitialized.selector);
-        harness.exposed_registerModule(IContractModule(address(moduleImpl)));
-    }
-
-    function test_getPacketAcknowledgementCall_DifferentStatusesProduceDifferentBytes() public {
-        CrossSimpleModuleHarness harness =
-            new CrossSimpleModuleHarness(IIBCHandler(address(handler)), IContractModule(address(moduleImpl)), false);
-
-        bytes memory a = harness.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_OK);
-        bytes memory b =
-            harness.getPacketAcknowledgementCall(PacketAcknowledgementCall.CommitStatus.COMMIT_STATUS_FAILED);
-
-        assertGt(a.length, 0, "ack nonempty");
-        assertGt(b.length, 0, "ack nonempty");
-        assertFalse(keccak256(a) == keccak256(b), "diff enc");
     }
 }

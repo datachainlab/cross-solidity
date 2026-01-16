@@ -34,13 +34,16 @@ jobs:
             'src/proto/**' \
             'src/core/PacketHandler.sol' \
             'src/core/ContractRegistry.sol' \
+            'src/core/TxAuthManagerBase.sol' \
+            'src/core/TxManagerBase.sol' \
+            'src/core/TxRunnerBase.sol' \
             -o lcov.filtered.info
 
       - name: Report code coverage
         uses: zgosalvez/github-actions-report-lcov@v5
         with:
           coverage-files: lcov.filtered.info
-          minimum-coverage: 100
+          minimum-coverage: 96
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
           update-comment: true

@@ -30,10 +30,13 @@ import {
 } from "@hyperledger-labs/yui-ibc-solidity/contracts/core/25-handler/OwnableIBCHandler.sol";
 
 // === App ===
-import {IContractModule} from "src/core/IContractModule.sol";
 import {CrossSimpleModule} from "src/core/CrossSimpleModule.sol";
+import {TxAuthManager} from "src/core/TxAuthManager.sol";
+import {TxManager} from "src/core/TxManager.sol";
 import {MockClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/clients/mock/MockClient.sol";
 import {MockCrossContract} from "src/example/MockCrossContract.sol";
+import {SampleExtensionVerifier} from "src/example/SampleExtensionVerifier.sol";
+import {IAuthExtensionVerifier} from "src/core/IAuthExtensionVerifier.sol";
 
 import {IIBCModuleInitializer} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/26-router/IIBCModule.sol";
 import {ILightClient} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/02-client/ILightClient.sol";
@@ -43,6 +46,7 @@ contract DeployAll is Script, Config {
     IBCHandler public ibcHandler;
     MockCrossContract public mockApp;
     CrossSimpleModule public crossSimpleModule;
+    TxManager public txManager;
     MockClient public mockClient;
 
     // ---------- helpers ----------
@@ -63,19 +67,36 @@ contract DeployAll is Script, Config {
 
     function _deployApp(IBCHandler handler, bool debugMode)
         internal
-        returns (MockCrossContract, CrossSimpleModule, MockClient)
+        returns (MockCrossContract, CrossSimpleModule, TxManager, MockClient)
     {
         console2.log("==> 02_DeployApp");
         MockCrossContract app = new MockCrossContract();
         console2.log("  MockCrossContract:", address(app));
 
-        CrossSimpleModule module = new CrossSimpleModule(handler, IContractModule(address(app)), debugMode);
+        SampleExtensionVerifier verifier = new SampleExtensionVerifier();
+        console2.log("  SampleExtensionVerifier:", address(verifier));
+
+        string[] memory typeUrls = new string[](1);
+        typeUrls[0] = "/verifier.sample.extension";
+
+        IAuthExtensionVerifier[] memory verifiers = new IAuthExtensionVerifier[](1);
+        verifiers[0] = IAuthExtensionVerifier(verifier);
+
+        TxAuthManager txAuthManager = new TxAuthManager();
+        console2.log("  TxAuthManager:", address(txAuthManager));
+
+        TxManager txManager = new TxManager();
+        console2.log("  TxManager:", address(txManager));
+
+        CrossSimpleModule module = new CrossSimpleModule(
+            handler, address(txAuthManager), address(txManager), app, typeUrls, verifiers, debugMode
+        );
         console2.log("  CrossSimpleModule:", address(module));
 
         MockClient mclient = new MockClient(address(handler));
         console2.log("  MockClient:", address(mclient));
 
-        return (app, module, mclient);
+        return (app, module, txManager, mclient);
     }
 
     function _initialize(
@@ -144,7 +165,7 @@ contract DeployAll is Script, Config {
     ) internal {
         vm.startBroadcast(deployerPk);
         ibcHandler = _deployCore();
-        (mockApp, crossSimpleModule, mockClient) = _deployApp(ibcHandler, debugMode);
+        (mockApp, crossSimpleModule, txManager, mockClient) = _deployApp(ibcHandler, debugMode);
         _initialize(ibcHandler, crossSimpleModule, portCross, mockClientType, mockClient);
         vm.stopBroadcast();
     }
@@ -155,6 +176,7 @@ contract DeployAll is Script, Config {
         config.set("ibc_handler", address(ibcHandler));
         config.set("mock_cross_contract", address(mockApp));
         config.set("cross_simple_module", address(crossSimpleModule));
+        config.set("tx_manager", address(txManager));
         config.set("mock_client", address(mockClient));
 
         // Meta

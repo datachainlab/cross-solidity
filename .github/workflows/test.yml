@@ -8,7 +8,7 @@ jobs:
     steps:
 
     - name: Set up Go 1.24
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v6
       with:
         go-version: 1.24
       id: go
@@ -22,7 +22,7 @@ jobs:
     - name: Resolve dependencies
       run: npm install
 
-    - name: Setup ganache-cli
+    - name: Setup chain & Deploy contracts
       run: NO_GEN_CODE=1 ./script/setup.sh development
 
     - name: Test

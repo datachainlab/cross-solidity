@@ -97,22 +97,24 @@ function loadAddressesFromToml(tomlPath, chainId) {
   }
   const ibc = addrSec.ibc_handler;
   const cross = addrSec.cross_simple_module;
+  const txManager = addrSec.tx_manager;
 
-  if (!ibc || !cross) {
-    console.error(`missing ibc_handler or cross_simple_module in [${chainId}.address]`);
+  if (!ibc || !cross || !txManager) {
+    console.error(`missing ibc_handler or cross_simple_module or tx_manager in [${chainId}.address]`);
     process.exit(1);
   }
-  return { ibc, cross };
+  return { ibc, cross, txManager };
 }
 
 (async () => {
-  const { ibc, cross } = loadAddressesFromToml(DEPLOYMENTS_TOML, CHAIN_ID);
+  const { ibc, cross, txManager } = loadAddressesFromToml(DEPLOYMENTS_TOML, CHAIN_ID);
 
   const targets = makePairs(CONF_TPL.split(":"));
   for (const [outPath, tplPath] of targets) {
     const str = await renderFile(tplPath, {
       IBCHandlerAddress: ibc,
       CrossSimpleModuleAddress: cross,
+      TxManagerAddress: txManager,
     });
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, str);

@@ -120,7 +120,7 @@ message Height {
   option (gogoproto.goproto_stringer) = false;
 
   // the version that the client is currently on
-  uint64 version_number = 1 [(gogoproto.moretags) = "yaml:\"version_number\""];
+  uint64 revision_number = 1 [(gogoproto.moretags) = "yaml:\"revision_number\""];
   // the height within the given version
-  uint64 version_height = 2 [(gogoproto.moretags) = "yaml:\"version_height\""];
+  uint64 revision_height = 2 [(gogoproto.moretags) = "yaml:\"revision_height\""];
 }

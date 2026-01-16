@@ -4,11 +4,14 @@ pragma solidity ^0.8.20;
 
 import "forge-std/src/Test.sol";
 import "../src/core/IBCKeeper.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract DummyHandler {}
 
 contract IBCKeeperHarness is IBCKeeper {
-    constructor(IIBCHandler h) IBCKeeper(h) {}
+    function exposed_initIBCKeeper(IIBCHandler handler) public initializer {
+        __initIBCKeeper(handler);
+    }
 
     function exposed_getIBCHandler() external view returns (address) {
         return address(getIBCHandler());
@@ -21,7 +24,8 @@ contract IBCKeeperTest is Test {
 
     function setUp() public {
         dummy = new DummyHandler();
-        keeper = new IBCKeeperHarness(IIBCHandler(address(dummy)));
+        keeper = new IBCKeeperHarness();
+        keeper.exposed_initIBCKeeper(IIBCHandler(address(dummy)));
     }
 
     function test_getIBCHandler_ReturnsSameAddress() public view {
@@ -29,8 +33,14 @@ contract IBCKeeperTest is Test {
         assertEq(h, address(dummy));
     }
 
-    function test_constructor_AllowsZeroAddress() public {
-        IBCKeeperHarness k = new IBCKeeperHarness(IIBCHandler(address(0)));
+    function test_exposed_initIBCKeeper_AllowsZeroAddress() public {
+        IBCKeeperHarness k = new IBCKeeperHarness();
+        k.exposed_initIBCKeeper(IIBCHandler(address(0)));
         assertEq(k.exposed_getIBCHandler(), address(0));
+    }
+
+    function test_exposed_initIBCKeeper_RevertOn_SecondInitialization() public {
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        keeper.exposed_initIBCKeeper(IIBCHandler(address(dummy)));
     }
 }

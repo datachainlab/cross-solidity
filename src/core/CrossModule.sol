@@ -13,19 +13,40 @@ import {Packet} from "@hyperledger-labs/yui-ibc-solidity/contracts/core/04-chann
 import "./PacketHandler.sol";
 import "./IBCKeeper.sol";
 
-abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHandler {
+import {Initiator} from "./Initiator.sol";
+import {Authenticator} from "./Authenticator.sol";
+import {Coordinator} from "./Coordinator.sol";
+import {DelegatedLogicHandler} from "./DelegatedLogicHandler.sol";
+import {IContractModule} from "./IContractModule.sol";
+import {IAuthExtensionVerifier} from "./IAuthExtensionVerifier.sol";
+
+abstract contract CrossModule is
+    AccessControl,
+    IIBCModule,
+    Initiator,
+    Authenticator,
+    Coordinator,
+    DelegatedLogicHandler
+{
     bytes32 public constant IBC_ROLE = keccak256("IBC_ROLE");
 
-    constructor(IIBCHandler ibcHandler_) IBCKeeper(ibcHandler_) {
+    constructor(
+        IIBCHandler ibcHandler_,
+        address txAuthManager_,
+        address txManager_,
+        IContractModule contractModule_,
+        string[] memory authTypeUrls_,
+        IAuthExtensionVerifier[] memory authVerifiers_
+    ) Initiator() DelegatedLogicHandler(txAuthManager_, txManager_) {
+        _initializeTxAuthManager(authTypeUrls_, authVerifiers_);
+        _initializeTxManager(ibcHandler_, contractModule_);
         _grantRole(IBC_ROLE, address(ibcHandler_));
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, IERC165) returns (bool) {
-        return interfaceId == type(IIBCModule).interfaceId || interfaceId == type(IIBCModuleInitializer).interfaceId
-            || super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceID) public view virtual override(AccessControl, IERC165) returns (bool) {
+        return interfaceID == type(IIBCModule).interfaceId || interfaceID == type(IIBCModuleInitializer).interfaceId
+            || super.supportsInterface(interfaceID);
     }
-
-    // function initiateTx() external {}
 
     /// Module callbacks ///
 
@@ -39,7 +60,7 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         returns (bytes memory acknowledgement)
     {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
-        return handlePacket(packet);
+        return _handlePacket(packet);
     }
 
     function onAcknowledgementPacket(
@@ -52,7 +73,7 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         override
     {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
-        handleAcknowledgement(packet, acknowledgement);
+        _handleAcknowledgement(packet, acknowledgement);
     }
 
     function onTimeoutPacket(
@@ -64,7 +85,7 @@ abstract contract CrossModule is AccessControl, IIBCModule, IBCKeeper, PacketHan
         override
     {
         require(hasRole(IBC_ROLE, _msgSender()), "caller must have the IBC role");
-        handleTimeout(packet);
+        _handleTimeout(packet);
     }
 
     function onChanOpenInit(IIBCModuleInitializer.MsgOnChanOpenInit calldata msg_)

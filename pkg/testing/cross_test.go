@@ -2,6 +2,7 @@ package testing
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"math/big"
 	"testing"
@@ -65,11 +66,11 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		))
 
 		// 3. check if a fired event matches expected one
-		event, err := suite.chain.findEventOnContractCall(ctx, txID)
+		event, err := suite.chain.findEventOnContractCommitImmediately(ctx, txID)
 		suite.Require().NoError(err)
 		suite.Require().True(event.Success)
 		suite.Require().Equal(event.Ret, successMsg)
-		suite.Require().Equal(event.TxId, crypto.Keccak256Hash(txID))
+		suite.Require().Equal(event.TxID, crypto.Keccak256Hash(txID))
 		suite.Require().Equal(event.TxIndex, uint8(1))
 	}
 
@@ -93,11 +94,11 @@ func (suite *CrossTestSuite) TestRecvPacket() {
 		))
 
 		// 3. check if a fired event matches expected one
-		event, err := suite.chain.findEventOnContractCall(ctx, txID)
+		event, err := suite.chain.findEventOnContractCommitImmediately(ctx, txID)
 		suite.Require().NoError(err)
 		suite.Require().False(event.Success)
 		suite.Require().Empty(event.Ret)
-		suite.Require().Equal(event.TxId, crypto.Keccak256Hash(txID))
+		suite.Require().Equal(event.TxID, crypto.Keccak256Hash(txID))
 		suite.Require().Equal(event.TxIndex, uint8(1))
 	}
 }
@@ -107,7 +108,7 @@ func (suite *CrossTestSuite) TestPBSerialization() {
 
 	// check if the serialization of a successful ack is correct
 	{
-		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
+		ack, err := suite.chain.TxManager.GetPacketAcknowledgementCall(
 			suite.chain.CallOpts(ctx, 0),
 			uint8(simpletypes.COMMIT_STATUS_OK),
 		)
@@ -121,7 +122,7 @@ func (suite *CrossTestSuite) TestPBSerialization() {
 
 	// check if the serialization of a failure ack is correct
 	{
-		ack, err := suite.chain.CrossSimpleModule.GetPacketAcknowledgementCall(
+		ack, err := suite.chain.TxManager.GetPacketAcknowledgementCall(
 			suite.chain.CallOpts(ctx, 0),
 			uint8(simpletypes.COMMIT_STATUS_FAILED),
 		)
@@ -142,6 +143,87 @@ func (suite *CrossTestSuite) createPacket(txID []byte, callInfo []byte) packets.
 	}
 	pdc := simpletypes.NewPacketDataCall(txID, types.NewResolvedContractTransaction(xcc, signers, callInfo, nil, nil))
 	return packets.NewPacketData(nil, pdc)
+}
+
+func (suite *CrossTestSuite) TestInitiateTx() {
+	ctx := context.Background()
+	opts := suite.chain.LegacyTxOpts(ctx, 0)
+
+	decodeB64 := func(s string) []byte {
+		b, err := base64.StdEncoding.DecodeString(s)
+		suite.Require().NoError(err)
+		return b
+	}
+
+	xcc1, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{
+		Port:    "",
+		Channel: "",
+	})
+	suite.Require().NoError(err)
+
+	xcc2, err := xcctypes.PackCrossChainChannel(&xcctypes.ChannelInfo{
+		Port:    "cross",
+		Channel: "channel-0",
+	})
+	suite.Require().NoError(err)
+
+	signer1 := crosssimplemodule.AccountData{
+		Id: decodeB64("0/syrvWS1CkCswOi9XwXq+gd+dIByQLeH9t/qFrDXqE="),
+		AuthType: crosssimplemodule.AuthTypeData{
+			Mode: uint8(authtypes.AuthMode_AUTH_MODE_LOCAL),
+		},
+	}
+
+	signer2 := crosssimplemodule.AccountData{
+		Id: decodeB64("y+1kWxwaYlTxFJ31HTWRxrOAMAc="),
+		AuthType: crosssimplemodule.AuthTypeData{
+			Mode: uint8(authtypes.AuthMode_AUTH_MODE_LOCAL),
+		},
+	}
+
+	ct1 := crosssimplemodule.ContractTransactionData{
+		CrossChainChannel: crosssimplemodule.GoogleProtobufAnyData{
+			TypeUrl: xcc1.TypeUrl,
+			Value:   xcc1.Value,
+		},
+		Signers:  []crosssimplemodule.AccountData{signer1},
+		CallInfo: decodeB64("eyJtZXRob2QiOiJ0cmFuc2ZlciIsImFyZ3MiOlsiNzkwOGE5ZGY5MzJkYmUwZjk5Nzg5NGE0MjMwOTdjYjViYTUxYWI0MDliZTAwZmM1YmZhODJkMjJmNDMyZjJiYiIsIjEwIl19"),
+		Links:    []crosssimplemodule.LinkData{},
+	}
+
+	ct2 := crosssimplemodule.ContractTransactionData{
+		CrossChainChannel: crosssimplemodule.GoogleProtobufAnyData{
+			TypeUrl: xcc2.TypeUrl,
+			Value:   xcc2.Value,
+		},
+		Signers:  []crosssimplemodule.AccountData{signer2},
+		CallInfo: decodeB64("+DuU3VEJ0FrDV+RGmSpg5kdkBBoOhSmMdHJhbnNmZXJGcm9t2JQAcxVAzWBgmR1rnFfOKVmY2bwvq4IGug=="),
+		Links:    []crosssimplemodule.LinkData{},
+	}
+
+	msg := crosssimplemodule.MsgInitiateTxData{
+		ChainId:              fmt.Sprintf("%d", suite.chain.chainID),
+		Nonce:                0,
+		CommitProtocol:       1, // SIMPLE_COMMIT_PROTOCOL
+		ContractTransactions: []crosssimplemodule.ContractTransactionData{ct1, ct2},
+		Signers:              []crosssimplemodule.AccountData{signer1},
+		TimeoutHeight: crosssimplemodule.IbcCoreClientV1HeightData{
+			RevisionNumber: 0,
+			RevisionHeight: 0,
+		},
+		TimeoutTimestamp: 0,
+	}
+
+	err = suite.chain.TxSyncIfNoError(ctx)(
+		suite.chain.CrossSimpleModule.InitiateTx(opts, msg),
+	)
+
+	suite.Require().NoError(err)
+
+	event, err := suite.chain.findEventTxInitiated(ctx, opts.From)
+	suite.Require().NoError(err)
+	suite.Require().Equal(opts.From, event.Proposer)
+	suite.Require().NotEmpty(event.TxID)
 }
 
 func TestChainTestSuite(t *testing.T) {
