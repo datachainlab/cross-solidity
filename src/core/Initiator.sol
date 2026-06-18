@@ -9,7 +9,7 @@ import {ICrossEvent} from "./ICrossEvent.sol";
 import {TxIDUtils} from "./TxIDUtils.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
-import {Account} from "../proto/cross/core/auth/Auth.sol";
+import {Account, AuthType} from "../proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
 
@@ -48,6 +48,8 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
         // generate txID
         bytes32 txID = msg_.computeTxId();
         if (_isTxRecorded(txID)) revert TxIDAlreadyExists(txID);
+
+        _validateLocalSigner(msg_.signers, msg.sender);
 
         // persist as PENDING
         _createTx(txID, msg_);
@@ -97,5 +99,19 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
             }
         }
         return out;
+    }
+
+    function _validateLocalSigner(Account.Data[] calldata signers, address sender) internal pure {
+        if (signers.length != 1) {
+            revert InvalidSignersLength();
+        }
+
+        bytes memory expectedSignerId = abi.encodePacked(sender);
+        if (signers[0].auth_type.mode != AuthType.AuthMode.AUTH_MODE_LOCAL) {
+            revert AuthModeMismatch();
+        }
+        if (keccak256(signers[0].id) != keccak256(expectedSignerId)) {
+            revert SignerMustEqualSender();
+        }
     }
 }
