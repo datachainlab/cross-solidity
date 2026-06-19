@@ -49,7 +49,7 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
         bytes32 txID = msg_.computeTxId();
         if (_isTxRecorded(txID)) revert TxIDAlreadyExists(txID);
 
-        _validateLocalSigner(msg_.signers, msg.sender);
+        _validateInitiateSigners(txID, msg_.signers, msg.sender);
 
         // persist as PENDING
         _createTx(txID, msg_);
@@ -99,6 +99,30 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
             }
         }
         return out;
+    }
+
+    function _validateInitiateSigners(bytes32 txID, Account.Data[] calldata signers, address sender) internal {
+        uint256 len = signers.length;
+        if (len == 0) {
+            revert InvalidSignersLength();
+        }
+
+        AuthType.AuthMode mode = signers[0].auth_type.mode;
+        for (uint256 i = 1; i < len; ++i) {
+            if (signers[i].auth_type.mode != mode) {
+                revert AuthModeMismatch();
+            }
+        }
+
+        if (mode == AuthType.AuthMode.AUTH_MODE_LOCAL) {
+            _validateLocalSigner(signers, sender);
+            return;
+        }
+        if (mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
+            _verifySignatures(txID, signers);
+            return;
+        }
+        revert AuthModeMismatch();
     }
 
     function _validateLocalSigner(Account.Data[] calldata signers, address sender) internal pure {
