@@ -107,35 +107,55 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
             revert InvalidSignersLength();
         }
 
-        AuthType.AuthMode mode = signers[0].auth_type.mode;
-        for (uint256 i = 1; i < len; ++i) {
-            if (signers[i].auth_type.mode != mode) {
-                revert AuthModeMismatch();
+        uint256 extensionCount = 0;
+        bool hasLocalSigner = false;
+        uint256 localSignerIndex = 0;
+
+        for (uint256 i = 0; i < len; ++i) {
+            AuthType.AuthMode mode = signers[i].auth_type.mode;
+            if (mode == AuthType.AuthMode.AUTH_MODE_LOCAL) {
+                if (hasLocalSigner) {
+                    revert InvalidSignersLength();
+                }
+                hasLocalSigner = true;
+                localSignerIndex = i;
+                continue;
             }
-        }
-
-        if (mode == AuthType.AuthMode.AUTH_MODE_LOCAL) {
-            _validateLocalSigner(signers, sender);
-            return;
-        }
-        if (mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
-            _verifySignatures(txID, signers);
-            return;
-        }
-        revert AuthModeMismatch();
-    }
-
-    function _validateLocalSigner(Account.Data[] calldata signers, address sender) internal pure {
-        if (signers.length != 1) {
-            revert InvalidSignersLength();
-        }
-
-        bytes memory expectedSignerId = abi.encodePacked(sender);
-        if (signers[0].auth_type.mode != AuthType.AuthMode.AUTH_MODE_LOCAL) {
+            if (mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
+                ++extensionCount;
+                continue;
+            }
             revert AuthModeMismatch();
         }
-        if (keccak256(signers[0].id) != keccak256(expectedSignerId)) {
+
+        if (hasLocalSigner) {
+            _validateLocalSigner(signers[localSignerIndex], sender);
+        }
+
+        if (extensionCount > 0) {
+            _verifySignatures(txID, _extractExtensionSigners(signers, extensionCount));
+        }
+    }
+
+    function _validateLocalSigner(Account.Data calldata signer, address sender) internal pure {
+        bytes memory expectedSignerId = abi.encodePacked(sender);
+        if (keccak256(signer.id) != keccak256(expectedSignerId)) {
             revert SignerMustEqualSender();
+        }
+    }
+
+    function _extractExtensionSigners(Account.Data[] calldata signers, uint256 extensionCount)
+        internal
+        pure
+        returns (Account.Data[] memory extensionSigners)
+    {
+        extensionSigners = new Account.Data[](extensionCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < signers.length; ++i) {
+            if (signers[i].auth_type.mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
+                extensionSigners[index] = signers[i];
+                ++index;
+            }
         }
     }
 }

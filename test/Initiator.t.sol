@@ -62,6 +62,9 @@ contract MockTxManager is TxManagerBase {
 contract MockTxAuthManager is TxAuthManagerBase {
     mapping(bytes32 => bool) public completed;
     bytes32 public lastInittxID;
+    bytes32 public lastSigntxID;
+    bytes32 public lastSignersHash;
+    uint256 public lastSignersCount;
     bytes32 public lastVerifytxID;
     uint256 public verifyCount;
     bool private _signReturns = false;
@@ -76,7 +79,10 @@ contract MockTxAuthManager is TxAuthManagerBase {
         return completed[txID];
     }
 
-    function _sign(bytes32 txID, AuthAccount.Data[] memory) internal virtual override returns (bool) {
+    function _sign(bytes32 txID, AuthAccount.Data[] memory signers) internal virtual override returns (bool) {
+        lastSigntxID = txID;
+        lastSignersHash = keccak256(abi.encode(signers));
+        lastSignersCount = signers.length;
         if (_signReturns) {
             completed[txID] = true;
         }
@@ -87,7 +93,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
         revert("MockTxAuthManager._getAuthState not implemented");
     }
 
-    function _verifySignatures(bytes32 txID, AuthAccount.Data[] calldata) internal virtual override {
+    function _verifySignatures(bytes32 txID, AuthAccount.Data[] memory) internal virtual override {
         lastVerifytxID = txID;
         ++verifyCount;
         if (_verifyShouldRevert) {
@@ -128,6 +134,10 @@ contract InitiatorTest is Test, ICrossEvent {
     AuthType.Data private localAuthType;
     AuthType.Data private extensionAuthType;
     string private chainIDStr;
+
+    function _signersHash(AuthAccount.Data[] memory signers) internal pure returns (bytes32) {
+        return keccak256(abi.encode(signers));
+    }
 
     function setUp() public {
         harness = new InitiatorHarness();
@@ -224,6 +234,9 @@ contract InitiatorTest is Test, ICrossEvent {
         assertTrue(harness.completed(txIDHash), "Mock: auth should be completed");
         assertEq(harness.createTxCount(), 1, "Mock: _createTx should be called once");
         assertEq(harness.lastInittxID(), txIDHash, "Mock: _initAuthState should be called with txID");
+        assertEq(harness.lastSigntxID(), txIDHash, "Mock: _sign should be called with txID");
+        assertEq(harness.lastSignersCount(), 1, "Mock: _sign should receive one signer");
+        assertEq(harness.lastSignersHash(), _signersHash(baseMsg.signers), "Mock: _sign should receive full signer set");
     }
 
     function test_initiateTx_SucceedsWithExtensionSignerAsPendingWhenAuthNotCompleted() public {
@@ -270,21 +283,65 @@ contract InitiatorTest is Test, ICrossEvent {
             uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
             "Status should be VERIFIED"
         );
+        assertEq(harness.lastSigntxID(), txIDHash, "Mock: _sign should be called with txID");
+        assertEq(harness.lastSignersCount(), 2, "Mock: _sign should receive two signers");
+        assertEq(harness.lastSignersHash(), _signersHash(baseMsg.signers), "Mock: _sign should receive full signer set");
+        assertEq(harness.verifyCount(), 1, "Mock: _verifySignatures should be called once");
+        assertEq(harness.lastVerifytxID(), txIDHash, "Mock: _verifySignatures should receive txID");
+    }
+
+    function test_initiateTx_SucceedsWithMixedLocalAndExtensionSignersAsVerified() public {
+        baseMsg.signers = new AuthAccount.Data[](2);
+        baseMsg.signers[0] = senderLocalSigner;
+        baseMsg.signers[1] = extSignerA;
+        baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](2);
+        baseMsg.contract_transactions[0].signers[0] = senderLocalSigner;
+        baseMsg.contract_transactions[0].signers[1] = extSignerA;
+        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+
+        harness.setSignReturns(true);
+
+        vm.expectEmit(true, false, false, true, address(harness));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this), baseMsg);
+
+        MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
+
+        assertEq(
+            uint256(resp.status),
+            uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_VERIFIED),
+            "Status should be VERIFIED"
+        );
+        assertEq(harness.verifyCount(), 1, "Mock: _verifySignatures should be called once");
+        assertEq(harness.lastVerifytxID(), txIDHash, "Mock: _verifySignatures should receive txID");
+    }
+
+    function test_initiateTx_SucceedsWithMixedExtensionAndLocalSignersAsPendingWhenAuthNotCompleted() public {
+        baseMsg.signers = new AuthAccount.Data[](2);
+        baseMsg.signers[0] = extSignerA;
+        baseMsg.signers[1] = senderLocalSigner;
+        baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](2);
+        baseMsg.contract_transactions[0].signers[0] = extSignerA;
+        baseMsg.contract_transactions[0].signers[1] = senderLocalSigner;
+        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+
+        harness.setSignReturns(false);
+
+        vm.expectEmit(true, false, false, true, address(harness));
+        emit TxInitiated(abi.encodePacked(txIDHash), address(this), baseMsg);
+
+        MsgInitiateTxResponse.Data memory resp = harness.initiateTx(baseMsg);
+
+        assertEq(
+            uint256(resp.status),
+            uint256(MsgInitiateTxResponse.InitiateTxStatus.INITIATE_TX_STATUS_PENDING),
+            "Status should be PENDING"
+        );
         assertEq(harness.verifyCount(), 1, "Mock: _verifySignatures should be called once");
         assertEq(harness.lastVerifytxID(), txIDHash, "Mock: _verifySignatures should receive txID");
     }
 
     function test_initiateTx_RevertWhen_SignerLengthZero() public {
         baseMsg.signers = new AuthAccount.Data[](0);
-
-        vm.expectRevert(ICrossError.InvalidSignersLength.selector);
-        harness.initiateTx(baseMsg);
-    }
-
-    function test_initiateTx_RevertWhen_SignerLengthMultiple() public {
-        baseMsg.signers = new AuthAccount.Data[](2);
-        baseMsg.signers[0] = senderLocalSigner;
-        baseMsg.signers[1] = signerB;
 
         vm.expectRevert(ICrossError.InvalidSignersLength.selector);
         harness.initiateTx(baseMsg);
@@ -311,19 +368,32 @@ contract InitiatorTest is Test, ICrossEvent {
         harness.initiateTx(baseMsg);
     }
 
-    function test_initiateTx_RevertWhen_MixedAuthModesLocalThenExtension() public {
+    function test_initiateTx_RevertWhen_MultipleLocalSignersProvided() public {
         baseMsg.signers = new AuthAccount.Data[](2);
         baseMsg.signers[0] = senderLocalSigner;
-        baseMsg.signers[1] = extSignerA;
+        baseMsg.signers[1] = signerB;
+
+        vm.expectRevert(ICrossError.InvalidSignersLength.selector);
+        harness.initiateTx(baseMsg);
+    }
+
+    function test_initiateTx_RevertWhen_UnsupportedAuthModeMixedWithLocal() public {
+        baseMsg.signers = new AuthAccount.Data[](2);
+        baseMsg.signers[0] = senderLocalSigner;
+        baseMsg.signers[1] = senderLocalSigner;
+        baseMsg.signers[1].auth_type =
+            AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_CHANNEL, option: GoogleProtobufAny.Data("", "")});
 
         vm.expectRevert(ICrossError.AuthModeMismatch.selector);
         harness.initiateTx(baseMsg);
     }
 
-    function test_initiateTx_RevertWhen_MixedAuthModesExtensionThenLocal() public {
+    function test_initiateTx_RevertWhen_MixedSignersIncludeUnsupportedAuthMode() public {
         baseMsg.signers = new AuthAccount.Data[](2);
         baseMsg.signers[0] = extSignerA;
         baseMsg.signers[1] = senderLocalSigner;
+        baseMsg.signers[1].auth_type =
+            AuthType.Data({mode: AuthType.AuthMode.AUTH_MODE_CHANNEL, option: GoogleProtobufAny.Data("", "")});
 
         vm.expectRevert(ICrossError.AuthModeMismatch.selector);
         harness.initiateTx(baseMsg);

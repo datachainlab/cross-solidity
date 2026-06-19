@@ -118,7 +118,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
     function _verifySignatures(
         bytes32,
         /*txIDHash*/
-        AuthAccount.Data[] calldata
+        AuthAccount.Data[] memory
         /*signers*/
     )
         internal

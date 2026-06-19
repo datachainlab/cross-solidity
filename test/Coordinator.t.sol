@@ -68,7 +68,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
         TxAuthState.Data memory state;
         return state;
     }
-    function _verifySignatures(bytes32, Account.Data[] calldata) internal virtual override {}
+    function _verifySignatures(bytes32, Account.Data[] memory) internal virtual override {}
 
     function _isCompletedAuth(bytes32 txID) internal view virtual override returns (bool) {
         return completedAuths[txID];
