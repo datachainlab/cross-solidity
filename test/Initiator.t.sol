@@ -226,9 +226,11 @@ contract InitiatorTest is Test, ICrossEvent {
         assertEq(harness.lastInittxID(), txIDHash, "Mock: _initAuthState should be called with txID");
     }
 
-    function test_initiateTx_SucceedsWithExtensionSignerAsPendingWhenSignersNotMet() public {
+    function test_initiateTx_SucceedsWithExtensionSignerAsPendingWhenAuthNotCompleted() public {
         baseMsg.signers = new AuthAccount.Data[](1);
         baseMsg.signers[0] = extSignerA;
+        baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](1);
+        baseMsg.contract_transactions[0].signers[0] = extSignerA;
         bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
 
         harness.setSignReturns(false);
@@ -251,6 +253,9 @@ contract InitiatorTest is Test, ICrossEvent {
         baseMsg.signers = new AuthAccount.Data[](2);
         baseMsg.signers[0] = extSignerA;
         baseMsg.signers[1] = extSignerB;
+        baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](2);
+        baseMsg.contract_transactions[0].signers[0] = extSignerA;
+        baseMsg.contract_transactions[0].signers[1] = extSignerB;
         bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
 
         harness.setSignReturns(true);
