@@ -139,6 +139,11 @@ contract InitiatorTest is Test, ICrossEvent {
         return keccak256(abi.encode(signers));
     }
 
+    function _computeTxId(MsgInitiateTx.Data memory msg_) internal pure returns (bytes32) {
+        msg_.signers = new AuthAccount.Data[](0);
+        return sha256(MsgInitiateTx.encode(msg_));
+    }
+
     function setUp() public {
         harness = new InitiatorHarness();
 
@@ -192,7 +197,7 @@ contract InitiatorTest is Test, ICrossEvent {
     function test_initiateTx_SucceedsAsPendingWhenSignersNotMet() public {
         baseMsg.signers = new AuthAccount.Data[](1);
         baseMsg.signers[0] = senderLocalSigner;
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setSignReturns(false);
 
@@ -216,7 +221,7 @@ contract InitiatorTest is Test, ICrossEvent {
     function test_initiateTx_SucceedsAsVerifiedWhenSignersMet() public {
         baseMsg.signers = new AuthAccount.Data[](1);
         baseMsg.signers[0] = senderLocalSigner;
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setSignReturns(true);
 
@@ -244,7 +249,7 @@ contract InitiatorTest is Test, ICrossEvent {
         baseMsg.signers[0] = extSignerA;
         baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](1);
         baseMsg.contract_transactions[0].signers[0] = extSignerA;
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setSignReturns(false);
 
@@ -269,7 +274,7 @@ contract InitiatorTest is Test, ICrossEvent {
         baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](2);
         baseMsg.contract_transactions[0].signers[0] = extSignerA;
         baseMsg.contract_transactions[0].signers[1] = extSignerB;
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setSignReturns(true);
 
@@ -297,7 +302,7 @@ contract InitiatorTest is Test, ICrossEvent {
         baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](2);
         baseMsg.contract_transactions[0].signers[0] = senderLocalSigner;
         baseMsg.contract_transactions[0].signers[1] = extSignerA;
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setSignReturns(true);
 
@@ -322,7 +327,7 @@ contract InitiatorTest is Test, ICrossEvent {
         baseMsg.contract_transactions[0].signers = new AuthAccount.Data[](2);
         baseMsg.contract_transactions[0].signers[0] = extSignerA;
         baseMsg.contract_transactions[0].signers[1] = senderLocalSigner;
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setSignReturns(false);
 
@@ -402,7 +407,7 @@ contract InitiatorTest is Test, ICrossEvent {
     function test_initiateTx_RevertWhen_ExtensionSignatureVerificationFails() public {
         baseMsg.signers = new AuthAccount.Data[](1);
         baseMsg.signers[0] = extSignerA;
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setVerifyShouldRevert(true);
 
@@ -443,7 +448,7 @@ contract InitiatorTest is Test, ICrossEvent {
     }
 
     function test_initiateTx_RevertWhen_txIDAlreadyExists() public {
-        bytes32 txIDHash = sha256(MsgInitiateTx.encode(baseMsg));
+        bytes32 txIDHash = _computeTxId(baseMsg);
 
         harness.setTxExists(txIDHash, true);
 

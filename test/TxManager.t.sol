@@ -96,6 +96,11 @@ contract TxManagerTest is Test, ICrossError {
     DummyIBCHandler private dummyHandler;
     DummyContractModule private dummyModule;
 
+    function _computeTxId(MsgInitiateTx.Data memory msg_) internal pure returns (bytes32) {
+        msg_.signers = new AuthAccount.Data[](0);
+        return sha256(MsgInitiateTx.encode(msg_));
+    }
+
     function setUp() public {
         harness = new TxManagerHarness();
         dummyHandler = new DummyIBCHandler();
@@ -114,7 +119,7 @@ contract TxManagerTest is Test, ICrossError {
             contract_transactions: txs
         });
 
-        txID = sha256(MsgInitiateTx.encode(txMsg));
+        txID = _computeTxId(txMsg);
     }
 
     // --- initialize ---

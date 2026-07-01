@@ -82,6 +82,11 @@ contract CoordinatorTest is Test, ICrossError, ICrossEvent {
     MsgInitiateTx.Data private dummyMsg;
     bytes32 private txID;
 
+    function _computeTxId(MsgInitiateTx.Data memory msg_) internal pure returns (bytes32) {
+        msg_.signers = new AuthAccount.Data[](0);
+        return sha256(MsgInitiateTx.encode(msg_));
+    }
+
     function setUp() public {
         harness = new CoordinatorHarness();
 
@@ -95,7 +100,7 @@ contract CoordinatorTest is Test, ICrossError, ICrossEvent {
             contract_transactions: new ContractTransaction.Data[](0)
         });
 
-        txID = sha256(MsgInitiateTx.encode(dummyMsg));
+        txID = _computeTxId(dummyMsg);
     }
 
     function test_executeTx_Succeeds() public {
