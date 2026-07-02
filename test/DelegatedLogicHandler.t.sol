@@ -276,6 +276,11 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
     MsgInitiateTx.Data private txMsg;
     Packet private dummyPacket;
 
+    function _computeTxId(MsgInitiateTx.Data memory msg_) internal pure returns (bytes32) {
+        msg_.signers = new AuthAccount.Data[](0);
+        return sha256(MsgInitiateTx.encode(msg_));
+    }
+
     function setUp() public {
         mockAuth = new MockTxAuthManager();
         mockTx = new MockTxManager();
@@ -357,7 +362,7 @@ contract DelegatedLogicHandlerTest is Test, ICrossError {
     }
 
     function test_runTxIfCompleted_DelegatesToTxManager() public {
-        bytes32 expectedTxID = sha256(MsgInitiateTx.encode(txMsg));
+        bytes32 expectedTxID = _computeTxId(txMsg);
 
         harness.exposed_runTxIfCompleted(expectedTxID, txMsg);
 

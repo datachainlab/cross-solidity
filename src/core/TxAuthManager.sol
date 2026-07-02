@@ -85,7 +85,7 @@ contract TxAuthManager is Initializable, TxAuthManagerBase, CrossStore, ITxAuthM
         return TxAuthState.Data({remaining_signers: remains});
     }
 
-    function _verifySignatures(bytes32 txIDHash, Account.Data[] calldata signers) internal virtual override {
+    function _verifySignatures(bytes32 txIDHash, Account.Data[] memory signers) internal virtual override {
         uint256 len = signers.length;
 
         if (len > MAX_SIGNERS_PER_TX) {
@@ -96,13 +96,13 @@ contract TxAuthManager is Initializable, TxAuthManagerBase, CrossStore, ITxAuthM
 
         // slither-disable-start calls-loop
         for (uint256 i = 0; i < len; ++i) {
-            Account.Data calldata signer = signers[i];
+            Account.Data memory signer = signers[i];
 
             if (signer.auth_type.mode != AuthType.AuthMode.AUTH_MODE_EXTENSION) {
                 revert AuthModeMismatch();
             }
 
-            string calldata typeUrl = signer.auth_type.option.type_url;
+            string memory typeUrl = signer.auth_type.option.type_url;
             IAuthExtensionVerifier verifier = s.authVerifiers[typeUrl];
             if (address(verifier) == address(0)) {
                 revert VerifierNotFound(typeUrl);
@@ -150,11 +150,7 @@ contract TxAuthManager is Initializable, TxAuthManagerBase, CrossStore, ITxAuthM
 
     function _accountKey(Account.Data memory a) internal pure returns (bytes32) {
         if (a.auth_type.mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
-            return keccak256(abi.encode(
-                a.id, 
-                a.auth_type.mode, 
-                a.auth_type.option.type_url
-            ));
+            return keccak256(abi.encode(a.id, a.auth_type.mode, a.auth_type.option.type_url));
         }
         return keccak256(abi.encode(a.id, a.auth_type));
     }

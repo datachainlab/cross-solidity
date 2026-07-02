@@ -168,7 +168,7 @@ func (suite *CrossTestSuite) TestInitiateTx() {
 	suite.Require().NoError(err)
 
 	signer1 := crosssimplemodule.AccountData{
-		Id: decodeB64("0/syrvWS1CkCswOi9XwXq+gd+dIByQLeH9t/qFrDXqE="),
+		Id: opts.From.Bytes(),
 		AuthType: crosssimplemodule.AuthTypeData{
 			Mode: uint8(authtypes.AuthMode_AUTH_MODE_LOCAL),
 		},

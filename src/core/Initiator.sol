@@ -9,7 +9,7 @@ import {ICrossEvent} from "./ICrossEvent.sol";
 import {TxIDUtils} from "./TxIDUtils.sol";
 
 import {MsgInitiateTx, MsgInitiateTxResponse, QuerySelfXCCResponse} from "../proto/cross/core/initiator/Initiator.sol";
-import {Account} from "../proto/cross/core/auth/Auth.sol";
+import {Account, AuthType} from "../proto/cross/core/auth/Auth.sol";
 import {GoogleProtobufAny} from "@hyperledger-labs/yui-ibc-solidity/contracts/proto/GoogleProtobufAny.sol";
 import {ChannelInfo} from "../proto/cross/core/xcc/XCC.sol";
 
@@ -48,6 +48,8 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
         // generate txID
         bytes32 txID = msg_.computeTxId();
         if (_isTxRecorded(txID)) revert TxIDAlreadyExists(txID);
+
+        _validateInitiateSigners(txID, msg_.signers, msg.sender);
 
         // persist as PENDING
         _createTx(txID, msg_);
@@ -97,5 +99,63 @@ abstract contract Initiator is IInitiator, TxAuthManagerBase, TxManagerBase, Ree
             }
         }
         return out;
+    }
+
+    function _validateInitiateSigners(bytes32 txID, Account.Data[] calldata signers, address sender) internal {
+        uint256 len = signers.length;
+        if (len == 0) {
+            revert InvalidSignersLength();
+        }
+
+        uint256 extensionCount = 0;
+        bool hasLocalSigner = false;
+        uint256 localSignerIndex = 0;
+
+        for (uint256 i = 0; i < len; ++i) {
+            AuthType.AuthMode mode = signers[i].auth_type.mode;
+            if (mode == AuthType.AuthMode.AUTH_MODE_LOCAL) {
+                if (hasLocalSigner) {
+                    revert InvalidSignersLength();
+                }
+                hasLocalSigner = true;
+                localSignerIndex = i;
+                continue;
+            }
+            if (mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
+                ++extensionCount;
+                continue;
+            }
+            revert AuthModeMismatch();
+        }
+
+        if (hasLocalSigner) {
+            _validateLocalSigner(signers[localSignerIndex], sender);
+        }
+
+        if (extensionCount > 0) {
+            _verifySignatures(txID, _extractExtensionSigners(signers, extensionCount));
+        }
+    }
+
+    function _validateLocalSigner(Account.Data calldata signer, address sender) internal pure {
+        bytes memory expectedSignerId = abi.encodePacked(sender);
+        if (keccak256(signer.id) != keccak256(expectedSignerId)) {
+            revert SignerMustEqualSender();
+        }
+    }
+
+    function _extractExtensionSigners(Account.Data[] calldata signers, uint256 extensionCount)
+        internal
+        pure
+        returns (Account.Data[] memory extensionSigners)
+    {
+        extensionSigners = new Account.Data[](extensionCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < signers.length; ++i) {
+            if (signers[i].auth_type.mode == AuthType.AuthMode.AUTH_MODE_EXTENSION) {
+                extensionSigners[index] = signers[i];
+                ++index;
+            }
+        }
     }
 }

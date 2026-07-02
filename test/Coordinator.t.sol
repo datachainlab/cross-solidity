@@ -68,7 +68,7 @@ contract MockTxAuthManager is TxAuthManagerBase {
         TxAuthState.Data memory state;
         return state;
     }
-    function _verifySignatures(bytes32, Account.Data[] calldata) internal virtual override {}
+    function _verifySignatures(bytes32, Account.Data[] memory) internal virtual override {}
 
     function _isCompletedAuth(bytes32 txID) internal view virtual override returns (bool) {
         return completedAuths[txID];
@@ -81,6 +81,11 @@ contract CoordinatorTest is Test, ICrossError, ICrossEvent {
     CoordinatorHarness private harness;
     MsgInitiateTx.Data private dummyMsg;
     bytes32 private txID;
+
+    function _computeTxId(MsgInitiateTx.Data memory msg_) internal pure returns (bytes32) {
+        msg_.signers = new AuthAccount.Data[](0);
+        return sha256(MsgInitiateTx.encode(msg_));
+    }
 
     function setUp() public {
         harness = new CoordinatorHarness();
@@ -95,7 +100,7 @@ contract CoordinatorTest is Test, ICrossError, ICrossEvent {
             contract_transactions: new ContractTransaction.Data[](0)
         });
 
-        txID = sha256(MsgInitiateTx.encode(dummyMsg));
+        txID = _computeTxId(dummyMsg);
     }
 
     function test_executeTx_Succeeds() public {

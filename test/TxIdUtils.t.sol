@@ -94,12 +94,12 @@ contract TxIDUtilsTest is Test {
         assertNotEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
     }
 
-    function test_computeTxId_ReturnsDifferentIdForDifferentRootSigners() public view {
+    function test_computeTxId_ReturnsSameIdForDifferentRootSigners() public view {
         MsgInitiateTx.Data memory m1 = _createBaseMsg();
         MsgInitiateTx.Data memory m2 = _createBaseMsg();
         m2.signers = new AuthAccount.Data[](1);
         m2.signers[0] = _createAccount("signer1");
-        assertNotEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
+        assertEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
     }
 
     function test_computeTxId_ReturnsDifferentIdForDifferentLocalSigners() public view {
@@ -150,7 +150,7 @@ contract TxIDUtilsTest is Test {
         assertNotEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
     }
 
-    function test_computeTxId_ReturnsDifferentIdForDifferentSignerAuthMode() public view {
+    function test_computeTxId_ReturnsSameIdForDifferentSignerAuthMode() public view {
         MsgInitiateTx.Data memory m1 = _createBaseMsg();
         m1.signers = new AuthAccount.Data[](1);
         m1.signers[0] = _createAccount("signer1");
@@ -160,10 +160,10 @@ contract TxIDUtilsTest is Test {
         m2.signers[0] = _createAccount("signer1");
         m2.signers[0].auth_type.mode = AuthType.AuthMode.AUTH_MODE_EXTENSION;
 
-        assertNotEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
+        assertEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
     }
 
-    function test_computeTxId_ReturnsDifferentIdForDifferentSignerAuthOptionTypeUrl() public view {
+    function test_computeTxId_ReturnsSameIdForDifferentSignerAuthOptionTypeUrl() public view {
         MsgInitiateTx.Data memory m1 = _createBaseMsg();
         m1.signers = new AuthAccount.Data[](1);
         m1.signers[0] = _createAccount("signer1");
@@ -173,10 +173,10 @@ contract TxIDUtilsTest is Test {
         m2.signers[0] = _createAccount("signer1");
         m2.signers[0].auth_type.option.type_url = "/new.verifier.v1";
 
-        assertNotEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
+        assertEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
     }
 
-    function test_computeTxId_ReturnsDifferentIdForDifferentSignerAuthOptionValue() public view {
+    function test_computeTxId_ReturnsSameIdForDifferentSignerAuthOptionValue() public view {
         MsgInitiateTx.Data memory m1 = _createBaseMsg();
         m1.signers = new AuthAccount.Data[](1);
         m1.signers[0] = _createAccount("signer1");
@@ -186,7 +186,7 @@ contract TxIDUtilsTest is Test {
         m2.signers[0] = _createAccount("signer1");
         m2.signers[0].auth_type.option.value = hex"123456";
 
-        assertNotEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
+        assertEq(harness.exposed_computeTxId(m1), harness.exposed_computeTxId(m2));
     }
 
     // --- Helpers ---
